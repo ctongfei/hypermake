@@ -1,0 +1,15 @@
+task t0() -> out:
+  echo "0" > $out
+
+task t1(x = $t0.out) -> out:
+  echo "1" > $out
+
+task t2(x = $t1.out) -> out:
+  echo "2" > $out
+
+
+@conda(env = ...)
+task train@ec2(data=$preprocess.out, dropout, regularizer) -> out:
+
+  python3 ....py $data ...
+
