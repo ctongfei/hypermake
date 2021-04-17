@@ -12,15 +12,17 @@ object Resolver {
    * @param targets A collection of target tasks
    * @return The task dependency DAG
    */
-  def resolve(targets: Iterable[Task]): Graph[Task] = {
-    val g = Graph[Task]()
+  def resolve(targets: Iterable[Job]): Graph[Job] = {
+    val g = Graph[Job]()
+    val s = mutable.HashSet[Job]()
     val q = mutable.Queue.from(targets)
 
     while (q.nonEmpty) {
       val c = q.dequeue()
-      if (!g.containsNode(c)) {
+      if (!s.contains(c)) {
         g.addNode(c)
-        for (d <- c.dependentTasks) {
+        s.add(c)
+        for (d <- c.dependentJobs) {
           g.addNode(d)
           g.addArc(d, c)
           q.enqueue(d)
@@ -35,7 +37,7 @@ object Resolver {
    * @param targets A collection of target task cubes
    * @return The task dependency DAG
    */
-  def resolveCube(targets: Iterable[Cube[Task]]) = {
+  def resolveCube(targets: Iterable[Cube[Job]]) = {
     val targetTasks = targets.flatMap(_.allElements)
     resolve(targetTasks)
   }
@@ -45,7 +47,7 @@ object Resolver {
    * @param plan The given plan
    * @return The task dependency DAG
    */
-  def resolvePlan(plan: Plan): Graph[Task] =
+  def resolvePlan(plan: Plan): Graph[Job] =
     resolveCube(plan.tasks)
 
 }

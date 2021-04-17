@@ -1,10 +1,9 @@
-package hypermake.semantics
-
-import java.io.File.pathSeparatorChar
-import java.io.FileNotFoundException
+package hypermake.execution
 
 import better.files.File
 
+import java.io.{File => JFile, _}
+import java.nio.file.{Files => JFiles, _}
 import scala.sys._
 
 
@@ -14,15 +13,14 @@ import scala.sys._
  * @param envVars Inherited environment variables from the parent process
  */
 class RuntimeContext private(
-                              workDir: String,
-                              envVars: Map[String, String],
-                              buildPath: String,
-                              includePaths: Seq[String],
-                              numParallelJobs: Int,
-                              keepGoing: Boolean,
-                              dryRun: Boolean,
-                              silent: Boolean,
-                              yes: Boolean
+                              val workDir: String,
+                              val envVars: Map[String, String],
+                              val includePaths: Seq[String],
+                              val numParallelJobs: Int,
+                              val keepGoing: Boolean,
+                              val dryRun: Boolean,
+                              val silent: Boolean,
+                              val yes: Boolean
                             ) {
 
   /**
@@ -40,11 +38,16 @@ class RuntimeContext private(
 
   lazy val SHELL = "bash"
 
-  lazy val paths = envVars.get(HYPERMAKEPATH).map(_.split(pathSeparatorChar)).getOrElse(Array[String]())
+  lazy val paths = envVars.get(HYPERMAKEPATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
   lazy val resolutionPaths = workDir +: paths
 
-  lazy val localOutputRoot = workDir + "/out"
+  private lazy val tempPath = JFiles.createTempDirectory("hypermake").toAbsolutePath
+
+  lazy val tempDir = tempPath.toString
+
+  def tempFile(prefix: String = "", suffix: String = "") =
+    JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
   /**
    * Resolves a Forge script file from `HYPERMAKEPATH`.
@@ -62,23 +65,23 @@ class RuntimeContext private(
 object RuntimeContext {
 
   def create(
-              buildPath: String = "out",
+              outputDirs: Map[String, String] = Map("local" -> "out"),
               includePaths: Seq[String] = Seq(),
               numParallelJobs: Int = 1,
               keepGoing: Boolean = false,
               dryRun: Boolean = false,
               silent: Boolean = false,
               yes: Boolean = false
-            ): RuntimeContext = new RuntimeContext(  // TODO: additional cmdline args
-    workDir = System.getProperty("user.dir"),
-    envVars = env,
-    buildPath = buildPath,
-    includePaths = includePaths,
-    numParallelJobs = numParallelJobs,
-    keepGoing = keepGoing,
-    dryRun = dryRun,
-    silent = silent,
-    yes = yes
-  )
+            ): RuntimeContext =
+    new RuntimeContext(  // TODO: additional cmdline args
+      workDir = System.getProperty("user.dir"),
+      envVars = env,
+      includePaths = includePaths,
+      numParallelJobs = numParallelJobs,
+      keepGoing = keepGoing,
+      dryRun = dryRun,
+      silent = silent,
+      yes = yes
+    )
 
 }

@@ -9,16 +9,15 @@ import hypermake.syntax.SyntacticParser
 
 object ParserTest extends App {
 
-  val file = File("src/test/resources/test.hm").lines.mkString("\n")
+//  import fastparse._
+//  val ast = parse("""task t0() -> out:
+//      a
+//    """, SyntacticParser.taskDef(_)).get.get
 
-  val ast = SyntacticParser.syntacticParse(file)
-
-  val z = 0
-
-  implicit val env = RuntimeContext.create()
-  implicit val ctx = new ParsingContext(env)
+  implicit val rt = RuntimeContext.create()
+  implicit val ctx = new ParsingContext()
   val workflow = new SemanticParser()
-  workflow.semanticParse(ast)
+  workflow.semanticParse(File("src/test/resources/test-sequential.hm"))
 
 
   val g = Resolver.resolvePlan(workflow.ctx.getPlan(Name("Run")))

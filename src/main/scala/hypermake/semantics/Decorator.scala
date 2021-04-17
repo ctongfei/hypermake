@@ -20,3 +20,7 @@ case class Decorator(name: Name, params: Set[Name], inputScriptParam: Name, outp
   }
 
 }
+
+object Decorator {
+
+}

@@ -11,6 +11,11 @@ import scala.util.{Failure, Success, Try}
 
 package object util {
 
+  private def mapViewAsMap[A, B](m: MapView[A, B]): IMap[A, B] = new DefaultMapBase[A, B] {
+    override def get(key: A) = m.get(key)
+    override def iterator = m.iterator
+  }
+
   implicit class ParsedExtensions[A](val p: Parsed[A]) {
 
     def asTry: Try[A] = p match {
@@ -19,9 +24,18 @@ package object util {
     }
   }
 
+  implicit class SetExtension[A](val s: Set[A]) {
+    def makeMap[B](f: A => B): Map[A, B] = new DefaultMapBase[A, B] {
+      def get(key: A) = if (s.contains(key)) Some(f(key)) else None
+      def iterator = s.iterator.map(a => a -> f(a))
+    }
+  }
+
   implicit class MapExtensions[A, B](val m: Map[A, B]) {
-    def filterKeysE(f: A => Boolean): Map[A, B] = m.view.filterKeys(f).toMap
+    def filterKeysE(f: A => Boolean): IMap[A, B] = m.view.filterKeys(f).toMap
+    def filterKeysL(f: A => Boolean): IMap[A, B] = mapViewAsMap(m.view.filterKeys(f))
     def mapValuesE[C](f: B => C): IMap[A, C] = m.view.mapValues(f).toMap
+    def mapValuesL[C](f: B => C): IMap[A, C] = mapViewAsMap(m.view.mapValues(f))
     def pointed(defaultKey: A): PointedMap[A, B] = PointedMap(m, defaultKey)
   }
 

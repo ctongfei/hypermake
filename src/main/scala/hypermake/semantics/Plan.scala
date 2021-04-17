@@ -5,10 +5,6 @@ import hypermake.core._
 import scala.collection._
 
 /**
- * Represents a collection of slice of tasks.
+ * Represents a collection of slices of tasks whose execution can be invoked from the command line.
  */
-class Plan(val tasks: Seq[Cube[Task]])(implicit val ctx: ParsingContext) {
-
-
-
-}
+class Plan(val tasks: Seq[Cube[Task]])(implicit val ctx: ParsingContext)

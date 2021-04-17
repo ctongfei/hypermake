@@ -51,6 +51,9 @@ class Graph[A](
 
 object Graph {
 
-  def apply[A]() = new Graph[A](mutable.HashMap[A, mutable.HashSet[A]](), mutable.HashMap[A, mutable.HashSet[A]]())
+  def apply[A]() = new Graph[A](
+    mutable.HashMap[A, mutable.HashSet[A]](),
+    mutable.HashMap[A, mutable.HashSet[A]]()
+  )
 
 }

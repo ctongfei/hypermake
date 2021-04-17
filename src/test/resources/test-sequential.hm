@@ -1,4 +1,6 @@
-task t0() -> out:
+local_root = "/home/tongfei/proj/forge/target"
+
+task t0(x = "1") -> out:
   echo "0" > $out
 
 task t1(x = $t0.out) -> out:
@@ -8,8 +10,4 @@ task t2(x = $t1.out) -> out:
   echo "2" > $out
 
 
-@conda(env = ...)
-task train@ec2(data=$preprocess.out, dropout, regularizer) -> out:
-
-  python3 ....py $data ...
-
+plan Run = { t2 }

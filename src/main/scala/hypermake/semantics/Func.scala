@@ -4,7 +4,7 @@ import hypermake.core.Name
 
 import scala.collection._
 import hypermake.exception._
-import hypermake.semantics.Escaper._
+import hypermake.util.Escaper._
 import hypermake.syntax.Identifier
 
 /**

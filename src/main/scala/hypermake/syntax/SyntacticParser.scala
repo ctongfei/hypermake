@@ -2,7 +2,7 @@ package hypermake.syntax
 
 import fastparse._
 import hypermake.exception._
-import hypermake.semantics.Escaper.Percent
+import hypermake.util.Escaper.Percent
 import hypermake.util.Util._
 
 
@@ -17,7 +17,7 @@ object SyntacticParser {
   def envModifier[_: P] = P { ("@" ~ identifier).? } map EnvModifier
 
   def keyValuePair[_: P] = P {
-    string ~ ("=" ~ value).?
+    string ~ ("=" ~ expr).?
   } map { case (k, ov) =>
     ov.fold[(String, Expr)]((k, StringLiteral(k, EnvModifier(None))))((v: Expr) => (k, v))
   }
@@ -86,14 +86,14 @@ object SyntacticParser {
 
   def literal[_: P]: P[Literal] = stringLiteral | dictLiteral
 
-  def value[_: P]: P[Expr] = literal | taskValRefN | valRef
+  def expr[_: P]: P[Expr] = literal | taskValRef1 | taskValRefN | valRef
 
   def parameter[_: P] = P {
     identifier ~ envModifier
   } map { case (name, ofs) => Parameter(name, ofs) }
 
   def explicitAssignment[_: P] = P {
-    parameter ~ "=" ~ value
+    parameter ~ "=" ~ expr
   } map { case (param, v) => ExplicitAssignment(param, v) }
 
   def refAssignment[_: P] = P {
@@ -137,7 +137,7 @@ object SyntacticParser {
   }
 
   def valDef[_: P] = P {
-    identifier ~ "=" ~ value
+    identifier ~ "=" ~ expr
   } map { case (id, v) => ValDef(id, v) }
 
   def funcDef[_: P] = P {
@@ -147,7 +147,7 @@ object SyntacticParser {
   def taskDef[_: P] = P {
     decoratorCalls ~
       "task" ~ identifier ~ envModifier ~ "(" ~ assignments ~ ")" ~ "->" ~ outputAssignments ~ impl
-  } map { case (decorators, name, fsm, inputs, outputs, impl) => TaskDef(decorators, name, fsm, inputs, outputs, impl) }
+  } map { case (decorators, name, envMod, inputs, outputs, impl) => TaskDef(decorators, name, envMod, inputs, outputs, impl) }
 
   def serviceDef[_: P] = P {
     decoratorCalls ~

@@ -1,4 +1,4 @@
-package hypermake.semantics
+package hypermake.util
 
 import java.net.{URLDecoder, URLEncoder}
 
@@ -24,7 +24,7 @@ object Escaper {
    * Escapes strings using C/C++ standard.
    */
   object C extends Escaper {
-    val map: Map[Char, Char] = Map(
+    val escapedChars: Map[Char, Char] = Map(
       '\u0007' -> 'a',
       '\b' -> 'b',
       '\u001b' -> 'e',
@@ -40,7 +40,7 @@ object Escaper {
     def escape(s: String) = {
       val sb = new StringBuilder()
       for (c <- s)
-        sb append (if (map contains c) "\\" + c else c.toString)
+        sb append (if (escapedChars contains c) "\\" + c else c.toString)
       sb.toString()
     }
 
