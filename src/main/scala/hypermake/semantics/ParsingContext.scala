@@ -66,6 +66,16 @@ class ParsingContext(implicit val runtime: RuntimeContext) {
     clauses.mkString(", ")
   }
 
+  def colorfulArgsString(args: Map[Name, String]) = {
+    import fansi._
+    val sortedArgs = args.toArray.sortBy(_._1)
+    val clauses = sortedArgs.collect {
+      case (a, k) if getAxis(a).default != k =>
+        s"${Color.Yellow(a.name)}: ${Bold.On(Color.LightGreen(k))}"
+    }
+    if (clauses.length == 0) Color.LightGreen("default").render else clauses.mkString(", ")
+  }
+
   def envOutputRoot(env: Name): String =
     getValue(Name(s"${env.name}_root")).default.value
 

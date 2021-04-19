@@ -4,10 +4,9 @@ import java.io.{File => JFile}
 import scala.collection._
 import better.files.File
 import zio._
-import zio.blocking._
 import zio.process._
 import hypermake.core._
-
+import hypermake.util._
 
 /**
  * Encapsulates a running environment that could be local, or some remote grid.
@@ -48,30 +47,30 @@ trait Env {
   /**
    * Reads the content of a file as a string.
    */
-  def read(f: String): ZIO[Blocking, Throwable, String]
+  def read(f: String): HIO[String]
 
-  def write(f: String, content: String): ZIO[Blocking, Throwable, Unit]
+  def write(f: String, content: String): HIO[Unit]
 
-  def mkdir(f: String): ZIO[Blocking, Throwable, Unit]
+  def mkdir(f: String): HIO[Unit]
 
   /**
    * Checks if a file exists on this file system.
    */
-  def exists(f: String): ZIO[Blocking, Throwable, Boolean]
+  def exists(f: String): HIO[Boolean]
 
   /**
    * Creates a symbolic link from [[src]] to [[dst]].
    */
-  def link(src: String, dst: String): ZIO[Blocking, Throwable, Unit]
+  def link(src: String, dst: String): HIO[Unit]
 
   /**
    * Creates an empty file at the given path.
    */
-  def touch(f: String): ZIO[Blocking, Throwable, Unit]
+  def touch(f: String): HIO[Unit]
 
-  def delete(f: String): ZIO[Blocking, Throwable, Unit]
-  def copyFrom(src: String, srcEnv: Env, dst: String): ZIO[Blocking, Throwable, Unit]
-  def execute(wd: String, command: String, args: Seq[String]): ZIO[Blocking, Throwable, Process]
+  def delete(f: String): HIO[Unit]
+  def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
+  def execute(wd: String, command: String, args: Seq[String]): HIO[ExitCode]
 
   override def toString = name
 
@@ -100,34 +99,67 @@ object Env {
   }
 
   class Local(implicit ctx: ParsingContext) extends Env {
+
     import ctx._
+
     final def name = "local"
+
     def separator = java.io.File.separatorChar
+
     def pathSeparator = java.io.File.pathSeparatorChar
+
     def root = ctx.envOutputRoot(Name("local"))
-    def read(f: String) = IO { File(f).contentAsString }
-    def write(f: String, content: String) = IO { File(f).writeText(content) }
-    def mkdir(f: String) = IO { File(f).createDirectoryIfNotExists(createParents = true) }
-    def exists(f: String) = IO { File(f).exists }
-    def touch(f: String) = IO { File(f).touch() }
-    def delete(f: String) = IO { File(f).delete() }
-    def link(src: String, dst: String) = IO { File(src).linkTo(File(dst), symbolic = true) }
+
+    def read(f: String) = IO {
+      File(f).contentAsString
+    }
+
+    def write(f: String, content: String) = IO {
+      File(f).writeText(content)
+    }
+
+    def mkdir(f: String) = IO {
+      File(f).createDirectoryIfNotExists(createParents = true)
+    }
+
+    def exists(f: String) = IO {
+      File(f).exists
+    }
+
+    def touch(f: String) = IO {
+      File(f).touch()
+    }
+
+    def delete(f: String) = IO {
+      File(f).delete()
+    }
+
+    def link(src: String, dst: String) = IO {
+      File(src).linkTo(File(dst), symbolic = true)
+    }
 
     override def copyFrom(src: String, srcEnv: Env, dst: String) = for {
       process: Process <- getScriptByName(s"copy_from_${srcEnv}_to_local").withArgs("src" -> src, "dst" -> dst).executeUnmanaged()
       u <- process.successfulExitCode.unit
     } yield u
 
-    override def execute(wd: String, command: String, args: Seq[String]) =
-      zio.process.Command(command, args.toList: _*)
-        .workingDirectory(new JFile(wd))
-        .stdout(ProcessOutput.FileRedirect(new JFile(s"$wd/stdout")))
-        .stderr(ProcessOutput.FileRedirect(new JFile(s"$wd/stderr"))).run
+    override def execute(wd: String, command: String, args: Seq[String]) = for {
+      process <- zio.process.Command(command, args.toList: _ *)
+        .workingDirectory( new JFile(wd))
+        .stdout(ProcessOutput.FileRedirect( new JFile(s"$wd/stdout")))
+        .stderr(ProcessOutput.FileRedirect( new JFile(s"$wd/stderr"))).run
+      exitCode <- process.exitCode
+      _ <- write(s"$wd/exitcode", exitCode.code.toString)
+    } yield exitCode
+
   }
 
   class Custom(val name: String)(implicit ctx: ParsingContext) extends Env {
+
     import ctx._
+
     def separator = java.io.File.separatorChar
+
     def pathSeparator = java.io.File.pathSeparatorChar
 
     def root = getValueByName(s"${name}_root")
@@ -140,7 +172,9 @@ object Env {
     def write(f: String, content: String) = {
       val tempScriptFile = runtime.tempFile()
       for {
-        _ <- IO { File(tempScriptFile).write(content) }
+        _ <- IO {
+          File(tempScriptFile).write(content)
+        }
         u <- copyFrom(tempScriptFile, ctx.localEnv, f)
       } yield u
     }
@@ -176,9 +210,10 @@ object Env {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String]) =
-      getScriptByName(s"${name}_execute").withArgs("command" -> s"$command ${args.mkString(" ")}").executeUnmanaged(wd)
+    def execute(wd: String, command: String, args: Seq[String]) = for {
+      process <- getScriptByName(s"${name}_execute").withArgs("command" -> s"$command ${args.mkString(" ")}").executeUnmanaged(wd)
+      exitCode <- process.exitCode
+    } yield exitCode
 
   }
-
 }

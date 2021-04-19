@@ -19,25 +19,6 @@ class Task(val name: Name,
            val rawScript: Script)
           (implicit ctx: ParsingContext) extends Job()(ctx) {
 
-//
-//  def executeRaw: IO[Boolean] = IO {
-//    val scriptFile = File(absolutePath / "script.sh")
-//    scriptFile.overwrite(script.toString)
-//    val command = s"${runtime.SHELL} script.sh"
-//    val process = scala.sys.process.Process(command, cwd = new java.io.File(absolutePath))
-//    val exitcode = process.!
-//    File(absolutePath / "exitcode").overwrite(exitcode.toString)
-//    exitcode == 0
-//  }
-//
-//  def execute(semaphore: Semaphore[IO]): IO[Boolean] =
-//    for {
-//      _ <- semaphore.acquire
-//      exitCode <- executeRaw
-//      _ <- semaphore.release
-//    }
-//      yield exitCode
-
   override lazy val hashCode = id.hashCode
 
   override def equals(o: Any) = o match {

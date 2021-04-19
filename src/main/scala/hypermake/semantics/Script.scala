@@ -3,6 +3,7 @@ package hypermake.semantics
 import scala.collection._
 import hypermake.core._
 import hypermake.execution.RuntimeContext
+import hypermake.util._
 import hypermake.util.Escaper._
 import zio._
 import zio.blocking.Blocking
@@ -27,7 +28,7 @@ case class Script(script: String, suffix: String = "sh", args: Map[Name, Value] 
 
   def fileName: String = s"script.$suffix"
 
-  def executeUnmanaged(wd: String)(implicit runtime: RuntimeContext): ZIO[Blocking, Throwable, Process] = {
+  def executeUnmanaged(wd: String)(implicit runtime: RuntimeContext): HIO[Process] = {
     val tempScriptFile = runtime.tempFile(suffix = s".$suffix")
     for {
       _ <- IO { File(tempScriptFile).write(this.toString) }
@@ -36,7 +37,7 @@ case class Script(script: String, suffix: String = "sh", args: Map[Name, Value] 
     } yield process
   }
 
-  def executeUnmanaged()(implicit runtime: RuntimeContext): ZIO[Blocking, Throwable, Process] =
+  def executeUnmanaged()(implicit runtime: RuntimeContext): HIO[Process] =
     executeUnmanaged(runtime.workDir)
 
 }

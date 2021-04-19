@@ -1,0 +1,18 @@
+site_name: 'Hypermake'
+site_description: 'Parameterized workflow manager'
+site_author: 'Tongfei Chen'
+copyright: 'Copyright &copy; 2020-2021 Tongfei Chen'
+
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: 'blue grey'
+
+repo_name: 'ctongfei/hypermake'
+repo_url: 'https://github.com/ctongfei/hypermake'
+
+
+nav:
+  - 'Introduction': 'index.md'

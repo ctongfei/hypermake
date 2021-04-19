@@ -1,19 +1,13 @@
 package hypermake.command
 
 import hypermake.command.CmdLineAST._
+import hypermake.util.printing._
 
 object Main extends App {
 
   val version = "0.1.0"
 
   lazy val helpMessage = {
-    import fansi.Color._
-    import fansi.Attr._
-    import fansi._
-
-    def O(s: String) = Green(s).render
-    def RO(s: String) = Blue(s).render
-    def C(s: String) = Yellow(s).render
 
     s"""
       | HyperMake $version

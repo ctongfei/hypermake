@@ -5,11 +5,16 @@ import scala.collection._
 import fastparse._
 import hypermake.core._
 import hypermake.exception._
+import zio._
+import zio.console._
+import zio.blocking._
 
 import scala.util.{Failure, Success, Try}
 
 
 package object util {
+
+  type HIO[+A] = ZIO[Console with Blocking, Throwable, A]
 
   private def mapViewAsMap[A, B](m: MapView[A, B]): IMap[A, B] = new DefaultMapBase[A, B] {
     override def get(key: A) = m.get(key)

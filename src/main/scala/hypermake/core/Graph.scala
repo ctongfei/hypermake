@@ -56,4 +56,29 @@ object Graph {
     mutable.HashMap[A, mutable.HashSet[A]]()
   )
 
+  /**
+   * Performs a traversal to resolve all dependent tasks of the given targets.
+   * @param targets A collection of target tasks
+   * @return The task dependency DAG
+   */
+  def resolveFromTargets[A](targets: Iterable[A], predecessors: A => Iterable[A]): Graph[A] = {
+    val g = Graph[A]()
+    val s = mutable.HashSet[A]()
+    val q = mutable.Queue.from(targets)
+
+    while (q.nonEmpty) {
+      val c = q.dequeue()
+      if (!s.contains(c)) {
+        g.addNode(c)
+        s.add(c)
+        for (d <- predecessors(c)) {
+          g.addNode(d)
+          g.addArc(d, c)
+          q.enqueue(d)
+        }
+      }
+    }
+    g
+  }
+
 }

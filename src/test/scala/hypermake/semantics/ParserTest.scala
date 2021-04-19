@@ -20,8 +20,7 @@ object ParserTest extends App {
   workflow.semanticParse(File("src/test/resources/test-sequential.hm"))
 
 
-  val g = Resolver.resolvePlan(workflow.ctx.getPlan(Name("Run")))
-  val tasks = g.topologicalSort
+  val g = workflow.ctx.getPlan(Name("Run")).dependencyGraph.topologicalSort
   val x = 0
 
 }

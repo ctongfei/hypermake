@@ -5,10 +5,11 @@ import better.files.File
 import scala.collection._
 import scala.collection.decorators._
 import zio._
+import zio.console.Console
+import zio.blocking.Blocking
 import hypermake.core._
 import hypermake.execution._
 import hypermake.util._
-import zio.blocking.Blocking
 
 /**
  * A job is any block of shell script that is executed by HyperMake.
@@ -58,13 +59,13 @@ abstract class Job(implicit ctx: ParsingContext) {
     outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, path) }
 
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
-  def isComplete: ZIO[Blocking, Throwable, Boolean] = for {
+  def isComplete: HIO[Boolean] = for {
     exitCode <- env.read(env.resolvePath("exitcode", absolutePath)).map(_.toInt)
     outputsExist <- checkOutputs
   } yield exitCode == 0 && outputsExist
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
-  def linkInputs: ZIO[Blocking, Throwable, Unit] = ZIO.collectAll_ {
+  def linkInputs: HIO[Unit] = ZIO.collectAll_ {
     for ((Name(input), (inputPath, inputEnv)) <- inputAbsolutePaths zipByKey inputEnvs)
       yield if (inputEnv == env)
         env.link(inputPath, path / input)
@@ -72,22 +73,27 @@ abstract class Job(implicit ctx: ParsingContext) {
   }
 
   /** An operation that checks the output of this job and the exit status of this job. */
-  def checkOutputs: ZIO[Blocking, Throwable, Boolean] = ZIO.collectAll {
+  def checkOutputs: HIO[Boolean] = ZIO.collectAll {
     for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
       yield outputEnv.exists(outputPath)
   }.map(_.forall(identity))
 
-  def execute: ZIO[Blocking, Throwable, ExitCode] = {
+  def execute: HIO[ExitCode] = {
     for {
       _ <- env.mkdir(absolutePath)
       _ <- env.write(absolutePath / script.fileName, script.toString)
-      process <- env.execute(absolutePath, runtime.SHELL, Seq(script.fileName))
-      exitCode <- process.exitCode
+      _ <- console.putStrLn(f"⚙️  Running job $colorfulString...")
+      exitCode <- env.execute(absolutePath, runtime.SHELL, Seq(script.fileName))
     } yield exitCode
   }
 
-  def clearOutputs: ZIO[Blocking, Throwable, Unit] =
+  def clearOutputs: HIO[Unit] =
     env.delete(absolutePath)
+
+  def colorfulString = {
+    import fansi._
+    s"${Bold.On(Color.LightBlue(name.name)).render}[${colorfulArgsString(`case`.underlying)}]"
+  }
 
   override def toString = id
   override lazy val hashCode = id.hashCode
