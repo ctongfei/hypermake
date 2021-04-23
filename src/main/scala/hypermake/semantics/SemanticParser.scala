@@ -175,13 +175,12 @@ class SemanticParser(implicit val ctx: ParsingContext) {
     }
   }
 
+  implicit object ParseTaskRefN extends Denotation[TaskRefN, Cube[Task]] {
+    def denotation(tr: TaskRefN) = getTask(tr.name.!).selectMany(tr.indices.!)
+  }
+
   implicit object ParsePlan extends Denotation[PlanDef, Plan] {
-    def denotation(pd: PlanDef) = {
-      val subtasks = pd.taskRefs.map { tr =>
-        getTask(tr.name.!).selectMany(tr.indices.!)
-      }
-      new Plan(subtasks)
-    }
+    def denotation(pd: PlanDef) = new Plan(pd.taskRefs.map(_.!))
   }
 
   /**
@@ -265,6 +264,10 @@ class SemanticParser(implicit val ctx: ParsingContext) {
 
   def semanticParse(file: File): Unit = {
     semanticParse(readFileToStmts(file))
+  }
+
+  def parseTarget(tr: TaskRefN) = {
+    planTable.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!))
   }
 
 }

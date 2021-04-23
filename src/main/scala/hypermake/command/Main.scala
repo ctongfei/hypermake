@@ -1,6 +1,10 @@
 package hypermake.command
 
+import better.files._
 import hypermake.command.CmdLineAST._
+import hypermake.execution._
+import hypermake.semantics._
+import hypermake.syntax.TaskRefN
 import hypermake.util.printing._
 
 object Main extends App {
@@ -10,13 +14,12 @@ object Main extends App {
   lazy val helpMessage = {
 
     s"""
-      | HyperMake $version
-      | Usage: forge [${O("options")}] [Forge script file] <${C("command")}> [${RO("running options")}] [targets]
+      | Hypermake $version
+      | Usage: hypermake [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
       |
       | Options:
-      |  -I <file>, --include=<file>   : Includes the specific Forge script to parse.
+      |  -I <file>, --include=<file>   : Includes the specific Hypermake script to parse.
       |  -H, --help                    : Prints this message and exit.
-      |  -O <path>, --output=<path>    : Specify the output directory. By default this is "out".
       |  -S, --shell                   : Specify outer shell to use. By default this is "bash".
       |  -V, --version                 : Shows Forge version and exit.
       |
@@ -29,7 +32,7 @@ object Main extends App {
       |  -y, --yes                     : Automatic "yes" to prompts.
       |
       | Commands:
-      |  print <var>                   : Prints the specific Forge script variable.
+      |  print <var>                   : Prints the specific Hypermake script variable.
       |  run <tasks or plans>          : Runs the given tasks or plans (space delimited).
       |  invalidate <tasks or plans>   : Invalidates the given tasks or plans.
       |  remove <tasks>                : Removes the output of the given tasks or plans.
@@ -44,7 +47,33 @@ object Main extends App {
   cmd match {
     case Cmd.Help    => println(helpMessage)
     case Cmd.Version => println(s"HyperMake $version")
-    case Cmd.Run(options, script, runOptions, task) =>
+    case Cmd.Run(options, scriptFile, runOptions, subtask) =>
+
+      implicit val runtime: RuntimeContext = RuntimeContext.create(
+        includePaths = options.collect { case Opt.Include(f) => f },
+        shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse("bash"),
+        numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
+        keepGoing = runOptions contains RunOpt.KeepGoing,
+        dryRun = runOptions contains RunOpt.DryRun,
+        silent = runOptions contains RunOpt.Silent,
+        yes = runOptions contains RunOpt.Yes
+      )
+      runtime._println("Parsing Hypermake scripts...")
+      implicit val ctx: ParsingContext = new ParsingContext()
+      val parser = new SemanticParser()
+      import parser._
+      runtime.includePaths foreach { f => parser.semanticParse(File(f)) }
+      parser.semanticParse(File(scriptFile))
+      runtime._println("Parsing complete.")
+
+      subtask match {
+        case Subtask.Run(ts) =>
+          val jobs = new Plan(ts flatMap parseTarget).dependencyGraph
+          val run = Executor.run(jobs)
+          zio.Runtime.default.unsafeRun(run)
+
+      }
+
   }
 
 }

@@ -14,6 +14,7 @@ import scala.sys._
  */
 class RuntimeContext private(
                               val workDir: String,
+                              val shell: String,
                               val envVars: Map[String, String],
                               val includePaths: Seq[String],
                               val numParallelJobs: Int,
@@ -60,13 +61,17 @@ class RuntimeContext private(
     }.getOrElse(throw new FileNotFoundException(s"HyperMake script $fn not found."))
   }
 
+  def _println(s: String): Unit = {
+    if (!silent) println(s)
+  }
+
 }
 
 object RuntimeContext {
 
   def create(
-              outputDirs: Map[String, String] = Map("local" -> "out"),
               includePaths: Seq[String] = Seq(),
+              shell: String = "bash",
               numParallelJobs: Int = 1,
               keepGoing: Boolean = false,
               dryRun: Boolean = false,
@@ -76,6 +81,7 @@ object RuntimeContext {
     new RuntimeContext(  // TODO: additional cmdline args
       workDir = System.getProperty("user.dir"),
       envVars = env,
+      shell = shell,
       includePaths = includePaths,
       numParallelJobs = numParallelJobs,
       keepGoing = keepGoing,

@@ -6,11 +6,8 @@ import hypermake.execution.RuntimeContext
 import hypermake.util._
 import hypermake.util.Escaper._
 import zio._
-import zio.blocking.Blocking
 import zio.process._
 import better.files._
-
-import java.util.UUID
 
 
 case class Script(script: String, suffix: String = "sh", args: Map[Name, Value] = Map()) {
@@ -28,12 +25,12 @@ case class Script(script: String, suffix: String = "sh", args: Map[Name, Value] 
 
   def fileName: String = s"script.$suffix"
 
-  def executeUnmanaged(wd: String)(implicit runtime: RuntimeContext): HIO[Process] = {
+  def executeUnmanaged(workDir: String)(implicit runtime: RuntimeContext): HIO[Process] = {
     val tempScriptFile = runtime.tempFile(suffix = s".$suffix")
     for {
       _ <- IO { File(tempScriptFile).write(this.toString) }
       process <- Command(runtime.SHELL, tempScriptFile)
-        .workingDirectory(new java.io.File(wd)).run
+        .workingDirectory(new java.io.File(workDir)).run
     } yield process
   }
 

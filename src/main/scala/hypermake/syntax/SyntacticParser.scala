@@ -2,8 +2,8 @@ package hypermake.syntax
 
 import fastparse._
 import hypermake.exception._
+import hypermake.util._
 import hypermake.util.Escaper.Percent
-import hypermake.util.Util._
 
 
 object SyntacticParser {

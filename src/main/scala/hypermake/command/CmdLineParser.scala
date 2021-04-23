@@ -27,10 +27,6 @@ object CmdLineParser {
   def include[_: P] =
     P { ("-I" | "--include") ~ string } map { i => Opt.Include(i) }
 
-  def output[_: P] = P {
-    ("-O" ~ string) | ("--output=" ~ string)
-  } map { sl => Opt.Output(sl) }
-
   def shell[_: P] =
     P { ("-S" | "--shell") ~ string } map { s => Opt.Shell(s) }
 
@@ -51,15 +47,17 @@ object CmdLineParser {
   def yes[_: P]: P[RunOpt] = P { "--yes" | "-y" } map { _ => RunOpt.Yes }
 
 
-  def opt[_: P]: P[Opt] = P { include | output | shell }
+  def opt[_: P]: P[Opt] = P { include | shell }
   def runtimeOpts[_: P] = P { numJobs | keepGoing | dryRun | silent | verbose | yes }
 
   def target[_: P] = SyntacticParser.taskRefN
 
+  def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
+
   def command[_: P] = P { "run".! | "invalidate".! | "remove".! | "mark-as-done".! | "export-shell".! }
 
   def run[_: P] = P {
-    opt.rep ~ string ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
+    opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
   }.map { case (opt, scriptFile, cmd, runOpts1, targets, runOpts2) =>
     val subtask = cmd match {
       case "run"          => Subtask.Run(targets)
@@ -68,7 +66,7 @@ object CmdLineParser {
       case "mark-as-done" => Subtask.MarkAsDone(targets)
       case "export-shell" => Subtask.ExportShell(targets)
     }
-    Cmd.Run(opt.toSet, scriptFile, (runOpts1 ++ runOpts2).toSet, subtask)
+    Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subtask)
   }
 
   def cmdArgs[_: P] = P {
@@ -83,4 +81,3 @@ object CmdLineParser {
   }
 
 }
-

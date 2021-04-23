@@ -1,8 +1,9 @@
 package hypermake.core
 
-import hypermake.exception.CyclicWorkflowException
-
 import scala.collection._
+import hypermake.exception._
+import hypermake.util._
+
 
 class Graph[A](
                 val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
@@ -29,8 +30,8 @@ class Graph[A](
   }
 
   def topologicalSort: Seq[A] = {
-    val inDegrees = mutable.HashMap.from(nodes.map(a => (a, incomingNodes(a).size)))
-    val zeroInDegrees = mutable.HashSet.from(inDegrees.filter(_._2 == 0).keys)
+    val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
+    val zeroInDegrees = mutable.HashSet.from(inDegrees.view.filter(_._2 == 0).keys)
     val buffer = mutable.ArrayBuffer[A]()
     var n = 0
     while (n < nodes.size) {

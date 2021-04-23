@@ -8,7 +8,7 @@ object CmdLineAST {
   object Cmd {
     case object Help                 extends Cmd // H
     case object Version              extends Cmd // V
-    case class Run(options: Set[Opt], script: String, runOptions: Set[RunOpt], task: Subtask) extends Cmd
+    case class Run(options: Seq[Opt], script: String, runOptions: Seq[RunOpt], task: Subtask) extends Cmd
   }
 
   sealed abstract class Opt

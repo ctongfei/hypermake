@@ -6,27 +6,15 @@ import fastparse._
 import hypermake.core._
 import hypermake.exception._
 import zio._
-import zio.console._
-import zio.blocking._
-
-import scala.util.{Failure, Success, Try}
 
 
 package object util {
 
-  type HIO[+A] = ZIO[Console with Blocking, Throwable, A]
+  type HIO[+A] = ZIO[ZEnv, Throwable, A]
 
   private def mapViewAsMap[A, B](m: MapView[A, B]): IMap[A, B] = new DefaultMapBase[A, B] {
     override def get(key: A) = m.get(key)
     override def iterator = m.iterator
-  }
-
-  implicit class ParsedExtensions[A](val p: Parsed[A]) {
-
-    def asTry: Try[A] = p match {
-      case Parsed.Success(a, _) => Success(a)
-      case f @ Parsed.Failure(_, _, _) => Failure(ParsingException(f))
-    }
   }
 
   implicit class SetExtension[A](val s: Set[A]) {
@@ -47,5 +35,11 @@ package object util {
   implicit class StringPathJoin(val s: String) extends AnyVal {
     def /(t: String) = s + java.io.File.separator + t
   }
+
+  def orderedSet[A](elems: Iterable[A]): Set[A] =
+    scala.collection.mutable.LinkedHashSet.from(elems)  // maintains order in the keys
+
+  def orderedMap[A, B](pairs: Iterable[(A, B)]): Map[A, B] =
+    scala.collection.mutable.LinkedHashMap.from(pairs)  // maintains order in the keys
 
 }

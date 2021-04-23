@@ -1,6 +1,5 @@
 package hypermake.syntax
 
-import hypermake.util.Util._
 import hypermake.util._
 
 import scala.collection._
