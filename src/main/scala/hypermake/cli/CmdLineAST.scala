@@ -1,4 +1,4 @@
-package hypermake.command
+package hypermake.cli
 
 import hypermake.syntax._
 
@@ -33,7 +33,6 @@ object CmdLineAST {
 
     case class Run(tasks: Seq[TaskRefN]) extends Subtask
     case class Invalidate(tasks: Seq[TaskRefN]) extends Subtask
-    case class Remove(tasks: Seq[TaskRefN]) extends Subtask
     case class MarkAsDone(tasks: Seq[TaskRefN]) extends Subtask
     case class ExportShell(tasks: Seq[TaskRefN]) extends Subtask
 

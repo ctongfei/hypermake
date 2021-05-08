@@ -65,6 +65,17 @@ class RuntimeContext private(
     if (!silent) println(s)
   }
 
+  override def toString = {
+    s"""workDir = $workDir
+       |shell = $shell
+       |includePaths = ${includePaths.mkString("[", ", ", "]")}
+       |numParallelJobs = $numParallelJobs
+       |keepGoing = $keepGoing
+       |dryRun = $dryRun
+       |silent = $silent
+       |yes = $yes
+       |""".stripMargin
+  }
 }
 
 object RuntimeContext {
@@ -78,7 +89,7 @@ object RuntimeContext {
               silent: Boolean = false,
               yes: Boolean = false
             ): RuntimeContext =
-    new RuntimeContext(  // TODO: additional cmdline args
+    new RuntimeContext(
       workDir = System.getProperty("user.dir"),
       envVars = env,
       shell = shell,

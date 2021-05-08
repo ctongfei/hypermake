@@ -1,4 +1,4 @@
-package hypermake.command
+package hypermake.cli
 
 import fastparse._
 import hypermake.exception._
@@ -21,7 +21,7 @@ import hypermake.syntax._
 object CmdLineParser {
 
   import fastparse.ScriptWhitespace._
-  import hypermake.command.CmdLineAST._
+  import hypermake.cli.CmdLineAST._
   import hypermake.syntax.SyntacticParser._
 
   def include[_: P] =
@@ -54,7 +54,7 @@ object CmdLineParser {
 
   def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
 
-  def command[_: P] = P { "run".! | "invalidate".! | "remove".! | "mark-as-done".! | "export-shell".! }
+  def command[_: P] = P { "run".! | "invalidate".! | "mark-as-done".! | "export-shell".! }
 
   def run[_: P] = P {
     opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
@@ -62,7 +62,6 @@ object CmdLineParser {
     val subtask = cmd match {
       case "run"          => Subtask.Run(targets)
       case "invalidate"   => Subtask.Invalidate(targets)
-      case "remove"       => Subtask.Remove(targets)
       case "mark-as-done" => Subtask.MarkAsDone(targets)
       case "export-shell" => Subtask.ExportShell(targets)
     }

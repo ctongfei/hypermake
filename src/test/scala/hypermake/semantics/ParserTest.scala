@@ -17,10 +17,10 @@ object ParserTest extends App {
   implicit val rt = RuntimeContext.create()
   implicit val ctx = new ParsingContext()
   val workflow = new SemanticParser()
-  workflow.semanticParse(File("src/test/resources/test-sequential.hm"))
+  workflow.semanticParse(File("src/test/resources/test.hm"))
 
 
-  val g = workflow.ctx.getPlan(Name("Run")).dependencyGraph.topologicalSort
+  val g = workflow.ctx.getPlan(Name("Run")).dependencyGraph
   val x = 0
 
 }

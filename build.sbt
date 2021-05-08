@@ -11,5 +11,6 @@ libraryDependencies ++= Seq(
   "dev.zio"                %% "zio-process"              % "0.3.0",
   "com.lihaoyi"            %% "fastparse"                % "2.2.2",
   "com.lihaoyi"            %% "fansi"                    % "0.2.10",
-  "com.github.pathikrit"   %% "better-files"             % "3.9.1"
+  "com.github.pathikrit"   %% "better-files"             % "3.9.1",
+  "org.jline"              %  "jline"                    % "3.19.0"
 )

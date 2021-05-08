@@ -70,7 +70,7 @@ trait Env {
 
   def delete(f: String): HIO[Unit]
   def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
-  def execute(wd: String, command: String, args: Seq[String]): HIO[ExitCode]
+  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]): HIO[ExitCode]
 
   override def toString = name
 
@@ -103,11 +103,8 @@ object Env {
     import ctx._
 
     final def name = "local"
-
     def separator = java.io.File.separatorChar
-
     def pathSeparator = java.io.File.pathSeparatorChar
-
     def root = ctx.envOutputRoot(Name("local"))
 
     def read(f: String) = IO {
@@ -139,18 +136,31 @@ object Env {
     }
 
     override def copyFrom(src: String, srcEnv: Env, dst: String) = for {
-      process: Process <- getScriptByName(s"copy_from_${srcEnv}_to_local").withArgs("src" -> src, "dst" -> dst).executeUnmanaged()
+      process: Process <- getScriptByName(s"copy_from_${srcEnv}_to_local")
+        .withArgs("src" -> src, "dst" -> dst)
+        .executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    override def execute(wd: String, command: String, args: Seq[String]) = for {
-      process <- zio.process.Command(command, args.toList: _ *)
-        .workingDirectory( new JFile(wd))
-        .stdout(ProcessOutput.FileRedirect( new JFile(s"$wd/stdout")))
-        .stderr(ProcessOutput.FileRedirect( new JFile(s"$wd/stderr"))).run
-      exitCode <- process.exitCode
-      _ <- write(s"$wd/exitcode", exitCode.code.toString)
-    } yield exitCode
+    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]) = {
+      val interpreter :: interpreterArgs = command.split(' ').toList
+      val proc = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
+        .workingDirectory(new JFile(wd)).env(envArgs.toMap)
+
+      val redirectedProc = if (runtime.silent)
+        proc
+          .stdout(ProcessOutput.FileRedirect(new JFile(s"$wd/stdout")))
+          .stderr(ProcessOutput.FileRedirect(new JFile(s"$wd/stderr")))
+      else proc
+        .stdout(ProcessOutput.Inherit)
+        .stderr(ProcessOutput.Inherit)
+
+      for {
+        process <- redirectedProc.run
+        exitCode <- process.exitCode
+        _ <- write(s"$wd/exitcode", exitCode.code.toString)
+      } yield exitCode
+    }
 
   }
 
@@ -165,7 +175,7 @@ object Env {
     def root = getValueByName(s"${name}_root")
 
     def read(f: String) = for {
-      process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeUnmanaged()
+      process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()
       stdout <- process.stdout.string
     } yield stdout
 
@@ -180,38 +190,41 @@ object Env {
     }
 
     def mkdir(f: String) = for {
-      process <- getScriptByName(s"${name}_mkdir").withArgs("dir" -> f).executeUnmanaged()
+      process <- getScriptByName(s"${name}_mkdir").withArgs("dir" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def exists(f: String) = for {
-      process <- getScriptByName(s"${name}_exists").withArgs("file" -> f).executeUnmanaged()
+      process <- getScriptByName(s"${name}_exists").withArgs("file" -> f).executeLocally()
       exitCode <- process.exitCode
     } yield exitCode.code == 0
 
     def link(src: String, dst: String) = for {
-      process <- getScriptByName(s"${name}_link").withArgs("src" -> src, "dst" -> dst).executeUnmanaged()
+      process <- getScriptByName(s"${name}_link").withArgs("src" -> src, "dst" -> dst).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def touch(f: String) = for {
-      process <- getScriptByName(s"${name}_touch").withArgs("file" -> f).executeUnmanaged()
+      process <- getScriptByName(s"${name}_touch").withArgs("file" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def delete(f: String) = for {
-      process <- getScriptByName(s"${name}_delete").withArgs("file" -> f).executeUnmanaged()
+      process <- getScriptByName(s"${name}_delete").withArgs("file" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def copyFrom(src: String, srcEnv: Env, dst: String) = for {
       process <- getScriptByName(s"copy_from_${srcEnv}_to_$name")
-        .withArgs("src" -> src, "dst" -> dst).executeUnmanaged()
+        .withArgs("src" -> src, "dst" -> dst).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String]) = for {
-      process <- getScriptByName(s"${name}_execute").withArgs("command" -> s"$command ${args.mkString(" ")}").executeUnmanaged(wd)
+    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String]) = for {
+      process <- getScriptByName(s"${name}_execute")
+        .withArgs("command" ->
+          s"${envVars.map { case (k, v) => s"$k=$v" }.mkString(" ")} $command ${args.mkString(" ")}"
+        ).executeLocally(wd)
       exitCode <- process.exitCode
     } yield exitCode
 

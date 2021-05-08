@@ -40,5 +40,5 @@ case class NonStringForOutputException(output: String)
 case class CyclicWorkflowException()
   extends Exception(s"Cyclic workflow detected.")
 
-case class JobFailedException(j: Job, exitCode: Int)
-  extends Exception(s"Job ${j.colorfulString} failed with exitcode $exitCode.")
+case class JobFailedException(j: Job)
+  extends Exception(s"Job ${j.colorfulString} failed.")

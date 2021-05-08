@@ -44,7 +44,7 @@ abstract class Job(implicit ctx: ParsingContext) {
   lazy val absolutePath = env.resolvePath(path)
 
   /** The canonical string identifier for this task. */
-  lazy val id = s"$name[${argsString(`case`.underlying)}]"
+  lazy val id = s"$name[$argsString]"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -78,17 +78,17 @@ abstract class Job(implicit ctx: ParsingContext) {
       yield outputEnv.exists(outputPath)
   }.map(_.forall(identity))
 
-  def execute: HIO[ExitCode] = {
-    for {
-      _ <- env.mkdir(absolutePath)
-      _ <- env.write(absolutePath / script.fileName, script.toString)
-      _ <- console.putStrLn(f"⚙️  Running job $colorfulString...")
-      exitCode <- env.execute(absolutePath, runtime.SHELL, Seq(script.fileName))
-    } yield exitCode
-  }
+  def execute: HIO[Boolean] = for {
+    _ <- env.mkdir(absolutePath)
+    _ <- env.write(absolutePath / script.fileName, script.script)
+    _ <- console.putStrLn(f"⚙️  Running job $colorfulString...")
+    exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
+  } yield exitCode.code == 0
 
-  def clearOutputs: HIO[Unit] =
+  def removeOutputs: HIO[Unit] =
     env.delete(absolutePath)
+
+  def argsString = ctx.argsString(`case`.underlying)
 
   def colorfulString = {
     import fansi._

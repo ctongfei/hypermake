@@ -1,7 +1,7 @@
-package hypermake.command
+package hypermake.cli
 
 import better.files._
-import hypermake.command.CmdLineAST._
+import hypermake.cli.CmdLineAST._
 import hypermake.execution._
 import hypermake.semantics._
 import hypermake.syntax.TaskRefN
@@ -58,6 +58,8 @@ object Main extends App {
         silent = runOptions contains RunOpt.Silent,
         yes = runOptions contains RunOpt.Yes
       )
+
+      runtime._println(runtime.toString)
       runtime._println("Parsing Hypermake scripts...")
       implicit val ctx: ParsingContext = new ParsingContext()
       val parser = new SemanticParser()
@@ -66,13 +68,20 @@ object Main extends App {
       parser.semanticParse(File(scriptFile))
       runtime._println("Parsing complete.")
 
-      subtask match {
+      val task = subtask match {
+
         case Subtask.Run(ts) =>
-          val jobs = new Plan(ts flatMap parseTarget).dependencyGraph
-          val run = Executor.run(jobs)
-          zio.Runtime.default.unsafeRun(run)
+          val jobGraph = new Plan(ts flatMap parseTarget).dependencyGraph
+          Executor.runDAG(jobGraph)(_.execute)
+
+        case Subtask.Invalidate(ts) => ???
+
+        case Subtask.MarkAsDone(ts) => ???
+
+        case Subtask.ExportShell(ts) => ???
 
       }
+      zio.Runtime.global.unsafeRun(task)
 
   }
 
