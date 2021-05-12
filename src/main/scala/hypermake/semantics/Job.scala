@@ -5,8 +5,7 @@ import better.files.File
 import scala.collection._
 import scala.collection.decorators._
 import zio._
-import zio.console.Console
-import zio.blocking.Blocking
+import zio.console._
 import hypermake.core._
 import hypermake.execution._
 import hypermake.util._
@@ -56,10 +55,10 @@ abstract class Job(implicit ctx: ParsingContext) {
     inputs.keySet.makeMap { x => env.resolvePath(inputs(x).value) }
 
   lazy val outputAbsolutePaths =
-    outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, path) }
+    outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, absolutePath) }
 
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
-  def isComplete: HIO[Boolean] = for {
+  def isDone: HIO[Boolean] = for {
     exitCode <- env.read(env.resolvePath("exitcode", absolutePath)).map(_.toInt)
     outputsExist <- checkOutputs
   } yield exitCode == 0 && outputsExist
@@ -73,17 +72,26 @@ abstract class Job(implicit ctx: ParsingContext) {
   }
 
   /** An operation that checks the output of this job and the exit status of this job. */
-  def checkOutputs: HIO[Boolean] = ZIO.collectAll {
-    for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
-      yield outputEnv.exists(outputPath)
-  }.map(_.forall(identity))
+  def checkOutputs: HIO[Boolean] = {
+    ZIO.collectAll {
+      for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
+        yield outputEnv.exists(outputPath)
+    }.map(_.forall(identity))
+  }
 
   def execute: HIO[Boolean] = for {
     _ <- env.mkdir(absolutePath)
     _ <- env.write(absolutePath / script.fileName, script.script)
-    _ <- console.putStrLn(f"⚙️  Running job $colorfulString...")
+    _ <- putStrLn(f"⚙️  Running job $colorfulString...")
     exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
   } yield exitCode.code == 0
+
+  def executeIfNotDone: HIO[Boolean] = for {
+    done <- isDone
+    successful <- if (done)
+      putStrLn(f"Job $colorfulString is done. Skipped.") as true
+      else execute
+  } yield successful
 
   def removeOutputs: HIO[Unit] =
     env.delete(absolutePath)

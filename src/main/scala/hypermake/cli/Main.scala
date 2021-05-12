@@ -72,7 +72,7 @@ object Main extends App {
 
         case Subtask.Run(ts) =>
           val jobGraph = new Plan(ts flatMap parseTarget).dependencyGraph
-          Executor.runDAG(jobGraph)(_.execute)
+          Executor.runDAG(jobGraph)(_.executeIfNotDone)
 
         case Subtask.Invalidate(ts) => ???
 
