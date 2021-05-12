@@ -72,6 +72,20 @@ trait Env {
   def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]): HIO[ExitCode]
 
+  def linkValue(x: Value, dst: String): HIO[Unit] = x match {
+    case Value.Pure(_) => ZIO.unit
+    case Value.Input(path, env) =>
+      if (env == this) link(path, dst)
+      else copyFrom(path, env, dst)
+    case Value.Output(path, env, job) =>
+      if (env == this) link(resolvePath(path, job.absolutePath), dst)
+      else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
+    case Value.Multiple(values, _) => for {
+      _ <- mkdir(dst)
+      r <- ZIO.foreach_(values.zipWithIndex) { case (v, i) => linkValue(v, s"$dst/$i") }
+    } yield r
+  }
+
   override def toString = name
 
   override def equals(o: Any) = o match {
@@ -132,7 +146,7 @@ object Env {
     }
 
     def link(src: String, dst: String) = IO {
-      File(src).linkTo(File(dst), symbolic = true)
+      File(dst).linkTo(File(src), symbolic = true)  // TODO: relativize link
     }
 
     override def copyFrom(src: String, srcEnv: Env, dst: String) = for {
@@ -147,16 +161,19 @@ object Env {
       val proc = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
         .workingDirectory(new JFile(wd)).env(envArgs.toMap)
 
-      val redirectedProc = if (runtime.silent)
-        proc
-          .stdout(ProcessOutput.FileRedirect(new JFile(s"$wd/stdout")))
-          .stderr(ProcessOutput.FileRedirect(new JFile(s"$wd/stderr")))
-      else proc
-        .stdout(ProcessOutput.Inherit)
-        .stderr(ProcessOutput.Inherit)
+//      val redirectedProc = if (runtime.silent)
+//        proc
+//          .stdout(ProcessOutput.FileRedirect(new JFile(s"$wd/stdout")))
+//          .stderr(ProcessOutput.FileRedirect(new JFile(s"$wd/stderr")))
+//      else proc
+//        .stdout(ProcessOutput.Inherit)
+//        .stderr(ProcessOutput.Inherit)
+      val redirectedProc = proc
 
       for {
         process <- redirectedProc.run
+        _ <- process.stdout.linesStream.foreach(s => console.putStrLn(s))
+        _ <- process.stderr.linesStream.foreach(s => console.putStrLn(s))
         exitCode <- process.exitCode
         _ <- write(s"$wd/exitcode", exitCode.code.toString)
       } yield exitCode

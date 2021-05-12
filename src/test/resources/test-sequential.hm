@@ -2,10 +2,12 @@ local_root = "/home/tongfei/proj/forge/target"
 
 task t0(x = "1") -> out:
   sleep 2
+  echo "AAA"
   echo "0" > $out
 
 task t1(x = $t0.out) -> out:
   sleep 2
+  echo "BBB"
   echo "1" > $out
 
 task t2(x = $t1.out) -> out:

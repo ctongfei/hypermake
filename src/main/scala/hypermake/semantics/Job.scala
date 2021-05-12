@@ -51,24 +51,19 @@ abstract class Job(implicit ctx: ParsingContext) {
 
   lazy val script: Script = rawScript.withNewArgs(inputs ++ outputs)
 
-  lazy val inputAbsolutePaths =
-    inputs.keySet.makeMap { x => env.resolvePath(inputs(x).value) }
-
   lazy val outputAbsolutePaths =
     outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, absolutePath) }
 
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
   def isDone: HIO[Boolean] = for {
-    exitCode <- env.read(env.resolvePath("exitcode", absolutePath)).map(_.toInt)
+    exitCode <- env.read(env.resolvePath("exitcode", absolutePath)).map(_.toInt).catchAll(_ => IO.succeed(-1))
     outputsExist <- checkOutputs
   } yield exitCode == 0 && outputsExist
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
-  def linkInputs: HIO[Unit] = ZIO.collectAll_ {
-    for ((Name(input), (inputPath, inputEnv)) <- inputAbsolutePaths zipByKey inputEnvs)
-      yield if (inputEnv == env)
-        env.link(inputPath, path / input)
-      else env.copyFrom(inputPath, inputEnv, path / input)
+  def linkInputs: HIO[Unit] = ZIO.collectAllPar_ {
+    for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
+      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath))
   }
 
   /** An operation that checks the output of this job and the exit status of this job. */
@@ -76,12 +71,13 @@ abstract class Job(implicit ctx: ParsingContext) {
     ZIO.collectAll {
       for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
         yield outputEnv.exists(outputPath)
-    }.map(_.forall(identity))
+    }.map(_.forall(identity)).catchAll(_ => IO.succeed(false))
   }
 
   def execute: HIO[Boolean] = for {
     _ <- env.mkdir(absolutePath)
     _ <- env.write(absolutePath / script.fileName, script.script)
+    _ <- linkInputs
     _ <- putStrLn(f"⚙️  Running job $colorfulString...")
     exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
   } yield exitCode.code == 0
