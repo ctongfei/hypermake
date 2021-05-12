@@ -7,12 +7,19 @@ copyright: 'Copyright &copy; 2020-2021 Tongfei Chen'
 theme:
   name: material
   palette:
-    scheme: slate
+    scheme: default
     primary: 'blue grey'
 
 repo_name: 'ctongfei/hypermake'
 repo_url: 'https://github.com/ctongfei/hypermake'
 
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
 
 nav:
   - 'Introduction': 'index.md'
+  - 'Tutorial':
+      - "01 Hello, world!": 'tutorial/01-hello.md'
+

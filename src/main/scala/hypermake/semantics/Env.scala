@@ -1,6 +1,7 @@
 package hypermake.semantics
 
 import java.io.{File => JFile}
+import java.nio.file.{Path, Paths, Files => JFiles}
 import scala.collection._
 import better.files.File
 import zio._
@@ -72,7 +73,7 @@ trait Env {
   def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]): HIO[ExitCode]
 
-  def linkValue(x: Value, dst: String): HIO[Unit] = x match {
+  def linkValue(x: Value, dst: => String): HIO[Unit] = x match {
     case Value.Pure(_) => ZIO.unit
     case Value.Input(path, env) =>
       if (env == this) link(path, dst)
@@ -82,7 +83,7 @@ trait Env {
       else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
     case Value.Multiple(values, _) => for {
       _ <- mkdir(dst)
-      r <- ZIO.foreach_(values.zipWithIndex) { case (v, i) => linkValue(v, s"$dst/$i") }
+      r <- ZIO.foreachPar_(values.zipWithIndex) { case (v, i) => linkValue(v, s"$dst/$i") }
     } yield r
   }
 
@@ -110,6 +111,22 @@ object Env {
       ctx.envTable += name -> env
       env
     }
+  }
+
+  object Empty extends Env {
+    def name = ""
+    def separator = '/'
+    def pathSeparator = ':'
+    def root = ???
+    def read(f: String) = ???
+    def write(f: String, content: String) = ???
+    def mkdir(f: String) = ???
+    def exists(f: String) = ???
+    def link(src: String, dst: String) = ???
+    def touch(f: String) = ???
+    def delete(f: String) = ???
+    def copyFrom(src: String, srcEnv: Env, dst: String) = ???
+    def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]) = ???
   }
 
   class Local(implicit ctx: ParsingContext) extends Env {
@@ -146,7 +163,9 @@ object Env {
     }
 
     def link(src: String, dst: String) = IO {
-      File(dst).linkTo(File(src), symbolic = true)  // TODO: relativize link
+      val dstPath = Paths.get(dst)
+      val relativePath = dstPath.getParent.relativize(Paths.get(src))
+      JFiles.createSymbolicLink(dstPath, relativePath)
     }
 
     override def copyFrom(src: String, srcEnv: Env, dst: String) = for {

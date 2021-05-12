@@ -69,8 +69,8 @@ class SemanticParser(implicit val ctx: ParsingContext) {
 
   implicit object ParseStringLiteral extends Denotation[StringLiteral, PointedCube[Value]] {
     def denotation(sl: StringLiteral) = {
-      val env = sl.envModifier.!(localEnv)  // no env modifier means pure input
-      val v = if (env.name == "") Value.Pure(sl.value) else Value.Input(sl.value, env)
+      val env = sl.envModifier.!(Env.Empty)  // no env modifier means pure input
+      val v = if (env == Env.Empty) Value.Pure(sl.value) else Value.Input(sl.value, env)
       PointedCube.Singleton(v)
     }
   }
