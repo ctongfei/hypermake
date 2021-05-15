@@ -6,6 +6,7 @@ import scala.collection._
 import better.files.File
 import zio._
 import zio.process._
+import zio.duration._
 import hypermake.core._
 import hypermake.util._
 
@@ -35,6 +36,8 @@ trait Env {
    * Output root on this environment. Intermediate results will be stored in this directory.
    */
   def root: String
+
+  def period: Duration
 
   /**
    * Resolves a path relative to the given root directory.
@@ -73,6 +76,10 @@ trait Env {
   def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]): HIO[ExitCode]
 
+  def locked(f: String): HIO[Boolean] = exists(s"$f/.lock")
+  def lock(f: String): HIO[Unit] = locked(f).delay(period).repeatUntilEquals(false) *> touch(s"$f/.lock")
+  def unlock(f: String): HIO[Unit] = locked(f).delay(period).repeatUntilEquals(true) *> delete(s"$f/.lock")
+
   def linkValue(x: Value, dst: => String): HIO[Unit] = x match {
     case Value.Pure(_) => ZIO.unit
     case Value.Input(path, env) =>
@@ -99,6 +106,8 @@ trait Env {
 object Env {
 
   def getValueByName(name: String)(implicit ctx: ParsingContext) = ctx.getValue(Name(name)).default.value
+  def getValueByNameOpt(name: String)(implicit ctx: ParsingContext) = ctx.getValueOpt(Name(name)).map(_.default.value)
+
   def getScriptByName(name: String)(implicit ctx: ParsingContext) = ctx.getFunc(Name(name)).script
 
   def apply(name: Name)(implicit ctx: ParsingContext) = {
@@ -113,22 +122,6 @@ object Env {
     }
   }
 
-  object Empty extends Env {
-    def name = ""
-    def separator = '/'
-    def pathSeparator = ':'
-    def root = ???
-    def read(f: String) = ???
-    def write(f: String, content: String) = ???
-    def mkdir(f: String) = ???
-    def exists(f: String) = ???
-    def link(src: String, dst: String) = ???
-    def touch(f: String) = ???
-    def delete(f: String) = ???
-    def copyFrom(src: String, srcEnv: Env, dst: String) = ???
-    def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]) = ???
-  }
-
   class Local(implicit ctx: ParsingContext) extends Env {
 
     import ctx._
@@ -137,6 +130,7 @@ object Env {
     def separator = java.io.File.separatorChar
     def pathSeparator = java.io.File.pathSeparatorChar
     def root = ctx.envOutputRoot(Name("local"))
+    def period = 1.second
 
     def read(f: String) = IO {
       File(f).contentAsString
@@ -205,10 +199,9 @@ object Env {
     import ctx._
 
     def separator = java.io.File.separatorChar
-
     def pathSeparator = java.io.File.pathSeparatorChar
-
     def root = getValueByName(s"${name}_root")
+    def period = getValueByNameOpt(s"${name}_period").map(_.toInt).getOrElse(5).seconds  // by default, 5s
 
     def read(f: String) = for {
       process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()

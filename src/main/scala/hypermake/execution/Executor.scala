@@ -10,7 +10,7 @@ import hypermake.util._
 
 object Executor {
 
-  def run(jobs: Iterable[Job], action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
+  def run(jobs: Iterable[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
       _ <- ZIO.foreach_(jobs) { j => semaphore.withPermit(action(j)) }
@@ -20,7 +20,7 @@ object Executor {
   /**
    * Runs an action over all jobs specified in the given acyclic directed graph.
    */
-  def runDAG[A](jobs: Graph[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
+  def runDAG(jobs: Graph[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
     val sortedJobs = jobs.topologicalSort  // may throw CyclicWorkflowException
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)

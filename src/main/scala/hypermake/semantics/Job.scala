@@ -76,10 +76,12 @@ abstract class Job(implicit ctx: ParsingContext) {
 
   def execute: HIO[Boolean] = for {
     _ <- env.mkdir(absolutePath)
+    _ <- env.lock(absolutePath)
     _ <- env.write(absolutePath / script.fileName, script.script)
     _ <- linkInputs
     _ <- putStrLn(f"⚙️  Running job $colorfulString...")
     exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
+    _ <- env.unlock(absolutePath)
   } yield exitCode.code == 0
 
   def executeIfNotDone: HIO[Boolean] = for {
