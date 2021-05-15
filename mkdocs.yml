@@ -22,4 +22,4 @@ nav:
   - 'Introduction': 'index.md'
   - 'Tutorial':
       - "01 Hello, world!": 'tutorial/01-hello.md'
-
+      - "02 Inputs & outputs": 'tutorial/02-compose.md'

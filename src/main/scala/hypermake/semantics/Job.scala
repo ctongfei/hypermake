@@ -74,21 +74,21 @@ abstract class Job(implicit ctx: ParsingContext) {
     }.map(_.forall(identity)).catchAll(_ => IO.succeed(false))
   }
 
-  def execute: HIO[Boolean] = for {
+  def execute(statusMonitor: StatusMonitor): HIO[Boolean] = for {
     _ <- env.mkdir(absolutePath)
+    _ <- statusMonitor.updateStatus(this, Status.Locked)
     _ <- env.lock(absolutePath)
     _ <- env.write(absolutePath / script.fileName, script.script)
     _ <- linkInputs
-    _ <- putStrLn(f"⚙️  Running job $colorfulString...")
+    _ <- statusMonitor.updateStatus(this, Status.Running)
     exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
     _ <- env.unlock(absolutePath)
   } yield exitCode.code == 0
 
-  def executeIfNotDone: HIO[Boolean] = for {
+  def executeIfNotDone(statusMonitor: StatusMonitor) = for {
     done <- isDone
-    successful <- if (done)
-      putStrLn(f"Job $colorfulString is done. Skipped.") as true
-      else execute
+    successful <- if (done) statusMonitor.updateStatus(this, Status.Succeeded) as true
+      else execute(statusMonitor)
   } yield successful
 
   def removeOutputs: HIO[Unit] =
