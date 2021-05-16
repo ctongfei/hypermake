@@ -1,10 +1,11 @@
-package hypermake.semantics
+package hypermake.core
 
 import cats.syntax.all._
 import better.files._
 import fastparse._
-import hypermake.core._
+import hypermake.collection._
 import hypermake.execution._
+import hypermake.semantics.{ParsingContext, SemanticParser}
 import hypermake.syntax.SyntacticParser
 
 object ParserTest extends App {

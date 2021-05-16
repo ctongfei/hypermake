@@ -2,9 +2,9 @@ package hypermake.execution
 
 import scala.collection._
 import zio._
-import hypermake.core._
+import hypermake.collection._
 import hypermake.exception.JobFailedException
-import hypermake.semantics._
+import hypermake.core._
 import hypermake.util._
 
 
@@ -22,24 +22,25 @@ object Executor {
    */
   def runDAG(jobs: Graph[Job])(implicit runtime: RuntimeContext): HIO[Unit] = {
     val sortedJobs = jobs.topologicalSort  // may throw CyclicWorkflowException
-    val statusMonitor = new StatusMonitor(sortedJobs.toIndexedSeq)
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
+      monitor <- Semaphore.make(1).map { sem => new StatusMonitor(sortedJobs.toIndexedSeq, sem) }
       promises <- ZIO.foldLeft(sortedJobs)(immutable.Map[Job, Promise[Throwable, Unit]]()) { (m, j) =>
         Promise.make[Throwable, Unit] map { p => m + (j -> p) }
       }
-      _ <- statusMonitor.initialize
+      _ <- monitor.initialize
       effects = sortedJobs map { j =>
         for {
           _ <- ZIO.foreach_(jobs.incomingNodes(j))(i => promises(i).await)
-          succeeded <- semaphore.withPermit(j.executeIfNotDone(statusMonitor))
-          _ <- if (succeeded) statusMonitor.updateStatus(j, Status.Succeeded) *> promises(j).succeed(())
-            else statusMonitor.updateStatus(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
+          (hasRun, successful) <- semaphore.withPermit(j.executeIfNotDone(monitor))
+          _ <- if (!hasRun) monitor.update(j, Status.Complete) *> promises(j).succeed(())
+            else if (successful) monitor.update(j, Status.Succeeded) *> promises(j).succeed(())
+            else monitor.update(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
         } yield ()
       }
       allFibers <- ZIO.forkAll(effects)
       _ <- allFibers.join
-      _ <- statusMonitor.tearDown
+      _ <- monitor.tearDown
     } yield ()
   }
 

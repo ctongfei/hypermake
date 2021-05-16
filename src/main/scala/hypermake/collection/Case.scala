@@ -1,4 +1,4 @@
-package hypermake.core
+package hypermake.collection
 
 import hypermake.syntax.Identifier
 import hypermake.util.MapWrapper

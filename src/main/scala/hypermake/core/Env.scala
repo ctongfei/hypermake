@@ -1,4 +1,4 @@
-package hypermake.semantics
+package hypermake.core
 
 import java.io.{File => JFile}
 import java.nio.file.{Path, Paths, Files => JFiles}
@@ -7,7 +7,8 @@ import better.files.File
 import zio._
 import zio.process._
 import zio.duration._
-import hypermake.core._
+import hypermake.collection._
+import hypermake.semantics.ParsingContext
 import hypermake.util._
 
 /**

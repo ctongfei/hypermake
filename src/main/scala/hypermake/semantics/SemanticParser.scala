@@ -1,16 +1,15 @@
 package hypermake.semantics
 
 import better.files._
-import fastparse._
-
-import scala.collection._
-import cats.syntax.unorderedTraverse._
 import cats.instances.all._
-import hypermake.core._
+import cats.syntax.unorderedTraverse._
+import hypermake.collection._
+import hypermake.core.{Env, Func, Package, Plan, PointedCubeTask, Script, Task, Value}
 import hypermake.exception._
-import hypermake.execution.RuntimeContext
 import hypermake.syntax._
 import hypermake.util._
+
+import scala.collection._
 
 
 /**

@@ -1,11 +1,14 @@
 package hypermake.execution
 
-sealed trait Status
+sealed abstract class Status(val text: String) {
+  override def toString = text
+}
 
 object Status {
-  case object Pending extends Status
-  case object Locked extends Status
-  case object Running extends Status
-  case object Succeeded extends Status
-  case object Failed extends Status
+  case object Pending   extends Status("PENDING ")
+  case object Locked    extends Status("LOCKED  ")
+  case object Running   extends Status("RUNNING ")
+  case object Succeeded extends Status("SUCCESS ")
+  case object Failed    extends Status("FAILED  ")
+  case object Complete  extends Status("COMPLETE")
 }

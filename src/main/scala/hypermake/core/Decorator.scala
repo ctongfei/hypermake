@@ -1,6 +1,6 @@
-package hypermake.semantics
+package hypermake.core
 
-import hypermake.core._
+import hypermake.collection._
 import hypermake.exception.ParametersUnboundException
 
 import scala.collection._

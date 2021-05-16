@@ -3,7 +3,7 @@ package hypermake
 import scala.collection.immutable.{Map => IMap}
 import scala.collection._
 import fastparse._
-import hypermake.core._
+import hypermake.collection._
 import hypermake.exception._
 import zio._
 

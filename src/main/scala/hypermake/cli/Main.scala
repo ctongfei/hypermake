@@ -3,7 +3,8 @@ package hypermake.cli
 import better.files._
 import hypermake.cli.CmdLineAST._
 import hypermake.execution._
-import hypermake.semantics._
+import hypermake.core._
+import hypermake.semantics.{ParsingContext, SemanticParser}
 import hypermake.syntax.TaskRefN
 import hypermake.util.printing._
 

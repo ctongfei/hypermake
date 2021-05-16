@@ -1,6 +1,6 @@
-package hypermake.semantics
+package hypermake.core
 
-import hypermake.core._
+import hypermake.collection._
 
 
 class Service(val name: Name,

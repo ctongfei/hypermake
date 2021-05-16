@@ -1,4 +1,4 @@
-package hypermake.semantics
+package hypermake.core
 
 import better.files.File
 
@@ -6,8 +6,9 @@ import scala.collection._
 import scala.collection.decorators._
 import zio._
 import zio.console._
-import hypermake.core._
+import hypermake.collection._
 import hypermake.execution._
+import hypermake.semantics.ParsingContext
 import hypermake.util._
 
 /**
@@ -76,20 +77,20 @@ abstract class Job(implicit ctx: ParsingContext) {
 
   def execute(statusMonitor: StatusMonitor): HIO[Boolean] = for {
     _ <- env.mkdir(absolutePath)
-    _ <- statusMonitor.updateStatus(this, Status.Locked)
+    _ <- statusMonitor.update(this, Status.Locked)
     _ <- env.lock(absolutePath)
     _ <- env.write(absolutePath / script.fileName, script.script)
     _ <- linkInputs
-    _ <- statusMonitor.updateStatus(this, Status.Running)
+    _ <- statusMonitor.update(this, Status.Running)
     exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
     _ <- env.unlock(absolutePath)
   } yield exitCode.code == 0
 
-  def executeIfNotDone(statusMonitor: StatusMonitor) = for {
+  def executeIfNotDone(statusMonitor: StatusMonitor): HIO[(Boolean, Boolean)] = for {
     done <- isDone
-    successful <- if (done) statusMonitor.updateStatus(this, Status.Succeeded) as true
-      else execute(statusMonitor)
-  } yield successful
+    (hasRun, successful) <- if (done) statusMonitor.update(this, Status.Complete) as (false, true)
+      else execute(statusMonitor).map((true, _))
+  } yield (hasRun, successful)
 
   def removeOutputs: HIO[Unit] =
     env.delete(absolutePath)
@@ -98,7 +99,7 @@ abstract class Job(implicit ctx: ParsingContext) {
 
   def colorfulString = {
     import fansi._
-    s"${Bold.On(Color.LightBlue(name.name)).render}[${colorfulArgsString(`case`.underlying)}]"
+    s"${Bold.On(Color.LightBlue(name.name)).render}[${argsStringDefault(`case`.underlying)}]"
   }
 
   override def toString = id

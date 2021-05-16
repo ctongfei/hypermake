@@ -1,6 +1,6 @@
-package hypermake.semantics
+package hypermake.core
 
-import hypermake.core.Name
+import hypermake.collection.Name
 
 import scala.collection._
 import hypermake.exception._

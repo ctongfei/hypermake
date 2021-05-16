@@ -1,11 +1,11 @@
-package hypermake.semantics
+package hypermake.core
 
 import java.io.{File => JFile}
 import scala.collection._
 import better.files._
 import zio._
 import zio.process._
-import hypermake.core._
+import hypermake.collection._
 import hypermake.execution._
 import hypermake.util._
 

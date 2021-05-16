@@ -2,8 +2,8 @@ package hypermake.exception
 
 import scala.collection._
 import fastparse._
+import hypermake.collection._
 import hypermake.core._
-import hypermake.semantics._
 import hypermake.syntax._
 
 

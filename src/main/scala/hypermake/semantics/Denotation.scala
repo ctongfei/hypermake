@@ -1,6 +1,5 @@
 package hypermake.semantics
 
-
 trait ContextualDenotation[C, S, +D] {
   def defaultContext: C
   def denotation(form: S, ctx: C = defaultContext): D

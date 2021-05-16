@@ -1,11 +1,13 @@
-package hypermake.semantics
+package hypermake.core
 
 import better.files.File
+
 import scala.collection._
 import scala.sys._
 import zio._
-import hypermake.core._
+import hypermake.collection._
 import hypermake.execution.RuntimeContext
+import hypermake.semantics.ParsingContext
 import hypermake.util._
 
 

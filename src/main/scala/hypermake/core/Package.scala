@@ -1,7 +1,8 @@
-package hypermake.semantics
+package hypermake.core
 
 import scala.collection._
-import hypermake.core._
+import hypermake.collection._
+import hypermake.semantics.ParsingContext
 
 /**
  * A package can be realized on multiple environments, and cannot be dependent on any other task.

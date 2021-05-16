@@ -1,10 +1,9 @@
 package hypermake.semantics
 
-import better.files.File
-import hypermake.core._
+import hypermake.collection._
+import hypermake.core.{Env, Func, Package, Plan, PointedCubeTask, Value}
 import hypermake.exception._
 import hypermake.execution.RuntimeContext
-import hypermake.util._
 import hypermake.util.Escaper._
 
 import scala.collection._
@@ -69,7 +68,7 @@ class ParsingContext(implicit val runtime: RuntimeContext) {
     clauses.mkString(", ")
   }
 
-  def colorfulArgsString(args: Map[Name, String]) = {
+  def argsStringDefault(args: Map[Name, String]) = {
     import fansi._
     val sortedArgs = args.toArray.sortBy(_._1)
     val clauses = sortedArgs.collect {

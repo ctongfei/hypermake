@@ -1,4 +1,4 @@
-package hypermake.core
+package hypermake.collection
 
 import cats._
 
