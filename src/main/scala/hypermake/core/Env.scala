@@ -6,7 +6,9 @@ import scala.collection._
 import better.files.File
 import zio._
 import zio.process._
+import zio.stream._
 import zio.duration._
+import hypermake.cli._
 import hypermake.collection._
 import hypermake.semantics.ParsingContext
 import hypermake.util._
@@ -38,7 +40,7 @@ trait Env {
    */
   def root: String
 
-  def period: Duration
+  def refreshInterval: Duration
 
   /**
    * Resolves a path relative to the given root directory.
@@ -75,14 +77,14 @@ trait Env {
 
   def delete(f: String): HIO[Unit]
   def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
-  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]): HIO[ExitCode]
+  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]): HIO[ExitCode]
 
   def locked(f: String): HIO[Boolean] = exists(s"$f/.lock")
-  def lock(f: String): HIO[Unit] = locked(f).delay(period).repeatUntilEquals(false) *> touch(s"$f/.lock")
-  def unlock(f: String): HIO[Unit] = locked(f).delay(period).repeatUntilEquals(true) *> delete(s"$f/.lock")
+  def lock(f: String): HIO[Unit] = locked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f/.lock")
+  def unlock(f: String): HIO[Unit] = locked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f/.lock")
 
   def linkValue(x: Value, dst: => String): HIO[Unit] = x match {
-    case Value.Pure(_) => ZIO.unit
+    case Value.Pure(_) => ZIO.unit  // do nothing
     case Value.Input(path, env) =>
       if (env == this) link(path, dst)
       else copyFrom(path, env, dst)
@@ -131,7 +133,7 @@ object Env {
     def separator = java.io.File.separatorChar
     def pathSeparator = java.io.File.pathSeparatorChar
     def root = ctx.envOutputRoot(Name("local"))
-    def period = 1.second
+    def refreshInterval = 100.milliseconds
 
     def read(f: String) = IO {
       File(f).contentAsString
@@ -170,24 +172,16 @@ object Env {
       u <- process.successfulExitCode.unit
     } yield u
 
-    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String]) = {
+    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
       val proc = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
         .workingDirectory(new JFile(wd)).env(envArgs.toMap)
-
-//      val redirectedProc = if (runtime.silent)
-//        proc
-//          .stdout(ProcessOutput.FileRedirect(new JFile(s"$wd/stdout")))
-//          .stderr(ProcessOutput.FileRedirect(new JFile(s"$wd/stderr")))
-//      else proc
-//        .stdout(ProcessOutput.Inherit)
-//        .stderr(ProcessOutput.Inherit)
-      val redirectedProc = proc
-
+        .stderr(ProcessOutput.Pipe).stdout(ProcessOutput.Pipe)
+      //ZSink.fromFile(Paths.get(s"$wd/stdout"))
       for {
-        process <- redirectedProc.run
-        _ <- process.stdout.linesStream.foreach(s => console.putStrLn(s))
-        _ <- process.stderr.linesStream.foreach(s => console.putStrLn(s))
+        process <- proc.run
+        _ <- process.stdout.stream.run(out)
+        _ <- process.stderr.stream.run(err)
         exitCode <- process.exitCode
         _ <- write(s"$wd/exitcode", exitCode.code.toString)
       } yield exitCode
@@ -202,7 +196,7 @@ object Env {
     def separator = java.io.File.separatorChar
     def pathSeparator = java.io.File.pathSeparatorChar
     def root = getValueByName(s"${name}_root")
-    def period = getValueByNameOpt(s"${name}_period").map(_.toInt).getOrElse(5).seconds  // by default, 5s
+    def refreshInterval = getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds  // by default, 5s
 
     def read(f: String) = for {
       process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()
@@ -250,11 +244,13 @@ object Env {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String]) = for {
+    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = for {
       process <- getScriptByName(s"${name}_execute")
         .withArgs("command" ->
           s"${envVars.map { case (k, v) => s"$k=$v" }.mkString(" ")} $command ${args.mkString(" ")}"
         ).executeLocally(wd)
+      _ <- process.stdout.stream.run(out)
+      _ <- process.stderr.stream.run(err)
       exitCode <- process.exitCode
     } yield exitCode
 

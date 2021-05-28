@@ -1,12 +1,12 @@
-package hypermake.cli
+package hypermake
 
-import better.files._
-import hypermake.cli.CmdLineAST._
-import hypermake.execution._
-import hypermake.core._
+import better.files.File
+import hypermake.cli.CmdLineAST.{Cmd, Opt, RunOpt, Subtask}
+import hypermake.cli.{CmdLineParser, PlainCLI}
+import hypermake.core.Plan
+import hypermake.execution.{Executor, RuntimeContext}
 import hypermake.semantics.{ParsingContext, SemanticParser}
-import hypermake.syntax.TaskRefN
-import hypermake.util.printing._
+import hypermake.util.printing.{C, O, RO}
 
 object Main extends App {
 
@@ -59,6 +59,7 @@ object Main extends App {
         silent = runOptions contains RunOpt.Silent,
         yes = runOptions contains RunOpt.Yes
       )
+      val cli = PlainCLI.create()
 
       runtime._println(runtime.toString)
       runtime._println("Parsing Hypermake scripts...")
@@ -73,7 +74,7 @@ object Main extends App {
 
         case Subtask.Run(ts) =>
           val jobGraph = new Plan(ts flatMap parseTarget).dependencyGraph
-          Executor.runDAG(jobGraph)
+          Executor.runDAG(jobGraph, cli)
 
         case Subtask.Invalidate(ts) => ???
 

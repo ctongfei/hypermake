@@ -6,11 +6,13 @@ import fastparse._
 import hypermake.collection._
 import hypermake.exception._
 import zio._
+import zio.stream.ZSink
 
 
 package object util {
 
   type HIO[+A] = ZIO[ZEnv, Throwable, A]
+  type HSink[A] = ZSink[ZEnv, Throwable, A, A, Long]
 
   private def mapViewAsMap[A, B](m: MapView[A, B]): IMap[A, B] = new DefaultMapBase[A, B] {
     override def get(key: A) = m.get(key)

@@ -1,0 +1,17 @@
+snli_url = "https://nlp.stanford.edu/projects/snli/snli_1.0.zip"
+u_snli_url = "http://nlp.jhu.edu/unli/u-snli.zip"
+
+task snli(snli_url=$) -> out:
+  mkdir -p $out
+  wget $snli_url
+  unzip snli_1.0.zip
+  mv snli_1.0/* $out
+  rm -r snli_1.0
+
+task u_snli_csv(u_snli_url=$) -> out:
+  mkdir -p $out
+  wget $u_snli_url
+  unzip u-snli.zip
+  mv *.csv $out
+
+plan Run = {snli u_snli_csv}

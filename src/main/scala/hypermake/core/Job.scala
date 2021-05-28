@@ -1,6 +1,7 @@
 package hypermake.core
 
 import better.files.File
+import hypermake.cli.{CLI, TextGUI}
 
 import scala.collection._
 import scala.collection.decorators._
@@ -10,6 +11,9 @@ import hypermake.collection._
 import hypermake.execution._
 import hypermake.semantics.ParsingContext
 import hypermake.util._
+import zio.stream.ZSink
+
+import java.nio.file.Paths
 
 /**
  * A job is any block of shell script that is executed by HyperMake.
@@ -75,21 +79,26 @@ abstract class Job(implicit ctx: ParsingContext) {
     }.map(_.forall(identity)).catchAll(_ => IO.succeed(false))
   }
 
-  def execute(statusMonitor: StatusMonitor): HIO[Boolean] = for {
-    _ <- env.mkdir(absolutePath)
-    _ <- statusMonitor.update(this, Status.Locked)
-    _ <- env.lock(absolutePath)
-    _ <- env.write(absolutePath / script.fileName, script.script)
-    _ <- linkInputs
-    _ <- statusMonitor.update(this, Status.Running)
-    exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs)
-    _ <- env.unlock(absolutePath)
-  } yield exitCode.code == 0
+  def execute(cli: CLI): HIO[Boolean] = {
+    val effect = for {
+      _ <- env.mkdir(absolutePath)
+      _ <- cli.update(this, Status.Locked)
+      _ <- env.lock(absolutePath)
+      _ <- env.write(absolutePath / script.fileName, script.script)
+      _ <- linkInputs
+      _ <- cli.update(this, Status.Running)
+      (outSink, errSink) <- cli.getSinks(this)
+      exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs, outSink, errSink)
+      hasOutputs <- checkOutputs
+    } yield (exitCode.code == 0) && hasOutputs
+    effect.ensuring(env.unlock(absolutePath).orElseSucceed())
+  }
 
-  def executeIfNotDone(statusMonitor: StatusMonitor): HIO[(Boolean, Boolean)] = for {
+
+  def executeIfNotDone(cli: CLI): HIO[(Boolean, Boolean)] = for {
     done <- isDone
-    (hasRun, successful) <- if (done) statusMonitor.update(this, Status.Complete) as (false, true)
-      else execute(statusMonitor).map((true, _))
+    (hasRun, successful) <- if (done) cli.update(this, Status.Complete) as (false, true)
+      else execute(cli).map((true, _))
   } yield (hasRun, successful)
 
   def removeOutputs: HIO[Unit] =

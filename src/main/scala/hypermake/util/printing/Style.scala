@@ -15,6 +15,7 @@ trait Style {
   def name(s: Status) = bg(s) ++ nameFg(s)
   def args(s: Status) = bg(s) ++ argsFg(s)
 
+  def render(j: Job): String
   def render(j: Job, s: Status): String
 
 }
@@ -41,6 +42,18 @@ object Style {
 
     def nameFg(s: Status) = Bold.On ++ Color.White
     def argsFg(s: Status) = Color.LightGray
+
+    def render(j: Job) = {
+      val b = Back.Black
+      val f = Color.Black
+      val a = Back.Black ++ Color.DarkGray
+      val n = Back.Black ++ Bold.On ++ Color.DarkGray
+      val jobName = n(j.name.name)
+      val jobArgs = j.`case`.underlying.map {
+        case (Name(k), v) => a(s"$k:") ++ (a ++ Bold.On)(v)
+      }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(n("default "))
+      (b(" ") ++ jobName ++ a("  ") ++ jobArgs ++ f(" ")).render
+    }
 
     def render(j: Job, s: Status) = {
       val b = bg(s)

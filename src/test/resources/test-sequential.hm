@@ -1,15 +1,18 @@
 local_root = "/home/tongfei/proj/forge/target"
 
 task t0(x = "1") -> out:
-  sleep 5
+  sleep 2
+  seq 1 100 | xargs -I@ echo "AAA"
   echo "0" > $out
 
 task t1(x = $t0.out) -> out:
   sleep 2
+  echo "BBB"
   cat $x > $out
 
 task t2(x = $t1.out) -> out:
   sleep 2
+  echo "CCC"
   cat $x > $out
 
 
