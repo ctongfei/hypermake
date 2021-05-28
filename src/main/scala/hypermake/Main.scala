@@ -28,7 +28,7 @@ object Main extends App {
       |  -j <n>, --jobs=<n>            : Allow n jobs running in parallel at once.
       |  -k, --keep-going              : Keep going even when some jobs failed.
       |  -n, --dry-run                 : Does not actually run any recipe; just prints them.
-      |  -s, --silent                  : Does not print recipes.
+      |  -s, --silent                  : Silent mode: redirect stdout and stderr to files without printing them.
       |  -v, --verbose                 : Verbose mode.
       |  -y, --yes                     : Automatic "yes" to prompts.
       |
