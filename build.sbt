@@ -1,7 +1,7 @@
-name := "forge"
-
-version := "0.1"
-
+name := "hypermake"
+organization := "me.tongfei"
+isSnapshot := true
+version := "0.1.0"
 scalaVersion := "2.13.5"
 
 libraryDependencies ++= Seq(
@@ -13,5 +13,4 @@ libraryDependencies ++= Seq(
   "com.lihaoyi"             %% "fansi"                    % "0.2.10",
   "com.github.pathikrit"    %% "better-files"             % "3.9.1",
   "org.jline"               %  "jline"                    % "3.19.0",
-  "com.googlecode.lanterna" %  "lanterna"                 % "3.1.1"
 )
