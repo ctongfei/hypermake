@@ -11,7 +11,7 @@ import scala.collection._
 /**
  * Contexts kept for each parsing run.
  */
-class ParsingContext(implicit val runtime: RuntimeContext) {
+class SymbolTable(implicit val runtime: RuntimeContext) {
 
   private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
   private[hypermake] val localEnv: Env = new Env.Local()(this)
@@ -83,7 +83,7 @@ class ParsingContext(implicit val runtime: RuntimeContext) {
 
 }
 
-object ParsingContext {
+object SymbolTable {
 
 
 

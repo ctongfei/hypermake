@@ -22,7 +22,6 @@ object CmdLineAST {
   object RunOpt {
     case class NumJobs(numJobs: Int) extends RunOpt // j
     case object KeepGoing            extends RunOpt // k
-    case object DryRun               extends RunOpt // n
     case object Silent               extends RunOpt // s
     case object Verbose              extends RunOpt // v
     case object Yes                  extends RunOpt // y
@@ -32,6 +31,7 @@ object CmdLineAST {
   object Subtask {
 
     case class Run(tasks: Seq[TaskRefN]) extends Subtask
+    case class DryRun(tasks: Seq[TaskRefN]) extends Subtask
     case class Invalidate(tasks: Seq[TaskRefN]) extends Subtask
     case class MarkAsDone(tasks: Seq[TaskRefN]) extends Subtask
     case class ExportShell(tasks: Seq[TaskRefN]) extends Subtask

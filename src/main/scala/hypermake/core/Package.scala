@@ -2,7 +2,7 @@ package hypermake.core
 
 import scala.collection._
 import hypermake.collection._
-import hypermake.semantics.ParsingContext
+import hypermake.semantics.SymbolTable
 
 /**
  * A package can be realized on multiple environments, and cannot be dependent on any other task.
@@ -17,7 +17,7 @@ case class Package(
   /**
    * Returns a task that builds this package on a specific environment.
    */
-  def on(env: Env)(implicit ctx: ParsingContext) = new PointedCubeTask(
+  def on(env: Env)(implicit ctx: SymbolTable) = new PointedCubeTask(
     Name(s"${name.name}@${env.name}"),  // package@ec2
     env,
     cases,

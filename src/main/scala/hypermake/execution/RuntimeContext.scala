@@ -19,7 +19,6 @@ class RuntimeContext private(
                               val includePaths: Seq[String],
                               val numParallelJobs: Int,
                               val keepGoing: Boolean,
-                              val dryRun: Boolean,
                               val silent: Boolean,
                               val yes: Boolean
                             ) {
@@ -61,17 +60,12 @@ class RuntimeContext private(
     }.getOrElse(throw new FileNotFoundException(s"HyperMake script $fn not found."))
   }
 
-  def _println(s: String): Unit = {
-    if (!silent) println(s)
-  }
-
   override def toString = {
     s"""workDir = $workDir
        |shell = $shell
        |includePaths = ${includePaths.mkString("[", ", ", "]")}
        |numParallelJobs = $numParallelJobs
        |keepGoing = $keepGoing
-       |dryRun = $dryRun
        |silent = $silent
        |yes = $yes
        |""".stripMargin
@@ -85,7 +79,6 @@ object RuntimeContext {
               shell: String = "bash",
               numParallelJobs: Int = 1,
               keepGoing: Boolean = false,
-              dryRun: Boolean = false,
               silent: Boolean = false,
               yes: Boolean = false
             ): RuntimeContext =
@@ -96,7 +89,6 @@ object RuntimeContext {
       includePaths = includePaths,
       numParallelJobs = numParallelJobs,
       keepGoing = keepGoing,
-      dryRun = dryRun,
       silent = silent,
       yes = yes
     )

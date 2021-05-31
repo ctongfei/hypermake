@@ -7,7 +7,7 @@ import scala.sys._
 import zio._
 import hypermake.collection._
 import hypermake.execution.RuntimeContext
-import hypermake.semantics.ParsingContext
+import hypermake.semantics.SymbolTable
 import hypermake.util._
 
 
@@ -19,7 +19,7 @@ class Task(val name: Name,
            val outputFileNames: Map[Name, Value],
            val outputEnvs: Map[Name, Env],
            val rawScript: Script)
-          (implicit ctx: ParsingContext) extends Job()(ctx) {
+          (implicit ctx: SymbolTable) extends Job()(ctx) {
 
   override lazy val hashCode = id.hashCode
 
@@ -40,7 +40,7 @@ class PointedCubeTask(val name: Name,
                       val outputNames: Map[Name, PointedCube[Value]],
                       val outputEnvs: Map[Name, Env],
                       val script: PointedCube[Script]
-                     )(implicit ctx: ParsingContext)
+                     )(implicit ctx: SymbolTable)
   extends PointedCube[Task]
 { self =>
 

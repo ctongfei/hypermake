@@ -16,7 +16,7 @@ import scala.collection._
  * A semantic parsing run.
  * @param ctx Global context
  */
-class SemanticParser(implicit val ctx: ParsingContext) {
+class SemanticParser(implicit val ctx: SymbolTable) {
 
   import ctx._
   import ctx.runtime._

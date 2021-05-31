@@ -1,7 +1,7 @@
 package hypermake.core
 
 import better.files.File
-import hypermake.cli.{CLI, TextGUI}
+import hypermake.cli.CLI
 
 import scala.collection._
 import scala.collection.decorators._
@@ -9,7 +9,7 @@ import zio._
 import zio.console._
 import hypermake.collection._
 import hypermake.execution._
-import hypermake.semantics.ParsingContext
+import hypermake.semantics.SymbolTable
 import hypermake.util._
 import zio.stream.ZSink
 
@@ -20,7 +20,7 @@ import java.nio.file.Paths
  * A job can either be a task, a package, or a service.
  * @param ctx Parsing context that yielded this job
  */
-abstract class Job(implicit ctx: ParsingContext) {
+abstract class Job(implicit ctx: SymbolTable) {
 
   import ctx._
   implicit def runtime: RuntimeContext = ctx.runtime
@@ -79,10 +79,10 @@ abstract class Job(implicit ctx: ParsingContext) {
     }.map(_.forall(identity)).catchAll(_ => IO.succeed(false))
   }
 
-  def execute(cli: CLI): HIO[Boolean] = {
+  def execute(cli: CLI.Service): HIO[Boolean] = {
     val effect = for {
       _ <- env.mkdir(absolutePath)
-      _ <- cli.update(this, Status.Locked)
+      _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
       _ <- env.write(absolutePath / script.fileName, script.script)
       _ <- linkInputs
@@ -94,12 +94,25 @@ abstract class Job(implicit ctx: ParsingContext) {
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
   }
 
-
-  def executeIfNotDone(cli: CLI): HIO[(Boolean, Boolean)] = for {
+  def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = for {
     done <- isDone
     (hasRun, successful) <- if (done) cli.update(this, Status.Complete) as (false, true)
       else execute(cli).map((true, _))
   } yield (hasRun, successful)
+
+  def markAsDone(cli: CLI.Service): HIO[Boolean] = {
+    val effect = for {
+      _ <- env.mkdir(absolutePath)
+      _ <- cli.update(this, Status.Waiting)
+      _ <- env.lock(absolutePath)
+      _ <- env.write(absolutePath / script.fileName, script.script)
+      _ <- cli.update(this, Status.Running)
+      _ <- ZIO.foreach_(outputAbsolutePaths zipByKey outputEnvs) { case (_, (p, e)) => e.touch(p) }
+      _ <- env.write("0", absolutePath / "exitcode")
+      hasOutputs <- checkOutputs
+    } yield hasOutputs
+    effect.ensuring(env.unlock(absolutePath).orElseSucceed())
+  }
 
   def removeOutputs: HIO[Unit] =
     env.delete(absolutePath)

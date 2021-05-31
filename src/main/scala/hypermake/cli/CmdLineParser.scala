@@ -5,18 +5,7 @@ import hypermake.exception._
 import hypermake.syntax._
 
 /**
- * Command line parser of Forge.
- *
- * Command line API:
- *  - `forge [optional script name] [options] mode [tasks]`
- *
- *
- * Forge has the following command line options:
- *  - `-S $SHELL`: Default shell to run (default: bash)
- *  - `-I $INCLUDE_PATHS`: Paths to find Forge imports (As in `gcc` / `make`)
- *  - `-j $NUMBER_OF_PARALLEL_TASKS`: Number of tasks to run simultaneously
- *  - `-v`: Verbose
- *  - `-y`: Yes: run jobs specified without prompt
+ * Command line parser of Hypermake.
  */
 object CmdLineParser {
 
@@ -38,8 +27,6 @@ object CmdLineParser {
 
   def keepGoing[_: P]: P[RunOpt] = P { "--keep-going" | "-k" } map { _ => RunOpt.KeepGoing }
 
-  def dryRun[_: P]: P[RunOpt] = P { "--dry-run" | "-n" } map { _ => RunOpt.DryRun }
-
   def silent[_: P]: P[RunOpt] = P { "--silent" | "-s" } map { _ => RunOpt.Silent }
 
   def verbose[_: P]: P[RunOpt] = P { "--verbose" | "-v" } map { _ => RunOpt.Verbose }
@@ -48,19 +35,20 @@ object CmdLineParser {
 
 
   def opt[_: P]: P[Opt] = P { include | shell }
-  def runtimeOpts[_: P] = P { numJobs | keepGoing | dryRun | silent | verbose | yes }
+  def runtimeOpts[_: P] = P { numJobs | keepGoing | silent | verbose | yes }
 
   def target[_: P] = SyntacticParser.taskRefN
 
   def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
 
-  def command[_: P] = P { "run".! | "invalidate".! | "mark-as-done".! | "export-shell".! }
+  def command[_: P] = P { "run".! | "dry-run".! | "invalidate".! | "mark-as-done".! | "export-shell".! }
 
   def run[_: P] = P {
     opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
   }.map { case (opt, scriptFile, cmd, runOpts1, targets, runOpts2) =>
     val subtask = cmd match {
       case "run"          => Subtask.Run(targets)
+      case "dry-run"      => Subtask.DryRun(targets)
       case "invalidate"   => Subtask.Invalidate(targets)
       case "mark-as-done" => Subtask.MarkAsDone(targets)
       case "export-shell" => Subtask.ExportShell(targets)

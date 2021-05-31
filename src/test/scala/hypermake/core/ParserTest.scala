@@ -5,7 +5,7 @@ import better.files._
 import fastparse._
 import hypermake.collection._
 import hypermake.execution._
-import hypermake.semantics.{ParsingContext, SemanticParser}
+import hypermake.semantics.{SymbolTable, SemanticParser}
 import hypermake.syntax.SyntacticParser
 
 object ParserTest extends App {
@@ -16,7 +16,7 @@ object ParserTest extends App {
 //    """, SyntacticParser.taskDef(_)).get.get
 
   implicit val rt = RuntimeContext.create()
-  implicit val ctx = new ParsingContext()
+  implicit val ctx = new SymbolTable()
   val workflow = new SemanticParser()
   workflow.semanticParse(File("src/test/resources/test.hm"))
 

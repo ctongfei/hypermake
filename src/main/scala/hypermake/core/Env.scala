@@ -10,7 +10,7 @@ import zio.stream._
 import zio.duration._
 import hypermake.cli._
 import hypermake.collection._
-import hypermake.semantics.ParsingContext
+import hypermake.semantics.SymbolTable
 import hypermake.util._
 
 /**
@@ -108,12 +108,12 @@ trait Env {
 
 object Env {
 
-  def getValueByName(name: String)(implicit ctx: ParsingContext) = ctx.getValue(Name(name)).default.value
-  def getValueByNameOpt(name: String)(implicit ctx: ParsingContext) = ctx.getValueOpt(Name(name)).map(_.default.value)
+  def getValueByName(name: String)(implicit ctx: SymbolTable) = ctx.getValue(Name(name)).default.value
+  def getValueByNameOpt(name: String)(implicit ctx: SymbolTable) = ctx.getValueOpt(Name(name)).map(_.default.value)
 
-  def getScriptByName(name: String)(implicit ctx: ParsingContext) = ctx.getFunc(Name(name)).script
+  def getScriptByName(name: String)(implicit ctx: SymbolTable) = ctx.getFunc(Name(name)).script
 
-  def apply(name: Name)(implicit ctx: ParsingContext) = {
+  def apply(name: Name)(implicit ctx: SymbolTable) = {
     if (name.name == "local")
       ctx.localEnv
     else if (ctx.envTable contains name)
@@ -125,7 +125,7 @@ object Env {
     }
   }
 
-  class Local(implicit ctx: ParsingContext) extends Env {
+  class Local(implicit ctx: SymbolTable) extends Env {
 
     import ctx._
 
@@ -189,7 +189,7 @@ object Env {
 
   }
 
-  class Custom(val name: String)(implicit ctx: ParsingContext) extends Env {
+  class Custom(val name: String)(implicit ctx: SymbolTable) extends Env {
 
     import ctx._
 

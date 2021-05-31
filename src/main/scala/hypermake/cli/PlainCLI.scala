@@ -10,7 +10,7 @@ import hypermake.util.StandardStreams.PrefixedOutputStream
 import hypermake.util._
 import hypermake.util.printing.Style
 
-class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI {
+class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
 
   def initialize = ZIO.succeed()
 
@@ -25,7 +25,11 @@ class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI {
     if (runtime.silent) (ofs, efs) else ((os zipWithPar ofs)(_+_), (es zipWithPar efs)(_+_))
   }
 
+  def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)
+
   def update(job: Job, status: Status) = putStrLn(style.render(job, status))
+
+  def tearDown = ZIO.succeed()
 }
 
 object PlainCLI {

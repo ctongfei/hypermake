@@ -6,7 +6,7 @@ sealed abstract class Status(val text: String) {
 
 object Status {
   case object Pending   extends Status("PENDING ")
-  case object Locked    extends Status("LOCKED  ")
+  case object Waiting   extends Status("WAITING ")
   case object Running   extends Status("RUNNING ")
   case object Succeeded extends Status("SUCCESS ")
   case object Failed    extends Status("FAILED  ")
