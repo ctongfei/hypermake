@@ -86,9 +86,8 @@ object Main extends App {
                   _ <- cli.initialize
                   _ <- putStrLn("The following jobs will be run:")
                   _ <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
-                  _ <- putStr("Continue [y/n]? ")
-                  response <- getStrLn
-                  u <- if (response.trim.toLowerCase == "y") Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask("Continue? [y/n]: ")
+                  u <- if (yes) Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
                   _ <- cli.tearDown
                 } yield u
 
@@ -104,7 +103,16 @@ object Main extends App {
 
               case Subtask.Invalidate(ts) => ???
 
-              case Subtask.MarkAsDone(ts) => ???
+              case Subtask.MarkAsDone(ts) =>
+                val jobs = ts flatMap parser.parseTarget flatMap { _.allElements }
+                for {
+                  _ <- cli.initialize
+                  _ <- putStrLn("The following jobs are to be marked as done:")
+                  _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask("Continue? [y/n]: ")
+                  u <- if (yes) Executor.run(jobs)(_.markAsDone(cli)) else ZIO.succeed(())
+                  _ <- cli.tearDown
+                } yield u
 
               case Subtask.ExportShell(ts) => ???
 

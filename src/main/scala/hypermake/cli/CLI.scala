@@ -15,6 +15,7 @@ object CLI {
     def getSinks(job: Job): HIO[(HSink[Byte], HSink[Byte])]
     def update(job: Job, status: Status): HIO[Unit]
     def tearDown: HIO[Unit]
+    def ask(s: String): HIO[Boolean]
   }
 
 }

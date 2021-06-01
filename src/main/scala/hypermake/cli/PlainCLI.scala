@@ -29,6 +29,11 @@ class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
 
   def update(job: Job, status: Status) = putStrLn(style.render(job, status))
 
+  def ask(s: String): HIO[Boolean] = for {
+    _ <- putStr(s)
+    response <- getStrLn
+  } yield response.trim.toLowerCase == "y"
+
   def tearDown = ZIO.succeed()
 }
 

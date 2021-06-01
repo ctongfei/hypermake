@@ -108,7 +108,7 @@ abstract class Job(implicit ctx: SymbolTable) {
       _ <- env.write(absolutePath / script.fileName, script.script)
       _ <- cli.update(this, Status.Running)
       _ <- ZIO.foreach_(outputAbsolutePaths zipByKey outputEnvs) { case (_, (p, e)) => e.touch(p) }
-      _ <- env.write("0", absolutePath / "exitcode")
+      _ <- env.write(absolutePath / "exitcode", "0")
       hasOutputs <- checkOutputs
     } yield hasOutputs
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())

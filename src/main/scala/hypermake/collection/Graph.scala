@@ -1,5 +1,6 @@
 package hypermake.collection
 
+import zio._
 import scala.collection._
 import hypermake.exception._
 import hypermake.util._
