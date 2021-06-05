@@ -141,12 +141,15 @@ object SyntacticParser {
   } map { case (id, v) => ValDef(id, v) }
 
   def funcDef[_: P] = P {
-      "def" ~ identifier ~ "(" ~ inputParamList ~ ")" ~ "->" ~ outputParamList ~ scriptImpl
-  } map { case (name, inputs, outputs, impl) => FuncDef(name, inputs, outputs, impl) }
+      "def" ~ identifier ~ "(" ~ assignments ~ ")" ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
+  } map { case (name, params, inputScript, impl) =>
+    val (inputName, inputFilename) = inputScript.getOrElse(Identifier("NULL") -> StringLiteral("/dev/null"))
+    FuncDef(name, params, inputName, inputFilename, impl)
+  }
 
   def taskDef[_: P] = P {
     decoratorCalls ~
-      "task" ~ identifier ~ envModifier ~ "(" ~ assignments ~ ")" ~ "->" ~ outputAssignments ~ impl
+      "task" ~ identifier ~ envModifier ~ "(" ~ assignments ~ ")" ~ "->" ~ outputAssignments ~ impl  // TODO: can have no output
   } map { case (decorators, name, envMod, inputs, outputs, impl) => TaskDef(decorators, name, envMod, inputs, outputs, impl) }
 
   def serviceDef[_: P] = P {
@@ -163,13 +166,9 @@ object SyntacticParser {
     "plan" ~ identifier ~ "=" ~ "{" ~ taskRefN.rep ~ "}"
   } map { case (name, taskRefs) => PlanDef(name, taskRefs) }
 
-  def decoratorDef[_: P] = P {
-    "def" ~ "@" ~ identifier ~ "[" ~ string ~ "]" ~  "(" ~ inputParamList ~ ")" ~ "(" ~ identifier ~ ")" ~ "->" ~ "(" ~ identifier ~ ")" ~ impl
-  } map { case (name, suffix, inputs, cmd, newCmd, impl) => DecoratorDef(name, suffix, inputs, cmd, newCmd, impl) }
-
   def importStatement[_: P] = P {
-    "import" ~ string ~ ("under" ~ indicesN).?
-  } map { case (filename, importIndices) => ImportStatement(filename, importIndices) }
+    "import" ~ string
+  } map { filename => ImportStatement(filename) }
 
   def statement[_: P]: P[Statement] = valDef | funcDef | taskDef | serviceDef | packageDef | planDef | importStatement
 

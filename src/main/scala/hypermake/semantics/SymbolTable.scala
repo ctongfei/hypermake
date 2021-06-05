@@ -1,7 +1,7 @@
 package hypermake.semantics
 
 import hypermake.collection._
-import hypermake.core.{Env, Func, Package, Plan, PointedCubeTask, Value}
+import hypermake.core._
 import hypermake.exception._
 import hypermake.execution.RuntimeContext
 import hypermake.util.Escaper._
@@ -16,12 +16,12 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
   private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
   private[hypermake] val localEnv: Env = new Env.Local()(this)
 
-  val valueTable = mutable.HashMap[Name, PointedCube[Value]]()
-  val funcTable = mutable.HashMap[Name, Func]()
-  val taskTable = mutable.HashMap[Name, PointedCubeTask]()
-  val packageTable = mutable.HashMap[Name, Package]()
-  val planTable = mutable.HashMap[Name, Plan]()
-  val envTable = mutable.HashMap[Name, Env](Name("local") -> localEnv)
+  private[hypermake] val valueTable = mutable.HashMap[Name, PointedCube[Value]]()
+  private[hypermake] val funcTable = mutable.HashMap[Name, Func]()
+  private[hypermake] val taskTable = mutable.HashMap[Name, PointedCubeTask]()
+  private[hypermake] val packageTable = mutable.HashMap[Name, Package]()
+  private[hypermake] val planTable = mutable.HashMap[Name, Plan]()
+  private[hypermake] val envTable = mutable.HashMap[Name, Env](Name("local") -> localEnv)
 
   def values: Map[Name, PointedCube[Value]] = valueTable
   def functions: Map[Name, Func] = funcTable

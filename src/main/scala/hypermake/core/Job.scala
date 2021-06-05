@@ -11,6 +11,7 @@ import hypermake.collection._
 import hypermake.execution._
 import hypermake.semantics.SymbolTable
 import hypermake.util._
+import hypermake.util.Escaper._
 import zio.stream.ZSink
 
 import java.nio.file.Paths
@@ -37,6 +38,8 @@ abstract class Job(implicit ctx: SymbolTable) {
     k -> Value.Output(v.value, outputEnvs.getOrElse(k, env), this)
   }
   def outputEnvs: Map[Name, Env]
+
+  def decorators: Seq[Call]
   def rawScript: Script
 
   /**
@@ -79,16 +82,28 @@ abstract class Job(implicit ctx: SymbolTable) {
     }.map(_.forall(identity)).catchAll(_ => IO.succeed(false))
   }
 
+  /** Writes the script and decorating calls to the working directory. */
+  def writeScript: HIO[Map[String, String]] = {
+    val scriptNames = decorators.map(_.inputScriptFilename)
+    for {
+      finalScript <- ZIO.foldLeft(decorators zip scriptNames)(script) { case (scr, (c, name)) =>
+        env.write(absolutePath / name, scr.script) as c(scr)
+      }
+      _ <- env.write(absolutePath / "script.sh", finalScript.script)
+      _ <- env.write(absolutePath / "args", finalScript.args.map { case (k, v) => s"""$k="${C.escape(v.value)}""""}.mkString("\n"))
+    } yield finalScript.strArgs
+  }
+
   def execute(cli: CLI.Service): HIO[Boolean] = {
     val effect = for {
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
-      _ <- env.write(absolutePath / script.fileName, script.script)
+      args <- writeScript
       _ <- linkInputs
       _ <- cli.update(this, Status.Running)
       (outSink, errSink) <- cli.getSinks(this)
-      exitCode <- env.execute(absolutePath, script.interpreter, Seq(script.fileName), script.strArgs, outSink, errSink)
+      exitCode <- env.execute(absolutePath, script.interpreter, Seq("script.sh"), args, outSink, errSink)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
@@ -105,7 +120,7 @@ abstract class Job(implicit ctx: SymbolTable) {
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
-      _ <- env.write(absolutePath / script.fileName, script.script)
+      _ <- writeScript
       _ <- cli.update(this, Status.Running)
       _ <- ZIO.foreach_(outputAbsolutePaths zipByKey outputEnvs) { case (_, (p, e)) => e.touch(p) }
       _ <- env.write(absolutePath / "exitcode", "0")

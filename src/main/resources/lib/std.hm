@@ -1,5 +1,7 @@
-# Wraps the given script in a Conda environment.
-def @Conda(env)(input) -> output="script.conda.sh":
-  conda activate $input
-  bash $input
-  conda deactivate
+def Git(repo, args="") <- build="build.sh":
+   git clone $args $repo package
+   ln -s $build package/build.sh
+   cd package
+   bash build.sh
+
+

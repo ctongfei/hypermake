@@ -1,5 +1,6 @@
 package hypermake.syntax
 
+import hypermake.collection.Name
 import hypermake.util._
 
 import scala.collection._
@@ -233,11 +234,6 @@ case class ValDef(name: Identifier, value: Expr) extends Statement {
   def children = Iterable(name, value)
 }
 
-case class FuncDef(name: Identifier, inputs: Identifiers, outputs: Identifiers, impl: ScriptImpl) extends Statement {
-  def str = s"def $name($inputs) -> ($outputs)$impl"
-  def children =  Iterable(name) ++ inputs ++ outputs ++ Iterable(impl)
-}
-
 case class TaskDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, outputs: Assignments, impl: Impl) extends Statement {
   def str = s"${decorators}task $name$env($inputs) -> ($outputs)$impl"
   def children = decorators.calls ++ Iterable(env, name, inputs, outputs, impl)
@@ -253,9 +249,9 @@ case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assi
   def children = decorators.calls ++ Iterable(name, inputs, impl)
 }
 
-case class DecoratorDef(name: Identifier, suffix: String, params: Identifiers, input: Identifier, output: Identifier, impl: Impl) extends Statement {
-  def str = s"def @$name[$suffix]$params($input) -> ($output)$impl"
-  def children = Iterable(name, params, input, output, impl)
+case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: Impl) extends Statement {
+  def str = s"""def $name($params) <- ($input = "$inputName")$impl"""
+  def children = Iterable(name, params, input, impl)
 }
 
 case class PlanDef(name: Identifier, taskRefs: Seq[TaskRefN]) extends Statement {
@@ -263,7 +259,7 @@ case class PlanDef(name: Identifier, taskRefs: Seq[TaskRefN]) extends Statement 
   def children = Iterable(name) ++ taskRefs
 }
 
-case class ImportStatement(fileName: String, importIndices: Option[IndicesN]) extends Statement {
-  def str = importIndices.fold(s"import $fileName")(indices => s"import $fileName under $indices")
+case class ImportStatement(fileName: String) extends Statement {
+  def str = s"import $fileName"
   def children = Nil
 }

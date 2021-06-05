@@ -11,6 +11,7 @@ case class Package(
                    name: Name,
                    cases: PointedCaseCube,
                    inputs: Map[Name, PointedCube[Value]],
+                   decorators: Seq[PointedCubeCall],
                    rawScript: PointedCube[Script]
              ) {
 
@@ -25,6 +26,7 @@ case class Package(
     Map(),
     Map(Name("package") -> PointedCube.Singleton(Value.Pure("package"))),
     Map(Name("package") -> env),
+    decorators,
     rawScript
   )
 

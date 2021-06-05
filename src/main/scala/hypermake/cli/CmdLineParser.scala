@@ -47,11 +47,11 @@ object CmdLineParser {
     opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
   }.map { case (opt, scriptFile, cmd, runOpts1, targets, runOpts2) =>
     val subtask = cmd match {
-      case "run"          => Subtask.Run(targets)
-      case "dry-run"      => Subtask.DryRun(targets)
-      case "invalidate"   => Subtask.Invalidate(targets)
-      case "mark-as-done" => Subtask.MarkAsDone(targets)
-      case "export-shell" => Subtask.ExportShell(targets)
+      case "run"          => Subcommand.Run(targets)
+      case "dry-run"      => Subcommand.DryRun(targets)
+      case "invalidate"   => Subcommand.Invalidate(targets)
+      case "mark-as-done" => Subcommand.MarkAsDone(targets)
+      case "export-shell" => Subcommand.ExportShell(targets)
     }
     Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subtask)
   }

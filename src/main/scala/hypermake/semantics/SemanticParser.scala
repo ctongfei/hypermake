@@ -4,7 +4,7 @@ import better.files._
 import cats.instances.all._
 import cats.syntax.unorderedTraverse._
 import hypermake.collection._
-import hypermake.core.{Env, Func, Package, Plan, PointedCubeTask, Script, Task, Value}
+import hypermake.core._
 import hypermake.exception._
 import hypermake.syntax._
 import hypermake.util._
@@ -121,9 +121,8 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     def denotation(impl: FuncCallImpl, localParams: Map[Name, PointedCube[Value]]) = {
       val func = getFunc(impl.call.funcName.!)
       val funcArgs = impl.call.inputs
-        .map { case (p, (_, a)) => p.! -> a.!(localParams) }.toMap
-        .unorderedSequence
-      funcArgs.map(func.reify)
+        .map { case (p, (_, a)) => p.! -> a.!(localParams) }
+      func.reify(funcArgs + (func.inputScript -> PointedCube.Singleton(Value.Pure("/dev/null")))).output  // TODO: delegate /dev/null to Env
     }
   }
 
@@ -139,10 +138,23 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     }
   }
 
+  implicit object ParseFuncCall extends Denotation[FuncCall, PointedCubeCall] {
+    def denotation(fc: FuncCall) = {
+      val f = getFunc(fc.funcName.!)
+      val args = fc.inputs.map { case (k, (_, v)) => k.! -> v.!! }
+      f.reify(args)
+    }
+  }
+
+  implicit object ParseDecoratorCall extends Denotation[DecoratorCall, PointedCubeCall] {
+    def denotation(dc: DecoratorCall) = dc.call.!
+  }
+
   implicit object ParseFunc extends Denotation[FuncDef, Func] {
     def denotation(fd: FuncDef) = {
-      val FuncDef(name, inputs, outputs, impl) = fd
-      Func(name.!, (inputs ++ outputs).map(_.!), impl.script.!)
+      val FuncDef(name, params, input, inputName, impl) = fd
+      val ps = params.map { case (k, (_, v)) => k.! -> v.!! }
+      Func(name.!, ps, input.!, inputName.value, impl.!())
     }
   }
 
@@ -151,7 +163,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
       val PackageDef(decorators, name, inputs, impl) = pd
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
       val axes = inputParams.values.map(_.cases.vars).fold(Set())(_ union _)
-      Package(name.!, allCases.filterVars(axes), inputParams, impl.!(inputParams))
+      Package(name.!, allCases.filterVars(axes), inputParams, decorators.calls.map(_.!), impl.!(inputParams))
     }
   }
 
@@ -166,10 +178,11 @@ class SemanticParser(implicit val ctx: SymbolTable) {
       val localParams = inputParams ++ outputParams
       val axes = inputParams.values.map(_.cases.vars).fold(Set())(_ union _)
       val script = impl.!(localParams)
+      val calls = decorators.calls.map(_.!)
       new PointedCubeTask(
         name.!, taskEnv, allCases.filterVars(axes),
         inputParams, inputEnvs, outputParams, outputEnvs,
-        script
+        calls, script
       )
     }
   }
@@ -254,7 +267,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     val content = f.lines.mkString("\n")
     val stmts = SyntacticParser.syntacticParse(content)
     val expandedStmts = stmts.flatMap {
-      case ImportStatement(fn, importIndices) =>
+      case ImportStatement(fn) =>
         readFileToStmts(resolveFile(fn))
       case stmt => Seq(stmt)
     }
@@ -266,7 +279,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
   }
 
   def parseTarget(tr: TaskRefN) = {
-    planTable.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!))
+    plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!))
   }
 
 }

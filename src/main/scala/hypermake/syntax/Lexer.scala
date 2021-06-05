@@ -6,7 +6,7 @@ object Lexer {
   import fastparse.NoWhitespace._
 
   val keywords = Set(
-    "def", "task", "plan", "service", "package", "import", "under"
+    "def", "task", "plan", "service", "package", "import"
   )
 
   def comment[_: P] = P { "#" ~ CharsWhile(_ != '\n', 0) }

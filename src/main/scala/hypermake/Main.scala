@@ -1,15 +1,16 @@
 package hypermake
 
 import better.files.File
+import fansi.Bold
 import zio._
 import zio.console._
-import hypermake.cli.CmdLineAST.{Cmd, Opt, RunOpt, Subtask}
+import hypermake.cli.CmdLineAST.{Cmd, Opt, RunOpt, Subcommand}
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
 import hypermake.core.{Job, Plan}
 import hypermake.execution.{Executor, RuntimeContext, Status}
 import hypermake.semantics.{SemanticParser, SymbolTable}
-import hypermake.util.printing.{C, O, RO}
+import hypermake.util.printing._
 
 object Main extends App {
 
@@ -19,29 +20,29 @@ object Main extends App {
 
     s"""
       | Hypermake $version
-      | Usage: hypermake [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
+      | Usage:
+      |   ${Bold.On("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
       |
       | Options:
-      |  -I <file>, --include=<file>   : Includes the specific Hypermake script to parse.
-      |  -H, --help                    : Prints this message and exit.
-      |  -S, --shell                   : Specify outer shell to use. By default this is "bash".
-      |  -V, --version                 : Shows Forge version and exit.
+      |  -I ${A("$file")}, --include=${A("$file")}  : Includes the specific Hypermake script ${A("file")} to parse.
+      |  -H, --help                 : Prints this message and exit.
+      |  -S, --shell                : Specify outer shell to use. By default this is "bash".
+      |  -V, --version              : Shows Hypermake version and exit.
       |
       | Running options:
-      |  -j <n>, --jobs=<n>            : Allow n jobs running in parallel at once.
-      |  -k, --keep-going              : Keep going even when some jobs failed.
-      |  -s, --silent                  : Silent mode: redirect stdout and stderr to files without printing them.
-      |  -v, --verbose                 : Verbose mode.
-      |  -y, --yes                     : Automatic "yes" to prompts.
+      |  -j ${A("$n")}, --jobs=${A("$n")}           : Allow ${A("n")} jobs running in parallel at once.
+      |  -k, --keep-going           : Keep going even when some jobs failed.
+      |  -s, --silent               : Silent mode: redirect stdout and stderr to files without printing them.
+      |  -v, --verbose              : Verbose mode.
+      |  -y, --yes                  : Automatic "yes" to prompts.
       |
       | Commands:
-      |  print <var>                   : Prints the specific Hypermake script variable.
-      |  run <tasks or plans>          : Runs the given tasks or plans (space delimited).
-      |  dry-run <tasks or plans>      : Lists all dependent tasks implicated by the given tasks or plans.
-      |  invalidate <tasks or plans>   : Invalidates the given tasks or plans.
-      |  remove <tasks>                : Removes the output of the given tasks or plans.
-      |  mark-as-done <tasks or plans> : Mark the given tasks as normally exited.
-      |  export-shell <tasks or plans> : Generates an equivalent shell script that runs the given tasks.
+      |  run ${A("$targets")}               : Runs the given tasks or plans (space delimited).
+      |  dry-run ${A("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
+      |  invalidate ${A("$targets")}        : Invalidates the given tasks or plans.
+      |  remove ${A("$targets")}            : Removes the output of the given tasks or plans.
+      |  mark-as-done ${A("$targets")}      : Mark the given tasks as normally exited.
+      |  export-shell ${A("$targets")}      : Generates an equivalent shell script that runs the given tasks.
       |
       |""".stripMargin
   }
@@ -80,7 +81,7 @@ object Main extends App {
           managedCli <- cli
           task <- managedCli.use { cli =>
             subtask match {
-              case Subtask.Run(ts) =>
+              case Subcommand.Run(ts) =>
                 val jobGraph = new Plan(ts flatMap parser.parseTarget).dependencyGraph
                 for {
                   _ <- cli.initialize
@@ -91,7 +92,7 @@ object Main extends App {
                   _ <- cli.tearDown
                 } yield u
 
-              case Subtask.DryRun(ts) =>
+              case Subcommand.DryRun(ts) =>
                 val jobGraph = new Plan(ts flatMap parser.parseTarget).dependencyGraph
                 for {
                   _ <- cli.initialize
@@ -101,9 +102,9 @@ object Main extends App {
                   _ <- cli.tearDown
                 } yield u
 
-              case Subtask.Invalidate(ts) => ???
+              case Subcommand.Invalidate(ts) => ???
 
-              case Subtask.MarkAsDone(ts) =>
+              case Subcommand.MarkAsDone(ts) =>
                 val jobs = ts flatMap parser.parseTarget flatMap { _.allElements }
                 for {
                   _ <- cli.initialize
@@ -114,7 +115,7 @@ object Main extends App {
                   _ <- cli.tearDown
                 } yield u
 
-              case Subtask.ExportShell(ts) => ???
+              case Subcommand.ExportShell(ts) => ???
 
             }
           }

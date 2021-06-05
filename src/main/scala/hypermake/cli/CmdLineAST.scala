@@ -8,7 +8,7 @@ object CmdLineAST {
   object Cmd {
     case object Help                 extends Cmd // H
     case object Version              extends Cmd // V
-    case class Run(options: Seq[Opt], script: String, runOptions: Seq[RunOpt], task: Subtask) extends Cmd
+    case class Run(options: Seq[Opt], script: String, runOptions: Seq[RunOpt], task: Subcommand) extends Cmd
   }
 
   sealed abstract class Opt
@@ -27,14 +27,14 @@ object CmdLineAST {
     case object Yes                  extends RunOpt // y
   }
 
-  sealed trait Subtask
-  object Subtask {
+  sealed trait Subcommand
+  object Subcommand {
 
-    case class Run(tasks: Seq[TaskRefN]) extends Subtask
-    case class DryRun(tasks: Seq[TaskRefN]) extends Subtask
-    case class Invalidate(tasks: Seq[TaskRefN]) extends Subtask
-    case class MarkAsDone(tasks: Seq[TaskRefN]) extends Subtask
-    case class ExportShell(tasks: Seq[TaskRefN]) extends Subtask
+    case class Run(tasks: Seq[TaskRefN]) extends Subcommand
+    case class DryRun(tasks: Seq[TaskRefN]) extends Subcommand
+    case class Invalidate(tasks: Seq[TaskRefN]) extends Subcommand
+    case class MarkAsDone(tasks: Seq[TaskRefN]) extends Subcommand
+    case class ExportShell(tasks: Seq[TaskRefN]) extends Subcommand
 
   }
 

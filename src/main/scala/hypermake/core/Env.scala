@@ -111,7 +111,7 @@ object Env {
   def getValueByName(name: String)(implicit ctx: SymbolTable) = ctx.getValue(Name(name)).default.value
   def getValueByNameOpt(name: String)(implicit ctx: SymbolTable) = ctx.getValueOpt(Name(name)).map(_.default.value)
 
-  def getScriptByName(name: String)(implicit ctx: SymbolTable) = ctx.getFunc(Name(name)).script
+  def getScriptByName(name: String)(implicit ctx: SymbolTable) = ctx.getFunc(Name(name)).impl.default
 
   def apply(name: Name)(implicit ctx: SymbolTable) = {
     if (name.name == "local")
