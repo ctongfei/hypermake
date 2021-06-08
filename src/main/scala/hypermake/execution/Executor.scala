@@ -14,8 +14,8 @@ object Executor {
   def run(jobs: Iterable[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
-      _ <- ZIO.foreach_(jobs) { j => semaphore.withPermit(action(j)) }
-    } yield ()
+      u <- ZIO.foreach_(jobs) { j => semaphore.withPermit(action(j)).orElseSucceed(()) }
+    } yield u
   }
 
   /**
@@ -32,14 +32,17 @@ object Executor {
         for {
           _ <- ZIO.foreach_(jobs.incomingNodes(j))(i => promises(i).await)
           (hasRun, successful) <- semaphore.withPermit(j.executeIfNotDone(cli))
-          _ <- if (!hasRun) cli.update(j, Status.Complete) *> promises(j).succeed(())
-          else if (successful) cli.update(j, Status.Succeeded) *> promises(j).succeed(())
-          else cli.update(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
-        } yield ()
+          u <-
+            if (!hasRun)
+              cli.update(j, Status.Complete) *> promises(j).succeed(())
+            else if (successful)
+              cli.update(j, Status.Succeeded) *> promises(j).succeed(())
+            else cli.update(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
+        } yield u
       }
       allFibers <- ZIO.forkAll(effects)
-      _ <- allFibers.join
-    } yield ()
+      u <- allFibers.join
+    } yield u
   }
 
 }

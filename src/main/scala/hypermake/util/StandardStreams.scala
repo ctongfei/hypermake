@@ -26,6 +26,7 @@ object StandardStreams {
   class PrefixedOutputStream(os: OutputStream, prefix: String) extends FilterOutputStream(os) {
     override def write(b: Array[Byte], off: Int, len: Int): Unit = os.synchronized {
       val lines = new String(b, off, len, StandardCharsets.UTF_8).split('\n')
+      os.write("\n".getBytes())
       for (line <- lines) {
         os.write((prefix + line + "\n").getBytes(StandardCharsets.UTF_8))
       }

@@ -49,8 +49,8 @@ object Style {
       val a = Back.Black ++ Color.DarkGray
       val n = Back.Black ++ Bold.On ++ Color.DarkGray
       val jobName = n(j.name.name)
-      val jobArgs = j.`case`.underlying.map {
-        case (Name(k), v) => a(s"$k:") ++ (a ++ Bold.On)(v)
+      val jobArgs = j.argsDefault.map {
+        case (k, v) => a(s"$k:") ++ (a ++ Bold.On)(v)
       }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(n("default "))
       (b(" ") ++ jobName ++ a("  ") ++ jobArgs ++ f(" ")).render
     }
@@ -60,8 +60,8 @@ object Style {
       val f = bgAsFg(s)
       val a = args(s)
       val jobName = name(s)(j.name.name)
-      val jobArgs = j.`case`.underlying.map {
-        case (Name(k), v) => a(s"$k:") ++ (a ++ Bold.On)(v)
+      val jobArgs = j.argsDefault.map {
+        case (k, v) => a(s"$k:") ++ (a ++ Bold.On)(v)
       }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(args(s)("default "))
       val statusStr = (bgAsFg(s) ++ Bold.On)(s.text)
       (b(" ") ++ jobName ++ b("  ") ++ jobArgs ++ f(" ") ++ statusStr).render

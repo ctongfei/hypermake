@@ -6,9 +6,15 @@ object CmdLineAST {
 
   sealed abstract class Cmd
   object Cmd {
-    case object Help                 extends Cmd // H
-    case object Version              extends Cmd // V
-    case class Run(options: Seq[Opt], script: String, runOptions: Seq[RunOpt], task: Subcommand) extends Cmd
+    case object Help    extends Cmd // H
+    case object Version extends Cmd // V
+    case class Run(
+                    options: Seq[Opt],
+                    script: String,
+                    runOptions: Seq[RunOpt],
+                    task: Subcommand,
+                    targets: Seq[TaskRefN]
+                  ) extends Cmd
   }
 
   sealed abstract class Opt
@@ -29,13 +35,13 @@ object CmdLineAST {
 
   sealed trait Subcommand
   object Subcommand {
-
-    case class Run(tasks: Seq[TaskRefN]) extends Subcommand
-    case class DryRun(tasks: Seq[TaskRefN]) extends Subcommand
-    case class Invalidate(tasks: Seq[TaskRefN]) extends Subcommand
-    case class MarkAsDone(tasks: Seq[TaskRefN]) extends Subcommand
-    case class ExportShell(tasks: Seq[TaskRefN]) extends Subcommand
-
+    case object Run extends Subcommand
+    case object DryRun extends Subcommand
+    case object Invalidate extends Subcommand
+    case object Unlock extends Subcommand
+    case object Remove extends Subcommand
+    case object MarkAsDone extends Subcommand
+    case object ExportShell extends Subcommand
   }
 
 }

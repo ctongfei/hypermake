@@ -98,7 +98,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
       val indices = indicesN.!
       task.curry(indices.vars) map { t =>
         Value.Multiple(
-          cases = t.selectMany(indices).allElements.map(_.outputs(output.!)),
+          cases = t.selectMany(indices).map(_.outputs(output.!)),
           env = task.env
         )
       }
@@ -233,7 +233,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
           val func = fd.!
           funcTable += f -> func
         }
-      case td: TaskDef => // TODO: decorator not handled
+      case td: TaskDef =>
         val t = td.name.!
         if (taskTable contains t) throw DuplicatedDefinitionException("Task", t.name)
         else {

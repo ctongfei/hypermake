@@ -12,6 +12,8 @@ class Graph[A](
               ) {
 
   def nodes: Set[A] = adjMap.keySet
+  def numNodes = nodes.size
+
   def containsNode(a: A) = adjMap.contains(a)
   def containsArc(a: A, b: A): Boolean = adjMap.contains(a) && adjMap(a).contains(b)
 
@@ -60,20 +62,20 @@ object Graph {
 
   /**
    * Performs a traversal to resolve all dependent tasks of the given targets.
-   * @param targets A collection of target tasks
+   * @param sources A collection of target tasks
    * @return The task dependency DAG
    */
-  def resolveFromTargets[A](targets: Iterable[A], predecessors: A => Iterable[A]): Graph[A] = {
+  def traverse[A](sources: Iterable[A], next: A => Iterable[A]): Graph[A] = {
     val g = Graph[A]()
     val s = mutable.HashSet[A]()
-    val q = mutable.Queue.from(targets)
+    val q = mutable.Queue.from(sources)
 
     while (q.nonEmpty) {
       val c = q.dequeue()
       if (!s.contains(c)) {
         g.addNode(c)
         s.add(c)
-        for (d <- predecessors(c)) {
+        for (d <- next(c)) {
           g.addNode(d)
           g.addArc(d, c)
           q.enqueue(d)

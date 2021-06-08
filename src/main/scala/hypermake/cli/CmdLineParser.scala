@@ -14,10 +14,10 @@ object CmdLineParser {
   import hypermake.syntax.SyntacticParser._
 
   def include[_: P] =
-    P { ("-I" | "--include") ~ string } map { i => Opt.Include(i) }
+    P { ("-I" | "--include") ~ string } map Opt.Include
 
   def shell[_: P] =
-    P { ("-S" | "--shell") ~ string } map { s => Opt.Shell(s) }
+    P { ("-S" | "--shell") ~ string } map Opt.Shell
 
   def help[_: P]: P[Cmd] = P { "--help" | "-H" | "-h" } map { _ => Cmd.Help }
   def version[_: P]: P[Cmd] = P { "--version" | "-V" } map { _ => Cmd.Version }
@@ -25,35 +25,37 @@ object CmdLineParser {
   def numJobs[_: P] =
     P { "-j" ~ Lexer.digit.rep.! } map { j => RunOpt.NumJobs(j.toInt) }
 
-  def keepGoing[_: P]: P[RunOpt] = P { "--keep-going" | "-k" } map { _ => RunOpt.KeepGoing }
-
-  def silent[_: P]: P[RunOpt] = P { "--silent" | "-s" } map { _ => RunOpt.Silent }
-
-  def verbose[_: P]: P[RunOpt] = P { "--verbose" | "-v" } map { _ => RunOpt.Verbose }
-
-  def yes[_: P]: P[RunOpt] = P { "--yes" | "-y" } map { _ => RunOpt.Yes }
-
+  def switch[_: P](short: String, long: String, out: RunOpt): P[RunOpt] =
+    P { long | short } map { _ => out }
 
   def opt[_: P]: P[Opt] = P { include | shell }
-  def runtimeOpts[_: P] = P { numJobs | keepGoing | silent | verbose | yes }
+  def runtimeOpts[_: P] = P {
+    numJobs |
+      switch("-k", "--keep-going", RunOpt.KeepGoing) |
+      switch("-s", "--silent", RunOpt.Silent) |
+      switch("-v", "--verbose", RunOpt.Verbose) |
+      switch("-y", "--yes", RunOpt.Yes)
+  }
 
   def target[_: P] = SyntacticParser.taskRefN
 
   def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
 
-  def command[_: P] = P { "run".! | "dry-run".! | "invalidate".! | "mark-as-done".! | "export-shell".! }
+  def command[_: P] = P { "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! | "export-shell".! }
 
   def run[_: P] = P {
     opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
   }.map { case (opt, scriptFile, cmd, runOpts1, targets, runOpts2) =>
     val subtask = cmd match {
-      case "run"          => Subcommand.Run(targets)
-      case "dry-run"      => Subcommand.DryRun(targets)
-      case "invalidate"   => Subcommand.Invalidate(targets)
-      case "mark-as-done" => Subcommand.MarkAsDone(targets)
-      case "export-shell" => Subcommand.ExportShell(targets)
+      case "run"          => Subcommand.Run
+      case "dry-run"      => Subcommand.DryRun
+      case "invalidate"   => Subcommand.Invalidate
+      case "unlock"       => Subcommand.Unlock
+      case "remove"       => Subcommand.Remove
+      case "mark-as-done" => Subcommand.MarkAsDone
+      case "export-shell" => Subcommand.ExportShell
     }
-    Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subtask)
+    Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subtask, targets)
   }
 
   def cmdArgs[_: P] = P {

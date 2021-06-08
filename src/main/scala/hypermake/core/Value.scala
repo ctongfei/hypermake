@@ -36,9 +36,9 @@ object Value {
     def dependencies = Set(job)
   }
 
-  case class Multiple(cases: Iterable[Value], env: Env)(implicit runtime: RuntimeContext) extends Path {
-    override def value = cases.map(_.value).mkString(runtime.IFS_CHAR)
-    override def dependencies = cases.map(_.dependencies).reduce(_ union _)
+  case class Multiple(cases: Cube[Value], env: Env)(implicit runtime: RuntimeContext) extends Path {
+    override def value = cases.map(_.value).allElements.mkString(runtime.IFS_CHAR)
+    override def dependencies = cases.map(_.dependencies).allElements.reduce(_ union _)
   }
 
 }

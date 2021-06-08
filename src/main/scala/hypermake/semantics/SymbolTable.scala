@@ -68,14 +68,21 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
     clauses.mkString(", ")
   }
 
-  def argsStringDefault(args: Map[Name, String]) = {
-    import fansi._
+  def argsDefault(args: Map[Name, String]): Seq[(String, String)] = {
     val sortedArgs = args.toArray.sortBy(_._1)
     val clauses = sortedArgs.collect {
       case (a, k) if getAxis(a).default != k =>
-        s"${Color.Yellow(a.name)}: ${Bold.On(Color.LightGreen(k))}"
+        a.name -> k
     }
-    if (clauses.length == 0) Color.LightGreen("default").render else clauses.mkString(", ")
+    clauses
+  }
+
+  def argsStringDefault(args: Map[Name, String]) = {
+    import fansi._
+    val clauses = argsDefault(args)
+    if (clauses.isEmpty)
+      Color.LightGreen("default").render
+    else clauses.map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }.mkString(", ")
   }
 
   def envOutputRoot(env: Name): String =

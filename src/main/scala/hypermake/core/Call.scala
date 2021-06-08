@@ -2,7 +2,6 @@ package hypermake.core
 
 import scala.collection._
 import hypermake.collection._
-import hypermake.execution.RuntimeContext
 import hypermake.semantics._
 import hypermake.util._
 

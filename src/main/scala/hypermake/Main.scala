@@ -40,6 +40,7 @@ object Main extends App {
       |  run ${A("$targets")}               : Runs the given tasks or plans (space delimited).
       |  dry-run ${A("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
       |  invalidate ${A("$targets")}        : Invalidates the given tasks or plans.
+      |  unlock ${A("$targets")}            : Unlocks the given tasks if another instance of Hypermake unexpectedly killed.
       |  remove ${A("$targets")}            : Removes the output of the given tasks or plans.
       |  mark-as-done ${A("$targets")}      : Mark the given tasks as normally exited.
       |  export-shell ${A("$targets")}      : Generates an equivalent shell script that runs the given tasks.
@@ -55,7 +56,7 @@ object Main extends App {
     cmd match {
       case Cmd.Help => putStrLn(helpMessage) as ExitCode(0)
       case Cmd.Version => putStrLn(s"HyperMake $version") as ExitCode(0)
-      case Cmd.Run(options, scriptFile, runOptions, subtask) =>
+      case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
 
         implicit val runtime: RuntimeContext = RuntimeContext.create(
           includePaths = options.collect { case Opt.Include(f) => f },
@@ -72,6 +73,8 @@ object Main extends App {
         runtime.includePaths foreach { f => parser.semanticParse(File(f)) }
         parser.semanticParse(File(scriptFile))
 
+        val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
+
         def printJobStatus(job: Job, cli: CLI.Service) = for {
           done <- job.isDone
           _ <- cli.update(job, if (done) Status.Complete else Status.Pending)
@@ -80,44 +83,61 @@ object Main extends App {
         val eff = for {
           managedCli <- cli
           task <- managedCli.use { cli =>
-            subtask match {
-              case Subcommand.Run(ts) =>
-                val jobGraph = new Plan(ts flatMap parser.parseTarget).dependencyGraph
+            val effect = subtask match {
+              case Subcommand.Run =>
+                val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
                 for {
-                  _ <- cli.initialize
-                  _ <- putStrLn("The following jobs will be run:")
+                  _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs will be run:")
                   _ <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
-                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask("Continue? [y/n]: ")
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
-                  _ <- cli.tearDown
                 } yield u
 
-              case Subcommand.DryRun(ts) =>
-                val jobGraph = new Plan(ts flatMap parser.parseTarget).dependencyGraph
+              case Subcommand.DryRun =>
+                val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
                 for {
-                  _ <- cli.initialize
-                  _ <- putStrLn("The following jobs are implied in the given target:")
+                  _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
                   u <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
                   _ <- getStrLn
-                  _ <- cli.tearDown
                 } yield u
 
-              case Subcommand.Invalidate(ts) => ???
+              case Subcommand.Invalidate => ???
 
-              case Subcommand.MarkAsDone(ts) =>
-                val jobs = ts flatMap parser.parseTarget flatMap { _.allElements }
+              case Subcommand.Unlock =>
                 for {
-                  _ <- cli.initialize
+                  _ <- putStrLn("The following jobs will be unlocked:")
+                  _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
+                  u <- if (yes) Executor.run(jobs)(_.forceUnlock as true) else ZIO.succeed(())
+                } yield u
+
+              case Subcommand.Remove =>
+                for {
+                  _ <- putStrLn(s"The output of the following jobs will be removed:")
+                  _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
+                  u <- if (yes) Executor.run(jobs) { j =>
+                    putStrLn(s"Removing job at ${j.absolutePath}") *> j.removeOutputs as true
+                  } else ZIO.succeed(())
+                } yield u
+
+              case Subcommand.MarkAsDone =>
+                for {
                   _ <- putStrLn("The following jobs are to be marked as done:")
                   _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
-                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask("Continue? [y/n]: ")
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(jobs)(_.markAsDone(cli)) else ZIO.succeed(())
-                  _ <- cli.tearDown
                 } yield u
 
-              case Subcommand.ExportShell(ts) => ???
+              case Subcommand.ExportShell =>
+                ???
 
             }
+            for {
+              _ <- cli.initialize
+              _ <- effect
+              u <- cli.tearDown
+            } yield u
           }
         } yield task
 

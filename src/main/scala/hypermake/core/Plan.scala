@@ -7,7 +7,7 @@ import scala.collection._
 /**
  * Represents a collection of slices of tasks whose execution can be invoked from the command line.
  */
-class Plan(val targets: Seq[Cube[Task]]) {
+class Plan(val targets: Seq[Cube[Job]]) {
 
   /**
    * Performs a traversal to resolve all dependent tasks of a given plan.
@@ -15,7 +15,7 @@ class Plan(val targets: Seq[Cube[Task]]) {
    */
   def dependencyGraph: Graph[Job] = {
     val targetJobs = targets.flatMap(_.allElements)
-    Graph.resolveFromTargets(targetJobs, _.dependentJobs)
+    Graph.traverse(targetJobs, _.dependentJobs)
   }
 
 }

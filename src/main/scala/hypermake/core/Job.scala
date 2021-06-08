@@ -1,20 +1,14 @@
 package hypermake.core
 
-import better.files.File
-import hypermake.cli.CLI
-
 import scala.collection._
 import scala.collection.decorators._
 import zio._
-import zio.console._
+import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.execution._
 import hypermake.semantics.SymbolTable
 import hypermake.util._
 import hypermake.util.Escaper._
-import zio.stream.ZSink
-
-import java.nio.file.Paths
 
 /**
  * A job is any block of shell script that is executed by HyperMake.
@@ -24,7 +18,7 @@ import java.nio.file.Paths
 abstract class Job(implicit ctx: SymbolTable) {
 
   import ctx._
-  implicit def runtime: RuntimeContext = ctx.runtime
+  implicit val runtime: RuntimeContext = ctx.runtime
 
   def name: Name
   def env: Env
@@ -57,7 +51,7 @@ abstract class Job(implicit ctx: SymbolTable) {
   lazy val dependentJobs: Set[Job] =
     inputs.values.map(_.dependencies).fold(Set())(_ union _)
 
-  lazy val script: Script = rawScript.withNewArgs(inputs ++ outputs)
+  lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs, rawScript.outputArgs ++ outputs)(runtime)
 
   lazy val outputAbsolutePaths =
     outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, absolutePath) }
@@ -69,10 +63,10 @@ abstract class Job(implicit ctx: SymbolTable) {
   } yield exitCode == 0 && outputsExist
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
-  def linkInputs: HIO[Unit] = ZIO.collectAllPar_ {
+  def linkInputs: HIO[Map[String, Option[String]]] = ZIO.collectAllPar {
     for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
-      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath))
-  }
+      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _)
+  }.map(_.toMap)
 
   /** An operation that checks the output of this job and the exit status of this job. */
   def checkOutputs: HIO[Boolean] = {
@@ -83,27 +77,36 @@ abstract class Job(implicit ctx: SymbolTable) {
   }
 
   /** Writes the script and decorating calls to the working directory. */
-  def writeScript: HIO[Map[String, String]] = {
+  def writeScript(linkedArgs: Map[String, Option[String]]): HIO[Map[String, String]] = {
+
+    def mergeArgs(args: Map[String, String], linkedArgs: Map[String, Option[String]]) = {
+      args ++ linkedArgs.collect { case (k, Some(v)) => k -> v }
+    }
+
     val scriptNames = decorators.map(_.inputScriptFilename)
     for {
       finalScript <- ZIO.foldLeft(decorators zip scriptNames)(script) { case (scr, (c, name)) =>
         env.write(absolutePath / name, scr.script) as c(scr)
-      }
+      }  // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
-      _ <- env.write(absolutePath / "args", finalScript.args.map { case (k, v) => s"""$k="${C.escape(v.value)}""""}.mkString("\n"))
-    } yield finalScript.strArgs
+      mergedArgs = mergeArgs(finalScript.strArgs, linkedArgs)
+      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k="${C.escape(v)}""""}.mkString("\n")
+      )
+    } yield mergedArgs
   }
 
   def execute(cli: CLI.Service): HIO[Boolean] = {
+
+
     val effect = for {
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
-      args <- writeScript
-      _ <- linkInputs
+      linkedArgs <- linkInputs
+      args <- writeScript(linkedArgs)
       _ <- cli.update(this, Status.Running)
       (outSink, errSink) <- cli.getSinks(this)
-      exitCode <- env.execute(absolutePath, script.interpreter, Seq("script.sh"), args, outSink, errSink)
+      exitCode <- env.execute(absolutePath, runtime.SHELL, Seq("script.sh"), args, outSink, errSink)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
@@ -120,7 +123,6 @@ abstract class Job(implicit ctx: SymbolTable) {
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
-      _ <- writeScript
       _ <- cli.update(this, Status.Running)
       _ <- ZIO.foreach_(outputAbsolutePaths zipByKey outputEnvs) { case (_, (p, e)) => e.touch(p) }
       _ <- env.write(absolutePath / "exitcode", "0")
@@ -129,8 +131,13 @@ abstract class Job(implicit ctx: SymbolTable) {
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
   }
 
+  def forceUnlock: HIO[Unit] =
+    env.forceUnlock(absolutePath)
+
   def removeOutputs: HIO[Unit] =
     env.delete(absolutePath)
+
+  def argsDefault = ctx.argsDefault(`case`.underlying)
 
   def argsString = ctx.argsString(`case`.underlying)
 

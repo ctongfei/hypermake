@@ -9,6 +9,7 @@ theme:
   palette:
     scheme: default
     primary: 'blue grey'
+    accent: grey
 
 repo_name: 'ctongfei/hypermake'
 repo_url: 'https://github.com/ctongfei/hypermake'
@@ -23,3 +24,4 @@ nav:
   - 'Tutorial':
       - "01 Hello, world!": 'tutorial/01-hello.md'
       - "02 Inputs & outputs": 'tutorial/02-compose.md'
+      - "03 Parameters": 'tutorial/03-branch.md'

@@ -10,10 +10,11 @@ import hypermake.syntax.SyntacticParser
 
 object ParserTest extends App {
 
-//  import fastparse._
-//  val ast = parse("""task t0() -> out:
-//      a
-//    """, SyntacticParser.taskDef(_)).get.get
+  import fastparse._
+  val ast = parse(
+    """task a() -> ():
+      |  print
+      |""".stripMargin, SyntacticParser.taskDef(_)).get.get
 
   implicit val rt = RuntimeContext.create()
   implicit val ctx = new SymbolTable()

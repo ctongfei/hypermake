@@ -82,19 +82,32 @@ trait Env {
   def locked(f: String): HIO[Boolean] = exists(s"$f/.lock")
   def lock(f: String): HIO[Unit] = locked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f/.lock")
   def unlock(f: String): HIO[Unit] = locked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f/.lock")
+  def forceUnlock(f: String): HIO[Unit] = for {
+    isLocked <- locked(f)
+    u <- if (isLocked) delete(s"$f/.lock") else ZIO.succeed(())
+  } yield u
 
-  def linkValue(x: Value, dst: => String): HIO[Unit] = x match {
-    case Value.Pure(_) => ZIO.unit  // do nothing
-    case Value.Input(path, env) =>
-      if (env == this) link(path, dst)
-      else copyFrom(path, env, dst)
-    case Value.Output(path, env, job) =>
-      if (env == this) link(resolvePath(path, job.absolutePath), dst)
-      else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
-    case Value.Multiple(values, _) => for {
-      _ <- mkdir(dst)
-      r <- ZIO.foreachPar_(values.zipWithIndex) { case (v, i) => linkValue(v, s"$dst/$i") }
-    } yield r
+  def linkValue(x: Value, dst: String)(implicit ctx: SymbolTable): HIO[Option[String]] = {
+    val base = dst.split('/').last  // get basename of dst
+    x match {
+      case Value.Pure(_) => ZIO.none  // do nothing
+      case Value.Input(path, env) =>
+        val e = if (env == this) link(path, dst)
+        else copyFrom(path, env, dst)
+        e as Some(base)
+      case Value.Output(path, env, job) =>
+        val e = if (env == this) link(resolvePath(path, job.absolutePath), dst)
+        else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
+        e as Some(base)
+      case Value.Multiple(values, _) =>
+        for {
+          _ <- mkdir(dst)
+          r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
+            val argsString = ctx.escapedArgsString(c.underlying)
+            linkValue(v, s"$dst/$argsString") as s"$base/$argsString"
+          }
+        } yield Some(r.mkString(ctx.runtime.IFS_CHAR))
+    }
   }
 
   override def toString = name
