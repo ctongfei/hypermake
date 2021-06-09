@@ -6,10 +6,23 @@ import hypermake.collection._
 import hypermake.exception.JobFailedException
 import hypermake.cli._
 import hypermake.core._
+import hypermake.semantics.SymbolTable
 import hypermake.util._
+
+import java.time._
 
 
 object Executor {
+
+  def backupJob(jobs: Iterable[Job])(implicit ctx: SymbolTable): HIO[Unit] = {
+    val nowStr = Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime.toString
+    val env = ctx.localEnv
+    val logPath = s"${env.root}/.runs/$nowStr"
+    for {
+      _ <- env.mkdir(logPath)
+      u <- env.write(s"$logPath/jobs", jobs.map(_.toString).mkString("\n"))
+    } yield u
+  }
 
   def run(jobs: Iterable[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
     for {

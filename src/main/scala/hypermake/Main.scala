@@ -12,6 +12,8 @@ import hypermake.execution.{Executor, RuntimeContext, Status}
 import hypermake.semantics.{SemanticParser, SymbolTable}
 import hypermake.util.printing._
 
+import java.time.{Instant, ZoneId}
+
 object Main extends App {
 
   val version = "0.1.0"
@@ -86,11 +88,12 @@ object Main extends App {
             val effect = subtask match {
               case Subcommand.Run =>
                 val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
+                val sortedJobs = jobGraph.topologicalSort
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs will be run:")
-                  _ <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
+                  _ <- ZIO.foreach_(sortedJobs)(printJobStatus(_, cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
-                  u <- if (yes) Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
+                  u <- if (yes) Executor.backupJob(sortedJobs) *> Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
                 } yield u
 
               case Subcommand.DryRun =>
@@ -141,8 +144,7 @@ object Main extends App {
           }
         } yield task
 
-
-        eff as ExitCode(0) orElseSucceed ExitCode(1)
+        (eff as ExitCode(0)).orDie
     }
   }
 
