@@ -97,7 +97,6 @@ abstract class Job(implicit ctx: SymbolTable) {
 
   def execute(cli: CLI.Service): HIO[Boolean] = {
 
-
     val effect = for {
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
@@ -136,6 +135,9 @@ abstract class Job(implicit ctx: SymbolTable) {
 
   def removeOutputs: HIO[Unit] =
     env.delete(absolutePath)
+
+  def invalidate: HIO[Unit] =
+    env.delete(absolutePath / "exitcode")
 
   def argsDefault = ctx.argsDefault(`case`.underlying)
 

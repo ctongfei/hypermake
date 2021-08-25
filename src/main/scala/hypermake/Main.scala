@@ -4,12 +4,13 @@ import better.files.File
 import fansi.Bold
 import zio._
 import zio.console._
-import hypermake.cli.CmdLineAST.{Cmd, Opt, RunOpt, Subcommand}
+import hypermake.cli.CmdLineAST._
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
 import hypermake.core.{Job, Plan}
 import hypermake.execution.{Executor, RuntimeContext, Status}
 import hypermake.semantics.{SemanticParser, SymbolTable}
+import hypermake.syntax.SyntacticParser
 import hypermake.util.printing._
 
 import java.time.{Instant, ZoneId}
@@ -58,21 +59,15 @@ object Main extends App {
     cmd match {
       case Cmd.Help => putStrLn(helpMessage) as ExitCode(0)
       case Cmd.Version => putStrLn(s"HyperMake $version") as ExitCode(0)
+
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
 
-        implicit val runtime: RuntimeContext = RuntimeContext.create(
-          includePaths = options.collect { case Opt.Include(f) => f },
-          shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse("bash"),
-          numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
-          keepGoing = runOptions contains RunOpt.KeepGoing,
-          silent = runOptions contains RunOpt.Silent,
-          yes = runOptions contains RunOpt.Yes
-        )
+        implicit val runtime: RuntimeContext = RuntimeContext.createFromCliOptions(options, runOptions)
         val cli = PlainCLI.create()
 
         implicit val ctx: SymbolTable = new SymbolTable()
         val parser = new SemanticParser()
-        runtime.includePaths foreach { f => parser.semanticParse(File(f)) }
+        runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
         parser.semanticParse(File(scriptFile))
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
@@ -104,7 +99,20 @@ object Main extends App {
                   _ <- getStrLn
                 } yield u
 
-              case Subcommand.Invalidate => ???
+              case Subcommand.Invalidate =>
+                val allRuns = File(s"${ctx.localEnv.root}/.runs").children.map(_ / "jobs")
+                val allRunJobs = allRuns.flatMap(_.lines).toSet.map { s =>
+                  parser.parseTask(fastparse.parse(s, SyntacticParser.taskRef1(_)).get.value)
+                }
+                val jobGraph = Graph.traverse[Job](allRunJobs, _.dependentJobs)
+                val jobsToBeInvalidated = Graph.traverse[Job](jobs, jobGraph.outgoingNodes)
+                val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
+                for {
+                  _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs are to be invalidated:")
+                  _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(printJobStatus(_, cli))
+                  yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
+                  u <- if (yes) Executor.run(sortedJobsToBeInvalidated)(_.invalidate as true) else ZIO.succeed(())
+                } yield u
 
               case Subcommand.Unlock =>
                 for {
@@ -133,7 +141,7 @@ object Main extends App {
                 } yield u
 
               case Subcommand.ExportShell =>
-                ???
+                putStrLn("Not yet implemented.")
 
             }
             for {

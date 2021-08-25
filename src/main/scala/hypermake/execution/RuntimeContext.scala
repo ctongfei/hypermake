@@ -1,6 +1,8 @@
 package hypermake.execution
 
 import better.files.File
+import hypermake.cli.CmdLineAST
+import hypermake.cli.CmdLineAST.{Opt, RunOpt}
 
 import java.io.{File => JFile, _}
 import java.nio.file.{Files => JFiles, _}
@@ -50,7 +52,7 @@ class RuntimeContext private(
     JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
   /**
-   * Resolves a Forge script file from `HYPERMAKEPATH`.
+   * Resolves a script file from `HYPERMAKEPATH`.
    * @param fn File name to resolve
    * @return The file
    */
@@ -92,5 +94,15 @@ object RuntimeContext {
       silent = silent,
       yes = yes
     )
+
+  def createFromCliOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = create(
+    includePaths = options.collect { case Opt.Include(f) => f },
+    shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse("bash"),
+    numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
+    keepGoing = runOptions contains RunOpt.KeepGoing,
+    silent = runOptions contains RunOpt.Silent,
+    yes = runOptions contains RunOpt.Yes
+  )
+
 
 }

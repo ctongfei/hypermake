@@ -34,7 +34,6 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
   def getValue(name: Name) = valueTable.getOrElse(name, throw UndefinedException("Value", name))
   def getValueOpt(name: Name) = valueTable.get(name)
 
-
   def getFunc(name: Name) = funcTable.getOrElse(name, throw UndefinedException("Function", name))
   def getTask(name: Name) = taskTable.getOrElse(name, throw UndefinedException("Task", name))
   def getPlan(name: Name) = planTable.getOrElse(name, throw UndefinedException("Plan", name))
@@ -87,11 +86,5 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
 
   def envOutputRoot(env: Name): String =
     getValueOpt(Name(s"${env.name}_root")).map(_.default.value).getOrElse("out")
-
-}
-
-object SymbolTable {
-
-
 
 }
