@@ -1,0 +1,50 @@
+def git(repo, args="") <- inner="build.sh":
+   git clone $args $repo package
+   cd package
+   ln -s ../$inner build.sh
+   bash build.sh
+
+def venv(env) <- script="venv.internal.sh":
+  . $env/bin/activate
+  . $script
+  deactivate
+
+@git(repo="https://github.com/ctongfei/unli")
+package unli:
+  true
+
+task unliEnv(unli=$) -> env:
+  virtualenv $env
+  . $env/bin/activate
+  pip install -r $unli/requirements.txt
+
+snli_url = "https://nlp.stanford.edu/projects/snli/snli_1.0.zip"
+u_snli_url = "http://nlp.jhu.edu/unli/u-snli.zip"
+
+task snli(snli_url=$) -> out:
+  mkdir -p $out
+  curl -o snli_1.0.zip $snli_url
+  unzip snli_1.0.zip
+  mv snli_1.0/* $out
+  rm -r snli_1.0
+
+task uSnliCsv(u_snli_url=$) -> out:
+  mkdir -p $out
+  wget $u_snli_url
+  unzip u-snli.zip
+  mv *.csv $out
+
+task snliQRels(unli=$, snli=$snli.out) -> out:
+  mkdir -p $out
+  python $unli/scripts/snli_to_qrels.py \
+    --snli $snli/snli_1.0 --out $out
+
+@venv(env=$unliEnv.env)
+task uSnliQRels(unli=$, snliQRels=$snliQRels.out, uSnliPath=$uSnliCsv.out) -> out:
+  mkdir -p $out
+  python $unli/scripts/usnli_to_qrels_align.py \
+    --snli $snliQRels \
+    --usnli_train $uSnliPath/train.csv \
+    --usnli_dev $uSnliPath/dev.csv \
+    --usnli_test $uSnliPath/test.csv \
+    --out $out
