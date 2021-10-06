@@ -16,8 +16,13 @@ class Call(
           ) {
 
   /** Wraps around input script and returns output script. */
-  def apply(input: Script): Script =
-    output.withNewArgs(input.args ++ args).withArgs(inputScript.name -> inputScriptFilename)
+  def apply(input: Script): Script = {
+    val r = output
+      .withNewArgs(input.args ++ args)
+      .withNewOutputArgs(input.outputArgs)
+      .withArgs(inputScript.name -> inputScriptFilename)
+    r
+  }
 
 }
 
