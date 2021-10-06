@@ -61,8 +61,8 @@ object SyntacticParser {
   } map { case (id, indices) => TaskRefN(id, indices) }
 
   def valRef[_: P] = P {
-    "$" ~ identifier
-  } map ValRef
+    "$" ~ identifier ~ indices1
+  } map  { case (id, indices) => ValRef(id, indices) }
 
   def taskValRef1[_: P] = P {
     "$" ~ taskRef1 ~ "." ~ identifier
@@ -111,11 +111,11 @@ object SyntacticParser {
   } map Identifiers
 
   def assignments[_: P] = P {
-    assignment.rep(sep = ",")
+    ("(" ~ assignment.rep(sep = ",") ~ ")").?.map(_.getOrElse(Seq()))
   } map Assignments
 
   def funcCall[_: P] = P {
-    identifier ~ "(" ~ assignments ~ ")"
+    identifier ~ assignments
   } map { case (funcName, inputs) => FuncCall(funcName, inputs) }
 
   def decoratorCall[_: P] = P {
@@ -133,7 +133,7 @@ object SyntacticParser {
   def outputParamList[_: P] = identifier.map(x => Identifiers(Seq(x))) | ("(" ~ inputParamList ~ ")")
 
   def outputAssignments[_: P] = P {
-    sameNameAssignment.map(a => Assignments(Seq(a))) | ("(" ~ assignments ~ ")")
+    sameNameAssignment.map(a => Assignments(Seq(a))) | assignments
   }
 
   def valDef[_: P] = P {
@@ -141,7 +141,7 @@ object SyntacticParser {
   } map { case (id, v) => ValDef(id, v) }
 
   def funcDef[_: P] = P {
-      "def" ~ identifier ~ "(" ~ assignments ~ ")" ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
+      "def" ~ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
   } map { case (name, params, inputScript, impl) =>
     val (inputName, inputFilename) = inputScript.getOrElse(Identifier("NULL") -> StringLiteral("/dev/null"))
     FuncDef(name, params, inputName, inputFilename, impl)
@@ -149,17 +149,17 @@ object SyntacticParser {
 
   def taskDef[_: P] = P {
     decoratorCalls ~
-      "task" ~ identifier ~ envModifier ~ "(" ~ assignments ~ ")" ~ "->" ~ outputAssignments ~ impl  // TODO: can have no output
+      "task" ~ identifier ~ envModifier ~ assignments ~ "->" ~ outputAssignments ~ impl  // TODO: can have no output
   } map { case (decorators, name, envMod, inputs, outputs, impl) => TaskDef(decorators, name, envMod, inputs, outputs, impl) }
 
   def serviceDef[_: P] = P {
     decoratorCalls ~
-      "service" ~ identifier ~ envModifier ~ "(" ~ assignments ~ ")" ~ impl
+      "service" ~ identifier ~ envModifier ~ assignments ~ impl
   } map { case (decorators, name, envMod, inputs, impl) => ServiceDef(decorators, name, envMod, inputs, impl) }
 
   def packageDef[_: P] = P {
     decoratorCalls ~
-      "package" ~ identifier ~ "(" ~ assignments ~ ")" ~ impl
+      "package" ~ identifier ~ assignments ~ scriptImpl
   } map { case (decorators, name, inputs, impl) => PackageDef(decorators, name, inputs, impl) }
 
   def planDef[_: P] = P {

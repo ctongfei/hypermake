@@ -11,7 +11,7 @@ import scala.collection._
 /**
  * Contexts kept for each parsing run.
  */
-class SymbolTable(implicit val runtime: RuntimeContext) {
+class Context(implicit val runtime: RuntimeContext) {
 
   private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
   private[hypermake] val localEnv: Env = new Env.Local()(this)
@@ -19,7 +19,7 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
   private[hypermake] val valueTable = mutable.HashMap[Name, PointedCube[Value]]()
   private[hypermake] val funcTable = mutable.HashMap[Name, Func]()
   private[hypermake] val taskTable = mutable.HashMap[Name, PointedCubeTask]()
-  private[hypermake] val packageTable = mutable.HashMap[Name, Package]()
+  private[hypermake] val packageTable = mutable.HashMap[Name, PointedCubePackage]()
   private[hypermake] val planTable = mutable.HashMap[Name, Plan]()
   private[hypermake] val envTable = mutable.HashMap[Name, Env](Name("local") -> localEnv)
 
@@ -27,12 +27,18 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
   def functions: Map[Name, Func] = funcTable
   def tasks: Map[Name, PointedCubeTask] = taskTable
   def plans: Map[Name, Plan] = planTable
-  def packages: Map[Name, Package] = packageTable
+  def packages: Map[Name, PointedCubePackage] = packageTable
   def envs: Map[Name, Env] = envTable
 
   def getAxis(name: Name) = allCases.underlying.getOrElse(name, throw UndefinedException("Axis", name))
-  def getValue(name: Name) = valueTable.getOrElse(name, throw UndefinedException("Value", name))
+
+  def getValue(name: Name) =
+    valueTable.getOrElse(name, throw UndefinedException("Value", name))
   def getValueOpt(name: Name) = valueTable.get(name)
+
+  def getPackage(name: Name) =
+    packageTable.getOrElse(name, throw UndefinedException("Package", name))
+  def getPackageOpt(name: Name) = packageTable.get(name)
 
   def getFunc(name: Name) = funcTable.getOrElse(name, throw UndefinedException("Function", name))
   def getTask(name: Name) = taskTable.getOrElse(name, throw UndefinedException("Task", name))
@@ -84,7 +90,10 @@ class SymbolTable(implicit val runtime: RuntimeContext) {
     else clauses.map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }.mkString(", ")
   }
 
-  def envOutputRoot(env: Name): String =
-    getValueOpt(Name(s"${env.name}_root")).map(_.default.value).getOrElse("out")
+  def envOutputRoot(envName: Name): String = {
+    val env = getEnv(envName)
+    val path = getValueOpt(Name(s"${env.name}_root")).map(_.default.value).getOrElse("out")
+    path
+  }
 
 }

@@ -10,7 +10,7 @@ import zio.stream._
 import zio.duration._
 import hypermake.cli._
 import hypermake.collection._
-import hypermake.semantics.SymbolTable
+import hypermake.semantics.Context
 import hypermake.util._
 
 /**
@@ -79,32 +79,34 @@ trait Env {
   def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]): HIO[ExitCode]
 
-  def locked(f: String): HIO[Boolean] = exists(s"$f/.lock")
-  def lock(f: String): HIO[Unit] = locked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f/.lock")
-  def unlock(f: String): HIO[Unit] = locked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f/.lock")
+  def isLocked(f: String): HIO[Boolean] = exists(s"$f/.lock")
+  def lock(f: String): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f/.lock")
+  def unlock(f: String): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f/.lock")
   def forceUnlock(f: String): HIO[Unit] = for {
-    isLocked <- locked(f)
+    isLocked <- isLocked(f)
     u <- if (isLocked) delete(s"$f/.lock") else ZIO.succeed(())
   } yield u
 
-  def linkValue(x: Value, dst: String)(implicit ctx: SymbolTable): HIO[Option[String]] = {
-    val base = dst.split('/').last  // get basename of dst
+  def linkValue(x: Value, dst: String)(implicit ctx: Context): HIO[Option[String]] = {
     x match {
       case Value.Pure(_) => ZIO.none  // do nothing
       case Value.Input(path, env) =>
         val e = if (env == this) link(path, dst)
         else copyFrom(path, env, dst)
-        e as Some(base)
+        e as Some(dst)
+      case Value.PackageOutput(pack) =>
+        val p = pack.output.on(this).value
+        link(p, dst) as Some(dst)
       case Value.Output(path, env, job) =>
         val e = if (env == this) link(resolvePath(path, job.absolutePath), dst)
         else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
-        e as Some(base)
+        e as Some(dst)
       case Value.Multiple(values, _) =>
         for {
           _ <- mkdir(dst)
           r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
             val argsString = ctx.escapedArgsString(c.underlying)
-            linkValue(v, s"$dst/$argsString") as s"$base/$argsString"
+            linkValue(v, s"$dst/$argsString") as s"$dst/$argsString"
           }
         } yield Some(r.mkString(ctx.runtime.IFS_CHAR))
     }
@@ -121,12 +123,12 @@ trait Env {
 
 object Env {
 
-  def getValueByName(name: String)(implicit ctx: SymbolTable) = ctx.getValue(Name(name)).default.value
-  def getValueByNameOpt(name: String)(implicit ctx: SymbolTable) = ctx.getValueOpt(Name(name)).map(_.default.value)
+  def getValueByName(name: String)(implicit ctx: Context) = ctx.getValue(Name(name)).default.value
+  def getValueByNameOpt(name: String)(implicit ctx: Context) = ctx.getValueOpt(Name(name)).map(_.default.value)
 
-  def getScriptByName(name: String)(implicit ctx: SymbolTable) = ctx.getFunc(Name(name)).impl.default
+  def getScriptByName(name: String)(implicit ctx: Context) = ctx.getFunc(Name(name)).impl.default
 
-  def apply(name: Name)(implicit ctx: SymbolTable) = {
+  def apply(name: Name)(implicit ctx: Context) = {
     if (name.name == "local")
       ctx.localEnv
     else if (ctx.envTable contains name)
@@ -138,7 +140,9 @@ object Env {
     }
   }
 
-  class Local(implicit ctx: SymbolTable) extends Env {
+  def local(implicit ctx: Context) = ctx.localEnv
+
+  class Local(implicit ctx: Context) extends Env {
 
     import ctx._
 
@@ -169,12 +173,13 @@ object Env {
     }
 
     def delete(f: String) = IO {
-      File(f).delete()
+      File(f).delete(swallowIOExceptions = true)
     }
 
     def link(src: String, dst: String) = IO {
       val dstPath = Paths.get(dst)
       val relativePath = dstPath.getParent.relativize(Paths.get(src))
+      JFiles.deleteIfExists(dstPath);
       JFiles.createSymbolicLink(dstPath, relativePath)
     }
 
@@ -202,14 +207,20 @@ object Env {
 
   }
 
-  class Custom(val name: String)(implicit ctx: SymbolTable) extends Env {
+  class Custom(val name: String)(implicit ctx: Context) extends Env {
 
     import ctx._
 
-    def separator = java.io.File.separatorChar
-    def pathSeparator = java.io.File.pathSeparatorChar
+    def separator =
+      getValueByNameOpt(s"${name}_separator").map(_.head).getOrElse(java.io.File.separatorChar)
+
+    def pathSeparator =
+      getValueByNameOpt(s"${name}_path_separator").map(_.head).getOrElse(java.io.File.pathSeparatorChar)
+
     def root = getValueByName(s"${name}_root")
-    def refreshInterval = getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds  // by default, 5s
+
+    def refreshInterval =
+      getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds  // by default, 5s
 
     def read(f: String) = for {
       process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()

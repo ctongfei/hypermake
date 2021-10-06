@@ -6,7 +6,7 @@ import hypermake.collection._
 import hypermake.exception.JobFailedException
 import hypermake.cli._
 import hypermake.core._
-import hypermake.semantics.SymbolTable
+import hypermake.semantics.Context
 import hypermake.util._
 import java.time._
 import java.time.format._
@@ -16,7 +16,7 @@ object Executor {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
 
-  def backupJob(jobs: Iterable[Job])(implicit ctx: SymbolTable): HIO[Unit] = {
+  def backupJob(jobs: Iterable[Job])(implicit ctx: Context): HIO[Unit] = {
     val nowStr = dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
     val env = ctx.localEnv
     val logPath = s"${env.root}/.runs/$nowStr"

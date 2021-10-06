@@ -9,11 +9,9 @@ import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
 import hypermake.core.{Job, Plan}
 import hypermake.execution.{Executor, RuntimeContext, Status}
-import hypermake.semantics.{SemanticParser, SymbolTable}
+import hypermake.semantics.{SemanticParser, Context}
 import hypermake.syntax.SyntacticParser
 import hypermake.util.printing._
-
-import java.time.{Instant, ZoneId}
 
 object Main extends App {
 
@@ -57,15 +55,15 @@ object Main extends App {
     val cmd = CmdLineParser.cmdLineParse(args.mkString(" "))
 
     cmd match {
-      case Cmd.Help => putStrLn(helpMessage) as ExitCode(0)
-      case Cmd.Version => putStrLn(s"HyperMake $version") as ExitCode(0)
+      case Cmd.Help => putStrLn(helpMessage).orDie as ExitCode(0)
+      case Cmd.Version => putStrLn(s"HyperMake $version").orDie as ExitCode(0)
 
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
 
         implicit val runtime: RuntimeContext = RuntimeContext.createFromCliOptions(options, runOptions)
         val cli = PlainCLI.create()
 
-        implicit val ctx: SymbolTable = new SymbolTable()
+        implicit val ctx: Context = new Context()
         val parser = new SemanticParser()
         runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
         parser.semanticParse(File(scriptFile))
@@ -101,14 +99,14 @@ object Main extends App {
 
               case Subcommand.Invalidate =>
                 val allRuns = File(s"${ctx.localEnv.root}/.runs").children.map(_ / "jobs")
-                val allRunJobs = allRuns.flatMap(_.lines).toSet.map { s =>
+                val allRunJobs = allRuns.flatMap(_.lines).toSet[String].map { s =>
                   parser.parseTask(fastparse.parse(s, SyntacticParser.taskRef1(_)).get.value)
                 }
                 val jobGraph = Graph.traverse[Job](allRunJobs, _.dependentJobs)
                 val jobsToBeInvalidated = Graph.traverse[Job](jobs, jobGraph.outgoingNodes)
                 val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
                 for {
-                  _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs are to be invalidated:")
+                  _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:")
                   _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(printJobStatus(_, cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(sortedJobsToBeInvalidated)(_.invalidate as true) else ZIO.succeed(())
@@ -134,7 +132,7 @@ object Main extends App {
 
               case Subcommand.MarkAsDone =>
                 for {
-                  _ <- putStrLn("The following jobs are to be marked as done:")
+                  _ <- putStrLn("The following jobs will be marked as done:")
                   _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(jobs)(_.markAsDone(cli)) else ZIO.succeed(())

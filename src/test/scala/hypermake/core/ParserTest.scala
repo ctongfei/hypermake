@@ -5,19 +5,19 @@ import better.files._
 import fastparse._
 import hypermake.collection._
 import hypermake.execution._
-import hypermake.semantics.{SymbolTable, SemanticParser}
+import hypermake.semantics.{Context, SemanticParser}
 import hypermake.syntax.SyntacticParser
 
 object ParserTest extends App {
 
   import fastparse._
   val ast = parse(
-    """task a() -> ():
-      |  print
-      |""".stripMargin, SyntacticParser.taskDef(_)).get.get
+    """@git(repo=https)
+      |pack
+      |""".stripMargin, SyntacticParser.decoratorCall(_)).get.get
 
   implicit val rt = RuntimeContext.create()
-  implicit val ctx = new SymbolTable()
+  implicit val ctx = new Context()
   val workflow = new SemanticParser()
   workflow.semanticParse(File("src/test/resources/test.hm"))
 

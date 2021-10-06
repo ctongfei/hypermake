@@ -5,6 +5,9 @@ import hypermake.util.MapWrapper
 
 import scala.collection._
 
+/**
+ * Encapsulates the parameters of a specific case of a variable or task.
+ */
 class Case(val underlying: Map[Name, String]) {
 
   def vars = underlying.keySet

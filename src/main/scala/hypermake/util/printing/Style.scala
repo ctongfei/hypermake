@@ -25,7 +25,7 @@ object Style {
   object Powerline extends Style {
     def bg(s: Status) = s match {
       case Status.Pending   => Back.DarkGray
-      case Status.Waiting    => Back.Yellow
+      case Status.Waiting   => Back.Yellow
       case Status.Running   => Back.Blue
       case Status.Succeeded => Back.Green
       case Status.Failed    => Back.Red
@@ -33,7 +33,7 @@ object Style {
     }
     def bgAsFg(s: Status) = s match {
       case Status.Pending   => Color.DarkGray
-      case Status.Waiting    => Color.Yellow
+      case Status.Waiting   => Color.Yellow
       case Status.Running   => Color.Blue
       case Status.Succeeded => Color.Green
       case Status.Failed    => Color.Red

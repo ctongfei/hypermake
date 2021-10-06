@@ -152,9 +152,9 @@ case class TaskRefN(name: Identifier, indices: IndicesN) extends Node {
   def children = Iterable(name) ++ indices.flatMap { case (k, v) => Iterable(k, v) }
 }
 
-case class ValRef(name: Identifier) extends Expr {
-  def str = s"$$$name"
-  def children = name :: Nil
+case class ValRef(name: Identifier, indices: Indices1) extends Expr {
+  def str = s"$$$name$indices"
+  def children = Iterable(name) ++ indices.flatMap { case (k, v) => Iterable(k, v) }
 }
 
 case class TaskOutputRef1(task: TaskRef1, name: Identifier) extends Expr {
@@ -195,7 +195,7 @@ case class Assignments(assignments: Seq[Assignment]) extends MapWrapper[Identifi
 
   val underlying = orderedMap(assignments.map {
     case ExplicitAssignment(param, v) => (param.name, (param.env, v))
-    case RefAssignment(param)         => (param.name, (param.env, ValRef(param.name)))
+    case RefAssignment(param)         => (param.name, (param.env, ValRef(param.name, Indices1(Nil))))
     case SameNameAssignment(param)    => (param.name, (param.env, StringLiteral(param.name.name, param.env)))
   })
 }
@@ -244,7 +244,7 @@ case class ServiceDef(decorators: DecoratorCalls, name: Identifier, env: EnvModi
   def children = decorators.calls ++ Iterable(name, inputs, impl)
 }
 
-case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assignments, impl: Impl) extends Statement {
+case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assignments, impl: ScriptImpl) extends Statement {
   def str = s"${decorators}package $name($inputs)$impl"
   def children = decorators.calls ++ Iterable(name, inputs, impl)
 }

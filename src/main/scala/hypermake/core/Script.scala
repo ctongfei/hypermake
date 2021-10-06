@@ -24,7 +24,7 @@ case class Script(
   def withArgs(newArgs: (String, String)*) =
     withNewArgs(newArgs.map { case (a, v) => Name(a) -> Value.Pure(v) }.toMap)
 
-  def strArgs: Map[String, String] = (args ++ outputArgs).map { case (k, v) => k.name -> v.value }
+  def strArgs: Map[String, String] = (args ++ outputArgs).map { case (k, v) => k.name -> v.absValue }
 
   /**
    * Writes this script as a local temporary file and executes it with its arguments.

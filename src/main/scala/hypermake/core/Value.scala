@@ -10,6 +10,7 @@ import scala.collection._
  */
 sealed trait Value {
   def value: String
+  def absValue(implicit runtime: RuntimeContext): String
   def isPath: Boolean = envOption.isDefined
   def envOption: Option[Env]
   def dependencies: Set[Job]
@@ -18,26 +19,40 @@ sealed trait Value {
 
 object Value {
 
-  case class Pure(value: String) extends Value {
+  sealed trait EnvAgnostic extends Value
+
+  case class Pure(value: String) extends EnvAgnostic {
+    def absValue(implicit runtime: RuntimeContext) = value
     def envOption = None
     def dependencies = Set()
   }
 
-  sealed trait Path extends Value {
+  case class PackageOutput(pack: Package) extends EnvAgnostic {
+    def value = "package"
+    def absValue(implicit runtime: RuntimeContext) = ???
+    def envOption = None
+    def dependencies = Set()
+    def on(env: Env): Output = Output(value, env, pack.on(env))
+  }
+
+  sealed trait EnvDependent extends Value {
     def env: Env
     override def envOption = Some(env)
   }
 
-  case class Input(value: String, env: Env) extends Path {
+  case class Input(value: String, env: Env) extends EnvDependent {
+    def absValue(implicit runtime: RuntimeContext) = value
     def dependencies = Set()
   }
 
-  case class Output(value: String, env: Env, job: Job) extends Path {
+  case class Output(value: String, env: Env, job: Job) extends EnvDependent {
+    def absValue(implicit runtime: RuntimeContext) = s"${runtime.workDir}/${job.absolutePath}/$value"
     def dependencies = Set(job)
   }
 
-  case class Multiple(cases: Cube[Value], env: Env)(implicit runtime: RuntimeContext) extends Path {
+  case class Multiple(cases: Cube[Value], env: Env)(implicit runtime: RuntimeContext) extends EnvDependent {
     override def value = cases.map(_.value).allElements.mkString(runtime.IFS_CHAR)
+    def absValue(implicit runtime: RuntimeContext) = cases.map(_.absValue).allElements.mkString(runtime.IFS_CHAR)
     override def dependencies = cases.map(_.dependencies).allElements.reduce(_ union _)
   }
 

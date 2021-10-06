@@ -1,7 +1,11 @@
-def Git(repo, args="") <- build="build.sh":
+def git(repo, args="") <- build="build.sh":
    git clone $args $repo package
    ln -s $build package/build.sh
    cd package
    bash build.sh
 
 
+def conda(env) <- script="conda.internal.sh":
+  conda activate $env
+  bash $script
+  conda deactivate

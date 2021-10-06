@@ -6,7 +6,7 @@ import zio._
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.execution._
-import hypermake.semantics.SymbolTable
+import hypermake.semantics.Context
 import hypermake.util._
 import hypermake.util.Escaper._
 
@@ -15,7 +15,7 @@ import hypermake.util.Escaper._
  * A job can either be a task, a package, or a service.
  * @param ctx Parsing context that yielded this job
  */
-abstract class Job(implicit ctx: SymbolTable) {
+abstract class Job(implicit ctx: Context) {
 
   import ctx._
   implicit val runtime: RuntimeContext = ctx.runtime
@@ -65,7 +65,7 @@ abstract class Job(implicit ctx: SymbolTable) {
   /** An operation that links output of dependent jobs to the working directory of this job. */
   def linkInputs: HIO[Map[String, Option[String]]] = ZIO.collectAllPar {
     for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
-      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _)
+      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _.map(x => s"${ctx.runtime.workDir}/$x"))
   }.map(_.toMap)
 
   /** An operation that checks the output of this job and the exit status of this job. */
@@ -90,7 +90,8 @@ abstract class Job(implicit ctx: SymbolTable) {
       }  // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
       mergedArgs = mergeArgs(finalScript.strArgs, linkedArgs)
-      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k="${C.escape(v)}""""}.mkString("\n")
+      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k="${C.escape(v)}""""}
+        .mkString("", "\n", "\n")
       )
     } yield mergedArgs
   }
@@ -98,6 +99,7 @@ abstract class Job(implicit ctx: SymbolTable) {
   def execute(cli: CLI.Service): HIO[Boolean] = {
 
     val effect = for {
+      _ <- removeOutputs
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
@@ -129,6 +131,9 @@ abstract class Job(implicit ctx: SymbolTable) {
     } yield hasOutputs
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
   }
+
+  def isLocked: HIO[Boolean] =
+    env.isLocked(absolutePath)
 
   def forceUnlock: HIO[Unit] =
     env.forceUnlock(absolutePath)

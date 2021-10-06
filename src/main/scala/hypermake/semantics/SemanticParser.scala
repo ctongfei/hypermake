@@ -16,7 +16,7 @@ import scala.collection._
  * A semantic parsing run.
  * @param ctx Global context
  */
-class SemanticParser(implicit val ctx: SymbolTable) {
+class SemanticParser(implicit val ctx: Context) {
 
   import ctx._
   import ctx.runtime._
@@ -58,11 +58,17 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     def denotation(verb: Verbatim): Script = Script(verb.text)
   }
 
-  implicit object ParseValRef extends ContextualDenotation[Map[Name, PointedCube[Value]], ValRef, PointedCube[Value]] {
-    def defaultContext = Map()
-    def denotation(r: ValRef, locals: Map[Name, PointedCube[Value]]): PointedCube[Value] = {
+  implicit object ParseValRef extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), ValRef, PointedCube[Value]] {
+    def defaultContext = (Map(), Env.local)
+    def denotation(r: ValRef, localsEnv: (Map[Name, PointedCube[Value]], Env)): PointedCube[Value] = {
       val name = r.name.!
-      locals.getOrElse(name, getValue(name))  // local variables override global variables
+      val indices = r.indices.!
+      val (locals, env) = localsEnv
+      val referred = locals.get(name)  // local variables override global variables
+        .orElse(getPackageOpt(name).map(_.output.map(_.on(env))))  // get package output on contextual env
+        .getOrElse(getValue(name))  // falls back to global values
+
+      referred.select(indices)
     }
   }
 
@@ -79,7 +85,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
       val DictLiteral(axis, assignments) = dl
       PointedCube.OfNestedMap(
         axis.!,
-        assignments.mapValuesE(ParseExpr.denotation(_, Map())).pointed(getAxis(axis.!).default)
+        assignments.mapValuesE(ParseExpr.denotation(_, (Map(), Env(Name(""))))).pointed(getAxis(axis.!).default)
       )
     }
   }
@@ -105,23 +111,23 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     }
   }
 
-  implicit object ParseExpr extends ContextualDenotation[Map[Name, PointedCube[Value]], Expr, PointedCube[Value]] {
-    def defaultContext = Map()
-    def denotation(e: Expr, locals: Map[Name, PointedCube[Value]]) = e match {
+  implicit object ParseExpr extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Expr, PointedCube[Value]] {
+    def defaultContext = (Map(), Env.local)
+    def denotation(e: Expr, localsEnv: (Map[Name, PointedCube[Value]], Env)) = e match {
       case sl: StringLiteral => sl.!
       case dl: DictLiteral => dl.!
-      case vr: ValRef => vr.!(locals)
+      case vr: ValRef => vr.!(localsEnv)
       case tor: TaskOutputRef1 => tor.!
       case tor: TaskOutputRefN => tor.!
     }
   }
 
-  implicit object ParseFuncCallImpl extends ContextualDenotation[Map[Name, PointedCube[Value]], FuncCallImpl, PointedCube[Script]] {
-    def defaultContext = Map()
-    def denotation(impl: FuncCallImpl, localParams: Map[Name, PointedCube[Value]]) = {
+  implicit object ParseFuncCallImpl extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), FuncCallImpl, PointedCube[Script]] {
+    def defaultContext = (Map(), Env.local)
+    def denotation(impl: FuncCallImpl, localParamsEnv: (Map[Name, PointedCube[Value]], Env)) = {
       val func = getFunc(impl.call.funcName.!)
       val funcArgs = impl.call.inputs
-        .map { case (p, (_, a)) => p.! -> a.!(localParams) }
+        .map { case (p, (_, a)) => p.! -> a.!(localParamsEnv) }
       func.reify(funcArgs + (func.inputScript -> PointedCube.Singleton(Value.Pure("/dev/null")))).output  // TODO: delegate /dev/null to Env
     }
   }
@@ -130,10 +136,10 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     def denotation(impl: ScriptImpl) = PointedCube.Singleton(impl.script.!)
   }
 
-  implicit object ParseImpl extends ContextualDenotation[Map[Name, PointedCube[Value]], Impl, PointedCube[Script]] {
-    def defaultContext = Map()
-    def denotation(impl: Impl, localParams: Map[Name, PointedCube[Value]]) = impl match {
-      case impl: FuncCallImpl => impl.!(localParams)
+  implicit object ParseImpl extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Impl, PointedCube[Script]] {
+    def defaultContext = (Map(), Env(Name("local")))
+    def denotation(impl: Impl, localParamsEnv: (Map[Name, PointedCube[Value]], Env)) = impl match {
+      case impl: FuncCallImpl => impl.!(localParamsEnv)
       case impl: ScriptImpl => impl.!
     }
   }
@@ -158,12 +164,12 @@ class SemanticParser(implicit val ctx: SymbolTable) {
     }
   }
 
-  implicit object ParsePackage extends Denotation[PackageDef, Package] {
+  implicit object ParsePackage extends Denotation[PackageDef, PointedCubePackage] {
     def denotation(pd: PackageDef) = {
       val PackageDef(decorators, name, inputs, impl) = pd
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
       val axes = inputParams.values.map(_.cases.vars).fold(Set())(_ union _)
-      Package(name.!, allCases.filterVars(axes), inputParams, decorators.calls.map(_.!), impl.!(inputParams))
+      PointedCubePackage(name.!, allCases.filterVars(axes), inputParams, decorators.calls.map(_.!), impl.!)
     }
   }
 
@@ -173,11 +179,11 @@ class SemanticParser(implicit val ctx: SymbolTable) {
       val taskEnv = env.!!
       val inputEnvs = inputs.map { case (k, (em, _)) => k.! -> em.!! }
       val outputEnvs = outputs.map { case (k, (em, _)) => k.! -> em.!! }
-      val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
+      val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!((Map(), taskEnv)) }
       val outputParams = outputs.map { case (k, (_, v)) => k.! -> v.!! }
       val localParams = inputParams ++ outputParams
       val axes = inputParams.values.map(_.cases.vars).fold(Set())(_ union _)
-      val script = impl.!(localParams)
+      val script = impl.!((localParams, taskEnv))
       val calls = decorators.calls.map(_.!)
       new PointedCubeTask(
         name.!, taskEnv, allCases.filterVars(axes),
@@ -230,7 +236,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
         else {
           valueTable += a -> value.!!
         }
-      case fd: FuncDef => // TODO: decorator not handled
+      case fd: FuncDef =>
         val f = fd.name.!
         if (funcTable contains f) throw DuplicatedDefinitionException("Function", f.name)
         else {
@@ -244,7 +250,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
           val task = td.!
           taskTable += t -> task
         }
-      case pd: PackageDef => // TODO: decorator not handled
+      case pd: PackageDef =>
         val p = pd.name.!
         if (packageTable contains p) throw DuplicatedDefinitionException("Package", p.name)
         else {
@@ -262,9 +268,8 @@ class SemanticParser(implicit val ctx: SymbolTable) {
   }
 
   /**
-   * Reads a Forge script while expanding all import statements. This function processes `import` statements.
+   * Reads a Hypermake script while expanding all import statements. This function processes `import` statements.
    * @param f Script file to be read
-   * @param ctx Context
    * @return A sequence of top-level definitions
    */
   def readFileToStmts(f: File): Seq[Statement] = {
@@ -284,8 +289,7 @@ class SemanticParser(implicit val ctx: SymbolTable) {
 
   def parseTask(tr: TaskRef1) = tr.!
 
-  def parseTarget(tr: TaskRefN) = {
+  def parseTarget(tr: TaskRefN) =
     plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!))
-  }
 
 }

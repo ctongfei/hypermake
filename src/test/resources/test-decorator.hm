@@ -1,7 +1,7 @@
-def Python(interpreter="python") <- input="script.py":
+def Exec(interpreter="python") <- input="script.py":
   $interpreter $input
 
-@Python()
+@Exec(interpreter="python")
 task run(x="test") -> ():
   import os
   globals().update(os.environ)

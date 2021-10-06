@@ -27,7 +27,7 @@ class PointedCubeCall(
                        val inputScript: Name,
                        val inputScriptFilename: String,
                        val output: PointedCube[Script]
-                     )(implicit ctx: SymbolTable)
+                     )(implicit ctx: Context)
   extends PointedCube[Call] {
   self =>
 
