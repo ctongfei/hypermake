@@ -15,3 +15,19 @@ This is a shorthand for `url=$url`.
 
 This task creates a single output called `homepage.html`: You can find this file at `out/download/default` directory. 
 One can simply write `out` instead of `(out="homepage.html")`: in this case the output file name will be `out`.
+
+Now, we'd like to extract all the headlines: their URLs and titles.
+We create another task that takes the output of the `download` task as input:
+```shell
+task getTitles(html=$download.out) -> out:
+  cat $html \
+  | perl -ne 'if (/<a href="(.*?)" class="storylink">(.*?)<\/a>/) { print "$1\t$2\n" }' \
+  > $out
+```
+
+Running the following command
+```shell
+hypermake tutorial/02.hm run getTitles
+```
+will sequentially run the two dependent jobs: first `download` then `getTitles`,
+and the resulting TSV table will be located in `out/getTitles/default/out`.
