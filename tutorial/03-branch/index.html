@@ -327,9 +327,9 @@ Hypermake models these configurations as <strong>parameters</strong> to values a
 <p>For example, we are here downloading various versions of the <a href="https://nlp.stanford.edu/projects/glove/">GloVe embeddings</a>
 from the Stanford NLP website:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">gloveUrl</span> <span class="o">=</span> <span class="o">{</span>Version:
-  <span class="nv">6b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.6B.zip&quot;</span>,
-  <span class="nv">cc42b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.42B.300d.zip&quot;</span>,
-  <span class="nv">cc840b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.840B.300d.zip&quot;</span>,
+  <span class="nv">6b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.6B.zip&quot;</span>
+  <span class="nv">cc42b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.42B.300d.zip&quot;</span>
+  <span class="nv">cc840b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.840B.300d.zip&quot;</span>
   <span class="nv">twitter27b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.twitter.27B.zip&quot;</span>
 <span class="o">}</span>
 
@@ -354,6 +354,7 @@ we can use the indexing notation <code>task[Var:key]</code>: here for example <c
 One can use <code>[Var:*]</code> syntax to refer to <strong>all</strong> cases of the task. The following command line invocation downloads all GloVe versions:
 <div class="highlight"><pre><span></span><code>hypermake glove.hm run downloadGloVe<span class="o">[</span>Version: *<span class="o">]</span>
 </code></pre></div></p>
+<p>Again, we can find the output files in </p>
                 
               
               

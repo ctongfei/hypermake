@@ -346,6 +346,16 @@ We create another task that takes the output of the <code>download</code> task a
 </code></pre></div>
 will sequentially run the two dependent jobs: first <code>download</code> then <code>getTitles</code>,
 and the resulting TSV table will be located in <code>out/getTitles/default/out</code>.</p>
+<p>In the directory <code>out/getTitles/default</code>, you can find the following files that may be of interest:
+ * <code>out</code>: the resulting TSV table
+ * <code>script.sh</code>: the script that was used to run the task
+ * <code>stdout</code>: the standard output of the task
+ * <code>stderr</code>: the standard error of the task
+ * <code>args</code>: A shell script that contains the arguments that were used to run the task
+ * <code>exitcode</code>: A file that contains the exit code of the task</p>
+<p>To recreate the task in shell, you can use the following command. It should have the same behavior as directly running from Hypermake.
+<div class="highlight"><pre><span></span><code>. args <span class="o">&amp;&amp;</span> . script.sh
+</code></pre></div></p>
                 
               
               
