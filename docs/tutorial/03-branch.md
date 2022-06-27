@@ -9,9 +9,9 @@ from the Stanford NLP website:
 
 ```shell
 gloveUrl = {Version:
-  6b="http://nlp.stanford.edu/data/glove.6B.zip",
-  cc42b="http://nlp.stanford.edu/data/glove.42B.300d.zip",
-  cc840b="http://nlp.stanford.edu/data/glove.840B.300d.zip",
+  6b="http://nlp.stanford.edu/data/glove.6B.zip"
+  cc42b="http://nlp.stanford.edu/data/glove.42B.300d.zip"
+  cc840b="http://nlp.stanford.edu/data/glove.840B.300d.zip"
   twitter27b="http://nlp.stanford.edu/data/glove.twitter.27B.zip"
 }
 
@@ -39,4 +39,6 @@ One can use `[Var:*]` syntax to refer to **all** cases of the task. The followin
 ```shell
 hypermake glove.hm run downloadGloVe[Version: *]
 ```
+
+Again, we can find the output files in 
 

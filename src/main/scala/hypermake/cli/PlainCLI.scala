@@ -12,7 +12,7 @@ import hypermake.util.printing.Style
 
 class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
 
-  def initialize = ZIO.succeed()
+  def setup = ZIO.succeed()
 
   /**
    * Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
@@ -34,7 +34,7 @@ class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
     response <- getStrLn
   } yield response.trim.toLowerCase == "y"
 
-  def tearDown = ZIO.succeed()
+  def teardown = ZIO.succeed()
 }
 
 object PlainCLI {

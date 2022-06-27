@@ -149,8 +149,10 @@ object SyntacticParser {
 
   def taskDef[_: P] = P {
     decoratorCalls ~
-      "task" ~ identifier ~ envModifier ~ assignments ~ "->" ~ outputAssignments ~ impl  // TODO: can have no output
-  } map { case (decorators, name, envMod, inputs, outputs, impl) => TaskDef(decorators, name, envMod, inputs, outputs, impl) }
+      "task" ~ identifier ~ envModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
+  } map { case (decorators, name, envMod, inputs, outputs, impl) =>
+    TaskDef(decorators, name, envMod, inputs, outputs.getOrElse(Assignments(Seq())), impl)
+  }
 
   def serviceDef[_: P] = P {
     decoratorCalls ~

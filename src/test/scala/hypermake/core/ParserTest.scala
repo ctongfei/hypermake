@@ -11,10 +11,11 @@ import hypermake.syntax.SyntacticParser
 object ParserTest extends App {
 
   import fastparse._
-  val ast = parse(
-    """@git(repo=https)
-      |pack
-      |""".stripMargin, SyntacticParser.decoratorCall(_)).get.get
+  val src =
+    """task hello:
+      |  echo "Hello, world!"
+      |""".stripMargin
+  val ast = parse(src, SyntacticParser.taskDef(_)).get.get
 
   implicit val rt = RuntimeContext.create()
   implicit val ctx = new Context()

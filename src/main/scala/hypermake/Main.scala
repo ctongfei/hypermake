@@ -41,7 +41,7 @@ object Main extends App {
       |  run ${A("$targets")}               : Runs the given tasks or plans (space delimited).
       |  dry-run ${A("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
       |  invalidate ${A("$targets")}        : Invalidates the given tasks or plans.
-      |  unlock ${A("$targets")}            : Unlocks the given tasks if another instance of Hypermake unexpectedly killed.
+      |  unlock ${A("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
       |  remove ${A("$targets")}            : Removes the output of the given tasks or plans.
       |  mark-as-done ${A("$targets")}      : Mark the given tasks as normally exited.
       |  export-shell ${A("$targets")}      : Generates an equivalent shell script that runs the given tasks.
@@ -56,11 +56,11 @@ object Main extends App {
 
     cmd match {
       case Cmd.Help => putStrLn(helpMessage).orDie as ExitCode(0)
-      case Cmd.Version => putStrLn(s"HyperMake $version").orDie as ExitCode(0)
+      case Cmd.Version => putStrLn(s"Hypermake $version").orDie as ExitCode(0)
 
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
 
-        implicit val runtime: RuntimeContext = RuntimeContext.createFromCliOptions(options, runOptions)
+        implicit val runtime: RuntimeContext = RuntimeContext.createFromCLIOptions(options, runOptions)
         val cli = PlainCLI.create()
 
         implicit val ctx: Context = new Context()
@@ -143,9 +143,9 @@ object Main extends App {
 
             }
             for {
-              _ <- cli.initialize
+              _ <- cli.setup
               _ <- effect
-              u <- cli.tearDown
+              u <- cli.teardown
             } yield u
           }
         } yield task

@@ -48,6 +48,8 @@ class RuntimeContext private(
 
   lazy val tempDir = tempPath.toString
 
+  lazy val nullFile = if (System.getProperty("os.name").toLowerCase contains "win") "NUL" else "/dev/null"
+
   def tempFile(prefix: String = "", suffix: String = "") =
     JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
@@ -95,7 +97,7 @@ object RuntimeContext {
       yes = yes
     )
 
-  def createFromCliOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = create(
+  def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = create(
     includePaths = options.collect { case Opt.Include(f) => f },
     shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse("bash"),
     numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
@@ -103,6 +105,5 @@ object RuntimeContext {
     silent = runOptions contains RunOpt.Silent,
     yes = runOptions contains RunOpt.Yes
   )
-
 
 }

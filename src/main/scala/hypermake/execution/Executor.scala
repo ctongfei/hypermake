@@ -52,7 +52,8 @@ object Executor {
               cli.update(j, Status.Complete) *> promises(j).succeed(())
             else if (successful)
               cli.update(j, Status.Succeeded) *> promises(j).succeed(())
-            else cli.update(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
+            else
+              cli.update(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
         } yield u
       }
       allFibers <- ZIO.forkAll(effects)

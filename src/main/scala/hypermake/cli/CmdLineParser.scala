@@ -41,21 +41,20 @@ object CmdLineParser {
 
   def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
 
-  def command[_: P] = P { "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! | "export-shell".! }
+  def command[_: P] = P { "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! | "export-shell".! } map {
+    case "run"          => Subcommand.Run
+    case "dry-run"      => Subcommand.DryRun
+    case "invalidate"   => Subcommand.Invalidate
+    case "unlock"       => Subcommand.Unlock
+    case "remove"       => Subcommand.Remove
+    case "mark-as-done" => Subcommand.MarkAsDone
+    case "export-shell" => Subcommand.ExportShell
+  }
 
   def run[_: P] = P {
     opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
-  }.map { case (opt, scriptFile, cmd, runOpts1, targets, runOpts2) =>
-    val subtask = cmd match {
-      case "run"          => Subcommand.Run
-      case "dry-run"      => Subcommand.DryRun
-      case "invalidate"   => Subcommand.Invalidate
-      case "unlock"       => Subcommand.Unlock
-      case "remove"       => Subcommand.Remove
-      case "mark-as-done" => Subcommand.MarkAsDone
-      case "export-shell" => Subcommand.ExportShell
-    }
-    Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subtask, targets)
+  }.map { case (opt, scriptFile, subcommand, runOpts1, targets, runOpts2) =>
+    Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subcommand, targets)
   }
 
   def cmdArgs[_: P] = P {
@@ -65,7 +64,9 @@ object CmdLineParser {
   def cmdLineParse(args: String): Cmd = {
     parse(args, cmdArgs(_)) match {
       case Parsed.Success(a, _) => a
-      case f: Parsed.Failure => throw ParsingException(f)
+      case f: Parsed.Failure =>
+        println(hypermake.Main.helpMessage)
+        throw ParsingException(f)
     }
   }
 

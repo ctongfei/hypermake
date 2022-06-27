@@ -128,7 +128,7 @@ class SemanticParser(implicit val ctx: Context) {
       val func = getFunc(impl.call.funcName.!)
       val funcArgs = impl.call.inputs
         .map { case (p, (_, a)) => p.! -> a.!(localParamsEnv) }
-      func.reify(funcArgs + (func.inputScript -> PointedCube.Singleton(Value.Pure("/dev/null")))).output  // TODO: delegate /dev/null to Env
+      func.reify(funcArgs + (func.inputScript -> PointedCube.Singleton(Value.Pure(runtime.nullFile)))).output
     }
   }
 
