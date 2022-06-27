@@ -27,7 +27,7 @@ task getTitles(html=$download.out) -> out:
 
 Running the following command
 ```shell
-hypermake tutorial/02.hm run getTitles
+hypermake tutorial/ycomb.hm run getTitles
 ```
 will sequentially run the two dependent jobs: first `download` then `getTitles`,
 and the resulting TSV table will be located in `out/getTitles/default/out`.

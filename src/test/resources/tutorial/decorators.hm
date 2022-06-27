@@ -1,0 +1,6 @@
+def python() <- input="script.py":
+  python $input
+
+@python
+task helloWorldInPython:
+  print("Hello World" + " " + "in Python!")

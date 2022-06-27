@@ -6,9 +6,37 @@ import zio.console._
 import zio.stream._
 import hypermake.core.Job
 import hypermake.execution.{RuntimeContext, Status}
-import hypermake.util.StandardStreams.PrefixedOutputStream
 import hypermake.util._
 import hypermake.util.printing.Style
+
+import java.io.{FilterOutputStream, OutputStream}
+import java.nio.charset.StandardCharsets
+
+
+class PrefixedOutputStream(os: OutputStream, prefix: String) extends FilterOutputStream(os) {
+
+  @volatile private[this] var atStartOfLine: Boolean = true
+
+  override def write(b: Int): Unit = os.synchronized {
+    if (atStartOfLine)
+      os.write(prefix.getBytes(StandardCharsets.UTF_8))
+    os.write(b)
+    atStartOfLine = b == '\n' || b == '\r'
+    if (atStartOfLine) os.flush()
+  }
+
+  override def write(b: Array[Byte], off: Int, len: Int): Unit = os.synchronized {
+    val lines = new String(b, off, len, StandardCharsets.UTF_8).split("(?<=[\\r\\n])")
+    // split that includes concluding delimiters with positive lookbehind regex
+    for (line <- lines) {
+      if (atStartOfLine) os.write(prefix.getBytes(StandardCharsets.UTF_8))
+      os.write(line.getBytes(StandardCharsets.UTF_8))
+      atStartOfLine = line.endsWith("\n") || line.endsWith("\r")
+      os.flush()
+    }
+  }
+
+}
 
 class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
 

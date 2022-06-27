@@ -115,7 +115,7 @@ abstract class Job(implicit ctx: Context) {
 
   def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = for {
     done <- isDone
-    (hasRun, successful) <- if (done) cli.update(this, Status.Complete) as (false, true)
+    (hasRun, successful) <- if (done) ZIO.succeed((false, true))
       else execute(cli).map((true, _))
   } yield (hasRun, successful)
 
