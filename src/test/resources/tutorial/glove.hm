@@ -1,12 +1,13 @@
 gloveUrl = {Version:
-  6b="http://nlp.stanford.edu/data/glove.6B.zip"
-  cc42b="http://nlp.stanford.edu/data/glove.42B.300d.zip"
-  cc840b="http://nlp.stanford.edu/data/glove.840B.300d.zip"
-  twitter27b="http://nlp.stanford.edu/data/glove.twitter.27B.zip"
+  6b="https://downloads.cs.stanford.edu/nlp/data/glove.6B.zip"
+  cc42b="https://downloads.cs.stanford.edu/nlp/data/glove.42B.300d.zip"
+  cc840b="https://downloads.cs.stanford.edu/nlp/data/glove.840B.300d.zip"
+  twitter27b="https://downloads.cs.stanford.edu/nlp/data/glove.twitter.27B.zip"
 }
 
 task downloadGloVe(gloveUrl=$) -> out:
-  wget -O glove.zip $gloveUrl
+  mkdir -p $out
+  curl -o glove.zip "$gloveUrl"
   unzip glove.zip
   mv *.txt $out
   rm glove.zip

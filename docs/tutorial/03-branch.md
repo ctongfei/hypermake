@@ -1,4 +1,4 @@
-# Hyperparameters
+# Parameters
 
 We'd like to _parameterize_ our tasks: there could be multiple versions of a task.
 This could be different datasets, different preprocessing pipelines, different pretrained models, etc.

@@ -198,8 +198,7 @@ object Env {
       //ZSink.fromFile(Paths.get(s"$wd/stdout"))
       for {
         process <- proc.run
-        _ <- process.stdout.stream.run(out)
-        _ <- process.stderr.stream.run(err)
+        _ <- process.stdout.stream.run(out) <&> process.stderr.stream.run(err)
         exitCode <- process.exitCode
         _ <- write(s"$wd/exitcode", exitCode.code.toString)
       } yield exitCode

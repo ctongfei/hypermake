@@ -33,12 +33,13 @@ will sequentially run the two dependent jobs: first `download` then `getTitles`,
 and the resulting TSV table will be located in `out/getTitles/default/out`.
 
 In the directory `out/getTitles/default`, you can find the following files that may be of interest:
- * `out`: the resulting TSV table
- * `script.sh`: the script that was used to run the task
- * `stdout`: the standard output of the task
- * `stderr`: the standard error of the task
- * `args`: A shell script that contains the arguments that were used to run the task
- * `exitcode`: A file that contains the exit code of the task
+
+  * `out`: the resulting TSV table
+  * `script.sh`: the script that was used to run the task
+  * `stdout`: the standard output of the task
+  * `stderr`: the standard error of the task
+  * `args`: A shell script that contains the arguments that were used to run the task
+  * `exitcode`: A file that contains the exit code of the task
 
 To recreate the task in shell, you can use the following command. It should have the same behavior as directly running from Hypermake.
 ```shell

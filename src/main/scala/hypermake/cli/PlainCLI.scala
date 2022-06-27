@@ -22,7 +22,9 @@ class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
     val es = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render(job)))
     val ofs = ZSink.fromFile(Paths.get(job.absolutePath, "stdout"))
     val efs = ZSink.fromFile(Paths.get(job.absolutePath, "stderr"))
-    if (runtime.silent) (ofs, efs) else ((os zipWithPar ofs)(_+_), (es zipWithPar efs)(_+_))
+    if (runtime.silent)
+      (ofs, efs)
+    else ((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
   }
 
   def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)

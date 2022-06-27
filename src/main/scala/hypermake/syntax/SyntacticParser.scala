@@ -104,7 +104,7 @@ object SyntacticParser {
     parameter
   } map { param => ExplicitAssignment(param, StringLiteral(param.name.name)) }
 
-  def assignment[_: P] = explicitAssignment | refAssignment | sameNameAssignment
+  def assignment[_: P]: P[Assignment] = explicitAssignment | refAssignment | sameNameAssignment
 
   def inputParamList[_: P] = P {
     identifier.rep(sep = ",")
