@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#hyperparameters" class="md-skip">
+        <a href="#parameters" class="md-skip">
           Skip to content
         </a>
       
@@ -281,6 +281,54 @@
   
 
           
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-parameterized-compose/" class="md-nav__link">
+        04 Parameterized pipelines
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-functions/" class="md-nav__link">
+        05 Functions
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-decorators/" class="md-nav__link">
+        06 Decorators
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tuntorial/07-environments.md" class="md-nav__link">
+        07 Environments
+      </a>
+    </li>
+  
+
+          
         </ul>
       </nav>
     </li>
@@ -320,7 +368,7 @@
                   </a>
                 
                 
-                <h1 id="hyperparameters">Hyperparameters</h1>
+                <h1 id="parameters">Parameters</h1>
 <p>We'd like to <em>parameterize</em> our tasks: there could be multiple versions of a task.
 This could be different datasets, different preprocessing pipelines, different pretrained models, etc.
 Hypermake models these configurations as <strong>parameters</strong> to values and tasks.</p>
@@ -334,6 +382,7 @@ from the Stanford NLP website:</p>
 <span class="o">}</span>
 
 task downloadGloVe<span class="o">(</span><span class="nv">gloveUrl</span><span class="o">=</span>$<span class="o">)</span> -&gt; out:
+  sleep <span class="k">$((</span><span class="o">(</span> <span class="nv">$RANDOM</span> <span class="o">%</span> <span class="m">10</span> <span class="o">)</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span>s
   wget -O glove.zip <span class="nv">$gloveUrl</span>
   unzip glove.zip
   mv *.txt <span class="nv">$out</span>
@@ -352,9 +401,12 @@ we can use the indexing notation <code>task[Var:key]</code>: here for example <c
 <div class="highlight"><pre><span></span><code>hypermake glove.hm run downloadGloVe<span class="o">[</span>Version:6b<span class="o">]</span>
 </code></pre></div>
 One can use <code>[Var:*]</code> syntax to refer to <strong>all</strong> cases of the task. The following command line invocation downloads all GloVe versions:
-<div class="highlight"><pre><span></span><code>hypermake glove.hm run downloadGloVe<span class="o">[</span>Version: *<span class="o">]</span>
+<div class="highlight"><pre><span></span><code>hypermake glove.hm run <span class="s1">&#39;downloadGloVe[Version: *]&#39;</span>
 </code></pre></div></p>
-<p>Again, we can find the output files in </p>
+<div class="admonition info inline end">
+<p>Single-quoting the task <code>downloadGlove[Version: *]</code> prohibits bash from expanding the wildcard <code>*</code> symbol.</p>
+</div>
+<p>Again, we can find the output files in <code>out/downloadGloVe/Version=XX</code>.</p>
                 
               
               
@@ -387,6 +439,20 @@ One can use <code>[Var:*]</code> syntax to refer to <strong>all</strong> cases o
           </div>
         </a>
       
+      
+        <a href="../04-parameterized-compose/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              04 Parameterized pipelines
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
       
     </nav>
   

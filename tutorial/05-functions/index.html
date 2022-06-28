@@ -18,7 +18,7 @@
     
     
       
-        <title>02 Inputs & outputs - Hypermake</title>
+        <title>05 Functions - Hypermake</title>
       
     
     
@@ -66,11 +66,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#inputs-outputs-and-composing-tasks" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -97,7 +92,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              02 Inputs & outputs
+              05 Functions
             
           </span>
         </div>
@@ -251,20 +246,11 @@
             
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../02-compose/" class="md-nav__link">
         02 Inputs & outputs
       </a>
-      
     </li>
   
 
@@ -296,11 +282,18 @@
             
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../05-functions/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         05 Functions
       </a>
+      
     </li>
   
 
@@ -342,70 +335,19 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/ctongfei/hypermake/edit/master/docs/tutorial/02-compose.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/ctongfei/hypermake/edit/master/docs/tutorial/05-functions.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="inputs-outputs-and-composing-tasks">Inputs, outputs, and composing tasks</h1>
-<p>A task can take parameters, and yield outputs.
-<div class="highlight"><pre><span></span><code><span class="nv">url</span> <span class="o">=</span> <span class="s2">&quot;https://news.ycombinator.org&quot;</span>
-task download<span class="o">(</span><span class="nv">url</span><span class="o">=</span>$<span class="o">)</span> -&gt; <span class="o">(</span><span class="nv">out</span><span class="o">=</span><span class="s2">&quot;homepage.html&quot;</span><span class="o">)</span>:
-  wget <span class="nv">$url</span> -O <span class="nv">$out</span>
-</code></pre></div></p>
-<div class="admonition info inline end">
-<p>Generally, when declaring a parameter whose default argument is a variable with the same name,
-one can omit the argument name by just writing <code>$</code>.</p>
-</div>
-<p>Running the task <code>download</code> will download the homepage of the Hacker News. Note the parameter is declared as <code>url=$</code>: 
-This is a shorthand for <code>url=$url</code>.</p>
-<p>This task creates a single output called <code>homepage.html</code>: You can find this file at <code>out/download/default</code> directory. 
-One can simply write <code>out</code> instead of <code>(out="homepage.html")</code>: in this case the output file name will be <code>out</code>.</p>
-<p>Now, we'd like to extract all the headlines: their URLs and titles.
-We create another task that takes the output of the <code>download</code> task as input:
-<div class="highlight"><pre><span></span><code>task getTitles<span class="o">(</span><span class="nv">html</span><span class="o">=</span><span class="nv">$download</span>.out<span class="o">)</span> -&gt; out:
-  cat <span class="nv">$html</span> <span class="se">\</span>
-  <span class="p">|</span> perl -ne <span class="s1">&#39;if (/&lt;a href=&quot;(.*?)&quot; class=&quot;storylink&quot;&gt;(.*?)&lt;\/a&gt;/) { print &quot;$1\t$2\n&quot; }&#39;</span> <span class="se">\</span>
-  &gt; <span class="nv">$out</span>
-</code></pre></div></p>
-<p>Running the following command
-<div class="highlight"><pre><span></span><code>hypermake tutorial/ycomb.hm run getTitles
-</code></pre></div>
-will sequentially run the two dependent jobs: first <code>download</code> then <code>getTitles</code>,
-and the resulting TSV table will be located in <code>out/getTitles/default/out</code>.</p>
-<p>In the directory <code>out/getTitles/default</code>, you can find the following files that may be of interest:</p>
-<ul>
-<li><code>out</code>: the resulting TSV table</li>
-<li><code>script.sh</code>: the script that was used to run the task</li>
-<li><code>stdout</code>: the standard output of the task</li>
-<li><code>stderr</code>: the standard error of the task</li>
-<li><code>args</code>: A shell script that contains the arguments that were used to run the task</li>
-<li><code>exitcode</code>: A file that contains the exit code of the task</li>
-</ul>
-<p>To recreate the task in shell, you can use the following command. It should have the same behavior as directly running from Hypermake.
-<div class="highlight"><pre><span></span><code>. args <span class="o">&amp;&amp;</span> . script.sh
-</code></pre></div></p>
+                  <h1>05 Functions</h1>
+                
+                
                 
               
               
@@ -424,7 +366,7 @@ and the resulting TSV table will be located in <code>out/getTitles/default/out</
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
-        <a href="../01-hello/" class="md-footer__link md-footer__link--prev" rel="prev">
+        <a href="../04-parameterized-compose/" class="md-footer__link md-footer__link--prev" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -433,19 +375,19 @@ and the resulting TSV table will be located in <code>out/getTitles/default/out</
               <span class="md-footer__direction">
                 Previous
               </span>
-              01 Hello, world!
+              04 Parameterized pipelines
             </div>
           </div>
         </a>
       
       
-        <a href="../03-branch/" class="md-footer__link md-footer__link--next" rel="next">
+        <a href="../06-decorators/" class="md-footer__link md-footer__link--next" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              03 Parameters
+              06 Decorators
             </div>
           </div>
           <div class="md-footer__button md-icon">

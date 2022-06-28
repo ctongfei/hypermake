@@ -18,7 +18,7 @@
     
     
       
-        <title>02 Inputs & outputs - Hypermake</title>
+        <title>06 Decorators - Hypermake</title>
       
     
     
@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#inputs-outputs-and-composing-tasks" class="md-skip">
+        <a href="#decorators" class="md-skip">
           Skip to content
         </a>
       
@@ -97,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              02 Inputs & outputs
+              06 Decorators
             
           </span>
         </div>
@@ -251,20 +251,11 @@
             
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../02-compose/" class="md-nav__link">
         02 Inputs & outputs
       </a>
-      
     </li>
   
 
@@ -308,11 +299,63 @@
             
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../06-decorators/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          06 Decorators
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         06 Decorators
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-a-simple-decorator" class="md-nav__link">
+    Example 1: A simple decorator
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-a-parameterized-decorator" class="md-nav__link">
+    Example 2: A parameterized decorator
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-chaining-decorators" class="md-nav__link">
+    Example 3: Chaining decorators
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -353,6 +396,35 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-a-simple-decorator" class="md-nav__link">
+    Example 1: A simple decorator
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-a-parameterized-decorator" class="md-nav__link">
+    Example 2: A parameterized decorator
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-chaining-decorators" class="md-nav__link">
+    Example 3: Chaining decorators
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -363,49 +435,82 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/ctongfei/hypermake/edit/master/docs/tutorial/02-compose.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/ctongfei/hypermake/edit/master/docs/tutorial/06-decorators.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="inputs-outputs-and-composing-tasks">Inputs, outputs, and composing tasks</h1>
-<p>A task can take parameters, and yield outputs.
-<div class="highlight"><pre><span></span><code><span class="nv">url</span> <span class="o">=</span> <span class="s2">&quot;https://news.ycombinator.org&quot;</span>
-task download<span class="o">(</span><span class="nv">url</span><span class="o">=</span>$<span class="o">)</span> -&gt; <span class="o">(</span><span class="nv">out</span><span class="o">=</span><span class="s2">&quot;homepage.html&quot;</span><span class="o">)</span>:
-  wget <span class="nv">$url</span> -O <span class="nv">$out</span>
-</code></pre></div></p>
-<div class="admonition info inline end">
-<p>Generally, when declaring a parameter whose default argument is a variable with the same name,
-one can omit the argument name by just writing <code>$</code>.</p>
-</div>
-<p>Running the task <code>download</code> will download the homepage of the Hacker News. Note the parameter is declared as <code>url=$</code>: 
-This is a shorthand for <code>url=$url</code>.</p>
-<p>This task creates a single output called <code>homepage.html</code>: You can find this file at <code>out/download/default</code> directory. 
-One can simply write <code>out</code> instead of <code>(out="homepage.html")</code>: in this case the output file name will be <code>out</code>.</p>
-<p>Now, we'd like to extract all the headlines: their URLs and titles.
-We create another task that takes the output of the <code>download</code> task as input:
-<div class="highlight"><pre><span></span><code>task getTitles<span class="o">(</span><span class="nv">html</span><span class="o">=</span><span class="nv">$download</span>.out<span class="o">)</span> -&gt; out:
-  cat <span class="nv">$html</span> <span class="se">\</span>
-  <span class="p">|</span> perl -ne <span class="s1">&#39;if (/&lt;a href=&quot;(.*?)&quot; class=&quot;storylink&quot;&gt;(.*?)&lt;\/a&gt;/) { print &quot;$1\t$2\n&quot; }&#39;</span> <span class="se">\</span>
-  &gt; <span class="nv">$out</span>
-</code></pre></div></p>
-<p>Running the following command
-<div class="highlight"><pre><span></span><code>hypermake tutorial/ycomb.hm run getTitles
+                <h1 id="decorators">Decorators</h1>
+<p>In Hypermake, a task can be decorated with some decorators, effectively modifying its behavior. This can support 
+ - Running with different shell;
+ - Running in specific virtual environments;
+ - Running through some cluster submission systems;
+ - etc.</p>
+<p>The general syntax for defining a decorator is:</p>
+<p><div class="highlight"><pre><span></span><code>def &lt;decoratorName&gt;<span class="o">(</span>&lt;arguments&gt;<span class="o">)</span> &lt;- <span class="nv">input</span><span class="o">=</span>&lt;internalScriptName&gt;:
+  &lt;script&gt;
 </code></pre></div>
-will sequentially run the two dependent jobs: first <code>download</code> then <code>getTitles</code>,
-and the resulting TSV table will be located in <code>out/getTitles/default/out</code>.</p>
-<p>In the directory <code>out/getTitles/default</code>, you can find the following files that may be of interest:</p>
-<ul>
-<li><code>out</code>: the resulting TSV table</li>
-<li><code>script.sh</code>: the script that was used to run the task</li>
-<li><code>stdout</code>: the standard output of the task</li>
-<li><code>stderr</code>: the standard error of the task</li>
-<li><code>args</code>: A shell script that contains the arguments that were used to run the task</li>
-<li><code>exitcode</code>: A file that contains the exit code of the task</li>
-</ul>
-<p>To recreate the task in shell, you can use the following command. It should have the same behavior as directly running from Hypermake.
-<div class="highlight"><pre><span></span><code>. args <span class="o">&amp;&amp;</span> . script.sh
+and when applying a decorator, one could write
+<div class="highlight"><pre><span></span><code>@&lt;decoratorName&gt;<span class="o">(</span>&lt;arguments&gt;<span class="o">)</span>
+task taskName<span class="o">(</span>...<span class="o">)</span> -&gt; out:
+  ...
 </code></pre></div></p>
+<p>This will modify the task with the decorator. The script to be modified will be stored as <code>internalScriptName</code>.</p>
+<h4 id="example-1-a-simple-decorator">Example 1: A simple decorator</h4>
+<p>An example that let us runs a task in Python instead of shell:
+<div class="highlight"><pre><span></span><code>def python<span class="o">()</span> &lt;- <span class="nv">internalPythonScript</span><span class="o">=</span><span class="s2">&quot;script.py&quot;</span>:
+  python <span class="nv">$internalPythonScript</span>
+
+@python
+task helloWorldInPython:
+  print<span class="o">(</span><span class="s2">&quot;Hello World&quot;</span> + <span class="s2">&quot; &quot;</span> + <span class="s2">&quot;in Python!&quot;</span><span class="o">)</span>
+</code></pre></div></p>
+<p>And we can invoke the task from the command line:
+<div class="highlight"><pre><span></span><code>hypermake tutorial/decorators.hm run helloWorldInPython
+</code></pre></div></p>
+<p>Let's see what's happening under the hood here. The script in the task <code>helloWorldInPython</code> is decorated with <code>@python</code>.
+The script with the line <code>print(...)</code> is stored as <code>script.py</code> as directed in the decorator. Then, in shell, the command
+in the decorator is run instead: <code>python script.py</code>.</p>
+<h4 id="example-2-a-parameterized-decorator">Example 2: A parameterized decorator</h4>
+<p>In Python, a task can be run in different Conda virtual environments. This is a decorator that lets us do that.</p>
+<div class="highlight"><pre><span></span><code>def conda<span class="o">(</span>env<span class="o">)</span> &lt;- <span class="nv">internalCondaScript</span><span class="o">=</span><span class="s2">&quot;conda-internal.sh&quot;</span>:
+  <span class="nb">eval</span> <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">command</span> conda <span class="s1">&#39;shell.bash&#39;</span> <span class="s1">&#39;hook&#39;</span> <span class="m">2</span>&gt; /dev/null<span class="k">)</span><span class="s2">&quot;</span>
+  conda activate <span class="nv">$env</span>
+  . <span class="nv">$internalCondaScript</span>
+  conda deactivate
+
+@conda<span class="o">(</span><span class="nv">env</span><span class="o">={</span>Env: base myenv<span class="o">})</span>
+task helloWorldFromEnv:
+  python -c <span class="s2">&quot;print(&#39;Hello World in Python from </span><span class="nv">$env</span><span class="s2">!&#39;)&quot;</span>
+</code></pre></div>
+<p>Note that in the task <code>helloWorldFromEnv</code>, the decorator <code>conda</code> has a parameterized argument: <code>env={Env: base myenv}</code>.
+We can invoke both cases of the task <code>helloWorldFromEnv</code>:
+<div class="highlight"><pre><span></span><code>hypermake tutorial/decorators.hm run <span class="s1">&#39;helloWorldFromEnv[Env: *]&#39;</span>
+</code></pre></div></p>
+<p>We will see both lines
+<div class="highlight"><pre><span></span><code>Hello World in Python from base!
+Hello World in Python from myenv!
+</code></pre></div>
+output to the terminal.</p>
+<h4 id="example-3-chaining-decorators">Example 3: Chaining decorators</h4>
+<p>We have now created two decorators:</p>
+<ul>
+<li><code>@python</code> that executes a script using Python instead of Bash as the interpreter;</li>
+<li><code>@conda</code> that runs a task in a specific Conda virtual environment.</li>
+</ul>
+<p>Can we compose these decorators? Yes.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@conda</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="n">Env</span><span class="p">:</span> <span class="n">base</span> <span class="n">myenv</span><span class="p">})</span>
+<span class="nd">@python</span>
+<span class="n">task</span> <span class="n">helloWorldInPythonFromEnv</span><span class="p">:</span>
+  <span class="kn">import</span> <span class="nn">os</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hello World in Python from </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;env&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="admonition info inline end">
+<p>One can use <code>os.environ[var]</code> to get the environment variable <code>$var</code> in Python.</p>
+</div>
+<p>First, our script is wrapped by <code>@python</code>, then <code>@conda(env)</code>. 
+Recall that Hypermake passes parameters into the script as environment variables: 
+we cannot use <code>$env</code> to get the Hypermake variable in Python.</p>
                 
               
               
@@ -424,7 +529,7 @@ and the resulting TSV table will be located in <code>out/getTitles/default/out</
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
-        <a href="../01-hello/" class="md-footer__link md-footer__link--prev" rel="prev">
+        <a href="../05-functions/" class="md-footer__link md-footer__link--prev" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -433,25 +538,11 @@ and the resulting TSV table will be located in <code>out/getTitles/default/out</
               <span class="md-footer__direction">
                 Previous
               </span>
-              01 Hello, world!
+              05 Functions
             </div>
           </div>
         </a>
       
-      
-        <a href="../03-branch/" class="md-footer__link md-footer__link--next" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              03 Parameters
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
       
     </nav>
   
