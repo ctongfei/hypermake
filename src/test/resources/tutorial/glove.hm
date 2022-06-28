@@ -12,4 +12,4 @@ task downloadGloVe(gloveUrl=$) -> out:
   mv *.txt $out
   rm glove.zip
 
-plan Run = { downloadGloVe[Version:6b] }
+plan Run = { downloadGloVe[Version:*] }

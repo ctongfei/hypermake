@@ -47,4 +47,20 @@ object Escaper {
     def unescape(s: String) = StringContext.processEscapes(s)
   }
 
+  /**
+   * Escapes a string for shell scripts (e.g. Bash).
+   */
+  object Shell extends Escaper {
+    // Credit to https://stackoverflow.com/a/33949338/2990673
+    def escape(s: String) = "'" + s.replace("'", "'\\''") + "'"
+    def unescape(s: String) = {
+      if (s.startsWith("'") && s.endsWith("'"))
+        s.substring(1, s.length - 1).replace("'\\''", "'")
+      else if (s.startsWith("\"") && s.endsWith("\""))
+        C.unescape(s.substring(1, s.length - 1))
+      else
+        C.unescape(s)
+    }
+  }
+
 }

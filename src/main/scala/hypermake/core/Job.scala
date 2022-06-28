@@ -97,7 +97,6 @@ abstract class Job(implicit ctx: Context) {
   }
 
   def execute(cli: CLI.Service): HIO[Boolean] = {
-
     val effect = for {
       _ <- removeOutputs
       _ <- env.mkdir(absolutePath)

@@ -192,12 +192,14 @@ object Env {
 
     override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
-      val proc = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
-        .workingDirectory(new JFile(wd)).env(envArgs.toMap)
-        .stderr(ProcessOutput.Pipe).stdout(ProcessOutput.Pipe)
-      //ZSink.fromFile(Paths.get(s"$wd/stdout"))
+      val pb = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
+        .workingDirectory(new JFile(wd))
+        .env(envArgs.toMap)
+        .stderr(ProcessOutput.Pipe)
+        .stdout(ProcessOutput.Pipe)
       for {
-        process <- proc.run
+        process <- pb.run
+        _ <- process
         _ <- process.stdout.stream.run(out) <&> process.stderr.stream.run(err)
         exitCode <- process.exitCode
         _ <- write(s"$wd/exitcode", exitCode.code.toString)
@@ -270,10 +272,9 @@ object Env {
     def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = for {
       process <- getScriptByName(s"${name}_execute")
         .withArgs("command" ->
-          s"${envVars.map { case (k, v) => s"$k=$v" }.mkString(" ")} $command ${args.mkString(" ")}"
+          s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args.mkString(" ")}"
         ).executeLocally(wd)
-      _ <- process.stdout.stream.run(out)
-      _ <- process.stderr.stream.run(err)
+      _ <- process.stdout.stream.run(out) <&> process.stderr.stream.run(err)
       exitCode <- process.exitCode
     } yield exitCode
 
