@@ -7,7 +7,8 @@ gloveUrl = {Version:
 
 task downloadGloVe(gloveUrl=$) -> out:
   mkdir -p $out
-  curl -o glove.zip "$gloveUrl"
+  sleep $((( $RANDOM % 10 ) + 1))s
+  wget -O glove.zip $gloveUrl
   unzip glove.zip
   mv *.txt $out
   rm glove.zip

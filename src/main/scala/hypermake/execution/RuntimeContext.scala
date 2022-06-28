@@ -38,8 +38,6 @@ class RuntimeContext private(
 
   final val IFS_CHAR = IFS.head.toString
 
-  lazy val SHELL = "bash"
-
   lazy val paths = envVars.get(HYPERMAKEPATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
   lazy val resolutionPaths = workDir +: paths
@@ -78,9 +76,11 @@ class RuntimeContext private(
 
 object RuntimeContext {
 
+  private val defaultShell = "bash -e"
+
   def create(
               includePaths: Seq[String] = Seq(),
-              shell: String = "bash",
+              shell: String = defaultShell,
               numParallelJobs: Int = 1,
               keepGoing: Boolean = false,
               silent: Boolean = false,
@@ -99,7 +99,7 @@ object RuntimeContext {
 
   def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = create(
     includePaths = options.collect { case Opt.Include(f) => f },
-    shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse("bash"),
+    shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse(defaultShell),
     numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
     keepGoing = runOptions contains RunOpt.KeepGoing,
     silent = runOptions contains RunOpt.Silent,

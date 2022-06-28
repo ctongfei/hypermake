@@ -106,7 +106,7 @@ abstract class Job(implicit ctx: Context) {
       args <- writeScript(linkedArgs)
       _ <- cli.update(this, Status.Running)
       (outSink, errSink) <- cli.getSinks(this)
-      exitCode <- env.execute(absolutePath, runtime.SHELL, Seq("script.sh"), args, outSink, errSink)
+      exitCode <- env.execute(absolutePath, runtime.shell, Seq("script.sh"), args, outSink, errSink)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())

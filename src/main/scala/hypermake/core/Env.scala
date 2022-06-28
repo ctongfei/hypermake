@@ -193,13 +193,12 @@ object Env {
     override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
       val pb = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
-        .workingDirectory(new JFile(wd))
+        .workingDirectory(File(wd).toJava.getAbsoluteFile)
         .env(envArgs.toMap)
         .stderr(ProcessOutput.Pipe)
         .stdout(ProcessOutput.Pipe)
       for {
         process <- pb.run
-        _ <- process
         _ <- process.stdout.stream.run(out) <&> process.stderr.stream.run(err)
         exitCode <- process.exitCode
         _ <- write(s"$wd/exitcode", exitCode.code.toString)

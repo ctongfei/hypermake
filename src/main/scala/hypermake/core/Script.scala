@@ -36,7 +36,7 @@ case class Script(
   def executeLocally(workDir: String = runtime.workDir): HIO[Process] = {
     val tempScriptFile = runtime.tempFile(prefix = "hypermake_temp_script")
     // allows the case where the interpreter has arguments: python -v ...
-    val command = s"${runtime.SHELL} $tempScriptFile".split(' ')
+    val command = s"${runtime.shell} $tempScriptFile".split(' ')
 
     for {
       _ <- IO { File(tempScriptFile).write(this.toString) }

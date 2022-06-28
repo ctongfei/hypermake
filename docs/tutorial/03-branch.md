@@ -16,6 +16,7 @@ gloveUrl = {Version:
 }
 
 task downloadGloVe(gloveUrl=$) -> out:
+  sleep $((( $RANDOM % 10 ) + 1))s
   wget -O glove.zip $gloveUrl
   unzip glove.zip
   mv *.txt $out
