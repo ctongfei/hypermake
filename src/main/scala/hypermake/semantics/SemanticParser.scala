@@ -182,9 +182,11 @@ class SemanticParser(implicit val ctx: Context) {
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!((Map(), taskEnv)) }
       val outputParams = outputs.map { case (k, (_, v)) => k.! -> v.!! }
       val localParams = inputParams ++ outputParams
-      val axes = inputParams.values.map(_.cases.vars).fold(Set())(_ union _)
       val script = impl.!((localParams, taskEnv))
       val calls = decorators.calls.map(_.!)
+      val inputParamAxes = inputParams.values.map(_.cases.vars)
+      val callParamAxes = calls.map(_.cases.vars)
+      val axes = (callParamAxes ++ inputParamAxes).fold(Set())(_ union _)
       new PointedCubeTask(
         name.!, taskEnv, allCases.filterVars(axes),
         inputParams, inputEnvs, outputParams, outputEnvs,

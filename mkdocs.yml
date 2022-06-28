@@ -25,3 +25,7 @@ nav:
       - "01 Hello, world!": 'tutorial/01-hello.md'
       - "02 Inputs & outputs": 'tutorial/02-compose.md'
       - "03 Parameters": 'tutorial/03-branch.md'
+      - "04 Parameterized pipelines": 'tutorial/04-parameterized-compose.md'
+      - "05 Functions": 'tutorial/05-functions.md'
+      - "06 Decorators": 'tutorial/06-decorators.md'
+      - "07 Environments": 'tuntorial/07-environments.md'

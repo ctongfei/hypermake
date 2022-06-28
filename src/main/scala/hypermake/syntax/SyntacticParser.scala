@@ -122,7 +122,8 @@ object SyntacticParser {
     "@" ~ funcCall
   } map DecoratorCall
 
-  def decoratorCalls[_: P] = decoratorCall.rep map DecoratorCalls
+  def decoratorCalls[_: P] =
+    decoratorCall.rep map (cs => DecoratorCalls(cs.reverse)) // reverse so that the first decorator is the outermost
 
   def funcCallImpl[_: P] = P {
     "=" ~ funcCall

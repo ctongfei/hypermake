@@ -1,6 +1,22 @@
-def python() <- input="script.py":
-  python $input
+def python() <- internalPythonScript="script.py":
+  python $internalPythonScript
+
+def conda(env) <- internalCondaScript="conda-internal.sh":
+  eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
+  conda activate $env
+  . $internalCondaScript
+  conda deactivate
 
 @python
 task helloWorldInPython:
   print("Hello World" + " " + "in Python!")
+
+@conda(env={Env: base myenv})
+task helloWorldFromEnv:
+  python -c "print('Hello World in Python from $env!')"
+
+@conda(env={Env: base myenv})
+@python
+task helloWorldInPythonFromEnv:
+  import os
+  print(f"Hello World in Python from {os.environ['env']}!")

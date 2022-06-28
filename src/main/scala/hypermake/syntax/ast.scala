@@ -211,7 +211,7 @@ case class DecoratorCall(call: FuncCall) extends Node {
 }
 
 case class DecoratorCalls(calls: Seq[DecoratorCall]) extends Node {
-  def str = calls.mkString("")
+  def str = calls.reverse.mkString("")
   def children = calls
 }
 

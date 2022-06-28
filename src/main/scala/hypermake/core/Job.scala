@@ -90,7 +90,7 @@ abstract class Job(implicit ctx: Context) {
       }  // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
       mergedArgs = mergeArgs(finalScript.strArgs, linkedArgs)
-      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k="${C.escape(v)}""""}
+      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k=${Shell.escape(v)}"""}
         .mkString("", "\n", "\n")
       )
     } yield mergedArgs

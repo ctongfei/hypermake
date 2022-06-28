@@ -38,8 +38,9 @@ hypermake glove.hm run downloadGloVe[Version:6b]
 ```
 One can use `[Var:*]` syntax to refer to **all** cases of the task. The following command line invocation downloads all GloVe versions:
 ```shell
-hypermake glove.hm run downloadGloVe[Version: *]
+hypermake glove.hm run 'downloadGloVe[Version: *]'
 ```
-
-Again, we can find the output files in 
+!!! info inline end ""
+    Single-quoting the task `downloadGlove[Version: *]` prohibits bash from expanding the wildcard `*` symbol.
+Again, we can find the output files in `out/downloadGloVe/Version=XX`.
 
