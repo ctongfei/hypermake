@@ -20,7 +20,7 @@ object ParserTest extends App {
   implicit val rt = RuntimeContext.create()
   implicit val ctx = new Context()
   val workflow = new SemanticParser()
-  workflow.semanticParse(File("src/test/resources/test.hm"))
+  workflow.semanticParse(File("src/test/resources/tutorial/decorators.hm"))
 
 
   val g = workflow.ctx.getPlan(Name("Run")).dependencyGraph

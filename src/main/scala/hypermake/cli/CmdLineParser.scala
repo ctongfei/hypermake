@@ -41,7 +41,9 @@ object CmdLineParser {
 
   def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
 
-  def command[_: P] = P { "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! | "export-shell".! } map {
+  def command[_: P]: P[Subcommand] = P {
+    "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! // "export-shell".!
+  } map {
     case "run"          => Subcommand.Run
     case "dry-run"      => Subcommand.DryRun
     case "invalidate"   => Subcommand.Invalidate

@@ -39,7 +39,7 @@ case class Script(
     val command = s"${runtime.shell} $tempScriptFile".split(' ')
 
     for {
-      _ <- IO { File(tempScriptFile).write(this.toString) }
+      _ <- IO { File(tempScriptFile).write(script) }
       process <- Command(command.head, command.tail: _*)
         .workingDirectory(new JFile(workDir))
         .env(strArgs.toMap)  // Hypermake args are injected as environment vars

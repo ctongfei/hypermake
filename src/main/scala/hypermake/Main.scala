@@ -44,11 +44,9 @@ object Main extends App {
       |  unlock ${A("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
       |  remove ${A("$targets")}            : Removes the output of the given tasks or plans.
       |  mark-as-done ${A("$targets")}      : Mark the given tasks as normally exited.
-      |  export-shell ${A("$targets")}      : Generates an equivalent shell script that runs the given tasks.
       |
       |""".stripMargin
   }
-
 
   def run(args: List[String]) = {
 
@@ -94,7 +92,6 @@ object Main extends App {
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
                   u <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
-                  _ <- getStrLn
                 } yield u
 
               case Subcommand.Invalidate =>
