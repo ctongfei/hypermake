@@ -28,7 +28,7 @@ object Value {
   }
 
   case class PackageOutput(pack: Package) extends EnvAgnostic {
-    def value = "package"
+    def value = pack.outputs._2.value
     def absValue(implicit runtime: RuntimeContext) = ???
     def envOption = None
     def dependencies = Set()

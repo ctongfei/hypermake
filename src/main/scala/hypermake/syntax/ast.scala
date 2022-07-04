@@ -244,9 +244,9 @@ case class ServiceDef(decorators: DecoratorCalls, name: Identifier, env: EnvModi
   def children = decorators.calls ++ Iterable(name, inputs, impl)
 }
 
-case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assignments, impl: ScriptImpl) extends Statement {
-  def str = s"${decorators}package $name($inputs)$impl"
-  def children = decorators.calls ++ Iterable(name, inputs, impl)
+case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assignments, output: ExplicitAssignment, impl: ScriptImpl) extends Statement {
+  def str = s"${decorators}package $name($inputs) -> $output$impl"
+  def children = decorators.calls ++ Iterable(name, inputs, output, impl)
 }
 
 case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: Impl) extends Statement {

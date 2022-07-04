@@ -166,10 +166,18 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParsePackage extends Denotation[PackageDef, PointedCubePackage] {
     def denotation(pd: PackageDef) = {
-      val PackageDef(decorators, name, inputs, impl) = pd
+      val PackageDef(decorators, name, inputs, output, impl) = pd
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
-      val axes = inputParams.values.map(_.cases.vars).fold(Set())(_ union _)
-      PointedCubePackage(name.!, allCases.filterVars(axes), inputParams, decorators.calls.map(_.!), impl.!)
+      val outputParams = Assignments(Seq(output)).map { case (k, (_, v)) => k.! -> v.!! }
+      val axes = (inputParams ++ outputParams).values.map(_.cases.vars).fold(Set())(_ union _)
+      PointedCubePackage(
+        name = name.!,
+        cases = allCases.filterVars(axes),
+        inputs = inputParams,
+        outputs = outputParams.head,
+        decorators = decorators.calls.map(_.!),
+        rawScript = impl.!
+      )
     }
   }
 
