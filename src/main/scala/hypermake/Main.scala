@@ -38,6 +38,7 @@ object Main extends App {
       |  -y, --yes                  : Automatic "yes" to prompts.
       |
       | Commands:
+      |  list                               : Lists the variables and tasks in this pipeline.
       |  run ${A("$targets")}               : Runs the given tasks or plans (space delimited).
       |  dry-run ${A("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
       |  invalidate ${A("$targets")}        : Invalidates the given tasks or plans.
@@ -77,6 +78,19 @@ object Main extends App {
           managedCli <- cli
           task <- managedCli.use { cli =>
             val effect = subtask match {
+              case Subcommand.List =>
+                for {
+                  _ <- putStrLn(s"The pipeline in $scriptFile contains:")
+                  _ <- putStrLn(s"Variables:")
+                  _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
+                    s"  $name: ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")}"
+                  }.mkString("\n"))
+                  _ <- putStrLn(s"Tasks:")
+                  _ <- putStrLn(ctx.tasks.map { case (name, task) =>
+                    s"  $name[${task.vars.mkString(", ")}]"
+                  }.mkString("\n"))
+                } yield ()
+
               case Subcommand.Run =>
                 val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
                 val sortedJobs = jobGraph.topologicalSort

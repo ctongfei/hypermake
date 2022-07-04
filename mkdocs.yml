@@ -28,4 +28,5 @@ nav:
       - "04 Parameterized pipelines": 'tutorial/04-parameterized-compose.md'
       - "05 Functions": 'tutorial/05-functions.md'
       - "06 Decorators": 'tutorial/06-decorators.md'
-      - "07 Environments": 'tuntorial/07-environments.md'
+      - "07 Packages": 'tutorial/07-packages.md'
+      - "08 Environments": 'tuntorial/08-environments.md'
