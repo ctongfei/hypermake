@@ -16,19 +16,19 @@ task mytask(mypackage=$, ...) -> out:
 ```
 
 #### Example 1: Copying a package from a local directory
-```
+```bash
 package pack1 -> out:
   ln -s $localDir out
 ```
 
 #### Example 2: Cloning from a remote repository
-```
+```bash
 package pack2 -> out:
   git clone $repo out
 ```
 
 #### Example 3: Call its Makefile after cloning from a repo
-```
+```bash
 package pack3(repo=$) -> out:
   git clone $repo out
   cd out
@@ -36,7 +36,7 @@ package pack3(repo=$) -> out:
 ```
 
 #### Example 4: Creates a Conda environment from a Python package
-```
+```bash
 package pack4(pythonPackage=$) -> out:
   mkdir -p $out
   conda env create -p $out -f $pythonPackage/environment.yml

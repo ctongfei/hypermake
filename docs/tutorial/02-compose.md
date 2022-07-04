@@ -25,6 +25,13 @@ task getTitles(html=$download.out) -> out:
   > $out
 ```
 
+It creates the following pipeline:
+
+```mermaid
+flowchart LR
+    download --> getTitles
+```
+
 Running the following command
 ```shell
 hypermake tutorial/ycomb.hm run getTitles
