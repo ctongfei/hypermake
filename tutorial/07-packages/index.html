@@ -17,7 +17,7 @@
     
     
       
-        <title>05 Functions - Hypermake</title>
+        <title>07 Packages - Hypermake</title>
       
     
     
@@ -67,6 +67,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#packages" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -96,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              05 Functions
+              07 Packages
             
           </span>
         </div>
@@ -303,19 +308,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../05-functions/" class="md-nav__link">
         05 Functions
       </a>
-      
     </li>
   
 
@@ -339,11 +336,73 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../07-packages/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          07 Packages
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         07 Packages
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-copying-a-package-from-a-local-directory" class="md-nav__link">
+    Example 1: Copying a package from a local directory
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-cloning-from-a-remote-repository" class="md-nav__link">
+    Example 2: Cloning from a remote repository
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-call-its-makefile-after-cloning-from-a-repo" class="md-nav__link">
+    Example 3: Call its Makefile after cloning from a repo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-4-creates-a-conda-environment-from-a-python-package" class="md-nav__link">
+    Example 4: Creates a Conda environment from a Python package
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -386,6 +445,44 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-copying-a-package-from-a-local-directory" class="md-nav__link">
+    Example 1: Copying a package from a local directory
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-cloning-from-a-remote-repository" class="md-nav__link">
+    Example 2: Cloning from a remote repository
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-call-its-makefile-after-cloning-from-a-repo" class="md-nav__link">
+    Example 3: Call its Makefile after cloning from a repo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-4-creates-a-conda-environment-from-a-python-package" class="md-nav__link">
+    Example 4: Creates a Conda environment from a Python package
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -397,15 +494,43 @@
             <article class="md-content__inner md-typeset">
               
                 
-  <a href="https://github.com/ctongfei/hypermake/edit/master/docs/tutorial/05-functions.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/ctongfei/hypermake/edit/master/docs/tutorial/07-packages.md" title="Edit this page" class="md-content__button md-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
 
-  <h1>05 Functions</h1>
-
-
+<h1 id="packages">Packages</h1>
+<p>In Hypermake, packages are special tasks that builds a software package. 
+They can depends on other packages but not tasks, and will be built differently on different environments (see next tutorial).</p>
+<p>A package is defined as follows:
+<div class="highlight"><pre><span></span><code>package &lt;package name&gt; -&gt; &lt;package output dir name&gt;:
+  &lt;build script&gt;
+</code></pre></div>
+And to refer to a package, just use <code>$&lt;package name&gt;</code>. For example, if a task requires a package <code>mypackage</code>, one can write
+<div class="highlight"><pre><span></span><code>task mytask(mypackage=$, ...) -&gt; out:
+  PYTHONPATH=$mypackage \
+    python $mypackage/a/b/c.py --out=$out
+</code></pre></div></p>
+<h4 id="example-1-copying-a-package-from-a-local-directory">Example 1: Copying a package from a local directory</h4>
+<div class="highlight"><pre><span></span><code>package pack1 -&gt; out:
+  ln -s <span class="nv">$localDir</span> out
+</code></pre></div>
+<h4 id="example-2-cloning-from-a-remote-repository">Example 2: Cloning from a remote repository</h4>
+<div class="highlight"><pre><span></span><code>package pack2 -&gt; out:
+  git clone <span class="nv">$repo</span> out
+</code></pre></div>
+<h4 id="example-3-call-its-makefile-after-cloning-from-a-repo">Example 3: Call its Makefile after cloning from a repo</h4>
+<div class="highlight"><pre><span></span><code>package pack3<span class="o">(</span><span class="nv">repo</span><span class="o">=</span>$<span class="o">)</span> -&gt; out:
+  git clone <span class="nv">$repo</span> out
+  <span class="nb">cd</span> out
+  make
+</code></pre></div>
+<h4 id="example-4-creates-a-conda-environment-from-a-python-package">Example 4: Creates a Conda environment from a Python package</h4>
+<div class="highlight"><pre><span></span><code>package pack4<span class="o">(</span><span class="nv">pythonPackage</span><span class="o">=</span>$<span class="o">)</span> -&gt; out:
+  mkdir -p <span class="nv">$out</span>
+  conda env create -p <span class="nv">$out</span> -f <span class="nv">$pythonPackage</span>/environment.yml
+</code></pre></div>
 
               
             </article>
@@ -421,7 +546,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../04-parameterized-compose/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 04 Parameterized pipelines" rel="prev">
+        <a href="../06-decorators/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 06 Decorators" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -430,26 +555,11 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              04 Parameterized pipelines
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../06-decorators/" class="md-footer__link md-footer__link--next" aria-label="Next: 06 Decorators" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
               06 Decorators
             </div>
           </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
         </a>
+      
       
     </nav>
   
