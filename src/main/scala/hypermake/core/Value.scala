@@ -46,7 +46,7 @@ object Value {
   }
 
   case class Output(value: String, env: Env, job: Job) extends EnvDependent {
-    def absValue(implicit runtime: RuntimeContext) = s"${runtime.workDir}/${job.absolutePath}/$value"
+    def absValue(implicit runtime: RuntimeContext) = s"${job.absolutePath}${env.separator}$value"
     def dependencies = Set(job)
   }
 

@@ -3,6 +3,7 @@ organization := "me.tongfei"
 isSnapshot := true
 version := "0.1.0"
 scalaVersion := "2.13.8"
+Compile/mainClass := Some("hypermake.Main")
 
 libraryDependencies ++= Seq(
   "org.scala-lang.modules"  %% "scala-collection-contrib" % "0.2.2",

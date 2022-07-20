@@ -65,7 +65,7 @@ abstract class Job(implicit ctx: Context) {
   /** An operation that links output of dependent jobs to the working directory of this job. */
   def linkInputs: HIO[Map[String, Option[String]]] = ZIO.collectAllPar {
     for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
-      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _.map(x => s"${ctx.runtime.workDir}/$x"))
+      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _)
   }.map(_.toMap)
 
   /** An operation that checks the output of this job and the exit status of this job. */
