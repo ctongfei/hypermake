@@ -49,7 +49,7 @@ abstract class Job(implicit ctx: Context) {
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
-    (inputs ++ decorators.map(_.args).fold(Iterable())(_ ++ _)).values.map(_.dependencies).fold(Set())(_ union _)
+    (inputs ++ decorators.map(_.args).fold(Iterable())(_ ++ _)).values.flatMap(_.dependencies).toSet
 
   lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs, rawScript.outputArgs ++ outputs)(runtime)
 
