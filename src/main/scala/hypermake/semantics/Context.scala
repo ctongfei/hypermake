@@ -55,7 +55,7 @@ class Context(implicit val runtime: RuntimeContext) {
   /**
    * Encodes the arguments as a percent-encoded string.
    */
-  def escapedArgsString(args: Map[Name, String]) = {
+  def percentEncodedArgsString(args: Map[Name, String]) = {
     val sortedArgs = args.toArray.sortBy(_._1)
     val clauses = sortedArgs.collect {
       case (a, k) if getAxis(a).default != k =>
@@ -68,7 +68,7 @@ class Context(implicit val runtime: RuntimeContext) {
     val sortedArgs = args.toArray.sortBy(_._1)
     val clauses = sortedArgs.collect {
       case (a, k) if getAxis(a).default != k =>
-        s"$a: ${Percent.escape(k)}"
+        s"$a: $k"
     }
     clauses.mkString(", ")
   }

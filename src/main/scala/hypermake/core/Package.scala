@@ -6,11 +6,12 @@ import hypermake.semantics.Context
 import hypermake.util._
 
 class Package(
-               name: Name,
-               `case`: Case,
-               inputs: Map[Name, Value],
-               decorators: Seq[Call],
-               rawScript: Script
+               val name: Name,
+               val `case`: Case,
+               val inputs: Map[Name, Value],
+               val outputs: (Name, Value),
+               val decorators: Seq[Call],
+               val rawScript: Script
              )(implicit ctx: Context) {
   def on(env: Env): Task = new Task(
     name = Name(s"$name@$env"),
@@ -21,8 +22,8 @@ class Package(
       case _: Value.Pure => Env(Name(""))
       case _: Value.PackageOutput => env
     },
-    outputFileNames = Map(Name("package") -> Value.Pure("package")),
-    outputEnvs = Map(Name("package") -> env),
+    outputFileNames = Map(outputs),
+    outputEnvs = Map(outputs._1 -> env),
     decorators = decorators, // TODO: what if decorators refer to env-dependent values?
     rawScript = rawScript
   )
@@ -37,6 +38,7 @@ case class PointedCubePackage(
                                name: Name,
                                cases: PointedCaseCube,
                                inputs: Map[Name, PointedCube[Value]],
+                               outputs: (Name, PointedCube[Value]),
                                decorators: Seq[PointedCubeCall],
                                rawScript: PointedCube[Script]
                              )(implicit ctx: Context)
@@ -48,6 +50,7 @@ case class PointedCubePackage(
         name = name,
         `case` = cases.normalizeCase(c),
         inputs = inputs.mapValuesE(_.select(c).default),
+        outputs = (outputs._1, outputs._2.select(c).default),
         decorators = decorators.map(_.select(c).default),
         rawScript = rawScript.select(c).default,
       ))
@@ -63,12 +66,12 @@ case class PointedCubePackage(
     cases,
     inputs,
     Map(),
-    Map(Name("package") -> PointedCube.Singleton(Value.Pure("package"))),
-    Map(Name("package") -> env),
+    Map(outputs),
+    Map(outputs._1 -> env),
     decorators,
     rawScript
   )
 
-  def output: PointedCube[Value.PackageOutput] = this.map(Value.PackageOutput)
+  def output: PointedCube[Value.PackageOutput] = this map Value.PackageOutput
 
 }

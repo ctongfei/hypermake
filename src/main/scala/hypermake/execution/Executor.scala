@@ -38,9 +38,10 @@ object Executor {
    */
   def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeContext): HIO[Unit] = {
     val sortedJobs = jobs.topologicalSort.toIndexedSeq  // may throw CyclicWorkflowException
+    val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
-      promises: Map[Job, Promise[Throwable, Unit]] <- ZIO.foldLeft(sortedJobs)(immutable.Map[Job, Promise[Throwable, Unit]]()) { (m, j) =>
+      promises: Map[Job, Promise[Throwable, Unit]] <- ZIO.foldLeft(sortedJobs)(emptyMap) { (m, j) =>
         Promise.make[Throwable, Unit] map { p => m + (j -> p) }
       }
       effects = sortedJobs map { j =>

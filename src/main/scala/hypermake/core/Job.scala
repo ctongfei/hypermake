@@ -40,12 +40,12 @@ abstract class Job(implicit ctx: Context) {
    * Path to store the output of this task, relative to the output root.
    * This is the working directory of this task if executed.
    */
-  lazy val path = s"$name/${escapedArgsString(`case`.underlying)}"
+  lazy val path = s"$name/$percentEncodedArgsString"
 
   lazy val absolutePath = env.resolvePath(path)
 
   /** The canonical string identifier for this task. */
-  lazy val id = s"$name[$argsString]"
+  lazy val id = s"$name[$percentEncodedArgsString]"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -145,6 +145,7 @@ abstract class Job(implicit ctx: Context) {
 
   def argsDefault = ctx.argsDefault(`case`.underlying)
 
+  def percentEncodedArgsString = ctx.percentEncodedArgsString(`case`.underlying)
   def argsString = ctx.argsString(`case`.underlying)
 
   def colorfulString = {

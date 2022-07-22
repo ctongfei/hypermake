@@ -38,17 +38,16 @@ object Main extends App {
       |  -y, --yes                  : Automatic "yes" to prompts.
       |
       | Commands:
+      |  list                               : Lists the variables and tasks in this pipeline.
       |  run ${A("$targets")}               : Runs the given tasks or plans (space delimited).
       |  dry-run ${A("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
       |  invalidate ${A("$targets")}        : Invalidates the given tasks or plans.
       |  unlock ${A("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
       |  remove ${A("$targets")}            : Removes the output of the given tasks or plans.
       |  mark-as-done ${A("$targets")}      : Mark the given tasks as normally exited.
-      |  export-shell ${A("$targets")}      : Generates an equivalent shell script that runs the given tasks.
       |
       |""".stripMargin
   }
-
 
   def run(args: List[String]) = {
 
@@ -79,6 +78,19 @@ object Main extends App {
           managedCli <- cli
           task <- managedCli.use { cli =>
             val effect = subtask match {
+              case Subcommand.List =>
+                for {
+                  _ <- putStrLn(s"The pipeline in $scriptFile contains:")
+                  _ <- putStrLn(s"Variables:")
+                  _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
+                    s"  $name: ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")}"
+                  }.mkString("\n"))
+                  _ <- putStrLn(s"Tasks:")
+                  _ <- putStrLn(ctx.tasks.map { case (name, task) =>
+                    s"  $name[${task.vars.mkString(", ")}]"
+                  }.mkString("\n"))
+                } yield ()
+
               case Subcommand.Run =>
                 val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
                 val sortedJobs = jobGraph.topologicalSort
@@ -94,7 +106,6 @@ object Main extends App {
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
                   u <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
-                  _ <- getStrLn
                 } yield u
 
               case Subcommand.Invalidate =>

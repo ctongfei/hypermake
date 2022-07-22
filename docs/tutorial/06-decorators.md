@@ -1,6 +1,7 @@
 # Decorators
 
 In Hypermake, a task can be decorated with some decorators, effectively modifying its behavior. This can support 
+
  - Running with different shell;
  - Running in specific virtual environments;
  - Running through some cluster submission systems;

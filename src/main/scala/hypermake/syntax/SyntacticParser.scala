@@ -137,6 +137,10 @@ object SyntacticParser {
     sameNameAssignment.map(a => Assignments(Seq(a))) | assignments
   }
 
+  def outputAssignment1[_: P] = P {
+    sameNameAssignment | explicitAssignment
+  }
+
   def valDef[_: P] = P {
     identifier ~ "=" ~ expr
   } map { case (id, v) => ValDef(id, v) }
@@ -162,8 +166,8 @@ object SyntacticParser {
 
   def packageDef[_: P] = P {
     decoratorCalls ~
-      "package" ~ identifier ~ assignments ~ scriptImpl
-  } map { case (decorators, name, inputs, impl) => PackageDef(decorators, name, inputs, impl) }
+      "package" ~ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl
+  } map { case (decorators, name, inputs, output, impl) => PackageDef(decorators, name, inputs, output, impl) }
 
   def planDef[_: P] = P {
     "plan" ~ identifier ~ "=" ~ "{" ~ taskRefN.rep ~ "}"
