@@ -6,7 +6,7 @@ import hypermake.cli.CmdLineAST.{Opt, RunOpt}
 
 import java.io.{File => JFile, _}
 import java.nio.file.{Files => JFiles, _}
-import scala.sys._
+import scala.jdk.CollectionConverters._
 
 
 /**
@@ -18,6 +18,7 @@ class RuntimeContext private(
                               val workDir: String,
                               val shell: String,
                               val envVars: Map[String, String],
+                              val definedVars: Map[String, String],
                               val includePaths: Seq[String],
                               val numParallelJobs: Int,
                               val keepGoing: Boolean,
@@ -65,6 +66,7 @@ class RuntimeContext private(
   override def toString = {
     s"""workDir = $workDir
        |shell = $shell
+       |definedVars = $definedVars
        |includePaths = ${includePaths.mkString("[", ", ", "]")}
        |numParallelJobs = $numParallelJobs
        |keepGoing = $keepGoing
@@ -79,6 +81,7 @@ object RuntimeContext {
   private val defaultShell = "bash -e"
 
   def create(
+              definedVars: Map[String, String] = Map(),
               includePaths: Seq[String] = Seq(),
               shell: String = defaultShell,
               numParallelJobs: Int = 1,
@@ -88,7 +91,8 @@ object RuntimeContext {
             ): RuntimeContext =
     new RuntimeContext(
       workDir = System.getProperty("user.dir"),
-      envVars = env,
+      envVars = System.getenv().asScala.toMap,
+      definedVars = definedVars,
       shell = shell,
       includePaths = includePaths,
       numParallelJobs = numParallelJobs,

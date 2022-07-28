@@ -1,5 +1,6 @@
 package hypermake.cli
 
+import hypermake.collection.Name
 import hypermake.syntax._
 
 object CmdLineAST {
@@ -19,6 +20,7 @@ object CmdLineAST {
 
   sealed abstract class Opt
   object Opt {
+    case class Define(name: String, value: String) extends Opt // -D name=value
     case class Include(path: String) extends Opt // I
     case class Output(path: String)  extends Opt // O
     case class Shell(shell: String)  extends Opt // S

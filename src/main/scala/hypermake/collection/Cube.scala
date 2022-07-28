@@ -112,7 +112,7 @@ object Cube {
   class SelectedMany[A](self: Cube[A], cc: CaseCube) extends Cube[A] {
     val cases = self.cases.selectMany(cc)
     def get(c: Case) = {
-      if ((c.vars intersect cases.vars).forall { a => cc(a) contains c(a) })  // all indices are in the sliced indices
+      if ((c.vars intersect cases.vars).forall { a => !cc.containsAxis(a) || cc(a).contains(c(a)) })  // all indices are in the sliced indices
         self.get(c) else None
     }
   }

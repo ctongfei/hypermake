@@ -2,6 +2,7 @@ package hypermake.cli
 
 import fastparse._
 import hypermake.exception._
+import hypermake.syntax.Lexer.identifier
 import hypermake.syntax._
 
 /**
@@ -12,6 +13,10 @@ object CmdLineParser {
   import fastparse.ScriptWhitespace._
   import hypermake.cli.CmdLineAST._
   import hypermake.syntax.SyntacticParser._
+
+  def define[_: P] =
+    P { ("-D" | "--define") ~ Lexer.identifier ~ "=" ~ string }
+      .map { case (name, value) => Opt.Define(name.name, value) }
 
   def include[_: P] =
     P { ("-I" | "--include") ~ string } map Opt.Include
@@ -28,7 +33,8 @@ object CmdLineParser {
   def switch[_: P](short: String, long: String, out: RunOpt): P[RunOpt] =
     P { long | short } map { _ => out }
 
-  def opt[_: P]: P[Opt] = P { include | shell }
+  def opt[_: P]: P[Opt] = P { define | include | shell }
+
   def runtimeOpts[_: P] = P {
     numJobs |
       switch("-k", "--keep-going", RunOpt.KeepGoing) |
