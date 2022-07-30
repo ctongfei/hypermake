@@ -39,7 +39,7 @@ trait Cube[+A] { self =>
   def selectMany(cc: CaseCube): Cube[A] = new SelectedMany(self, cc)
 
   def currySelectMany(cc: CaseCube): Cube[Cube[A]] =
-    curry(cc.vars).map(_.selectMany(cc))
+    curry(vars diff cc.vars).selectMany(cc)
 
   def productWith[B, C](that: Cube[B])(f: (A, B) => C): Cube[C] = new ProductWith(self, that, f)
 

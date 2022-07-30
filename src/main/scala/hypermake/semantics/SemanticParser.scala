@@ -203,16 +203,16 @@ class SemanticParser(implicit val ctx: Context) {
     }
   }
 
-  implicit object ParseTaskRef1 extends Denotation[TaskRef1, Task] {
-    def denotation(tr: TaskRef1) = getTask(tr.name.!).select(tr.indices.!).default
+  implicit object ParseTaskRef1 extends Denotation[TaskRef1, PointedCube[Task]] {
+    def denotation(tr: TaskRef1) = getTask(tr.name.!).select(tr.indices.!)
   }
 
-  implicit object ParseTaskRefN extends Denotation[TaskRefN, Cube[Task]] {
-    def denotation(tr: TaskRefN) = getTask(tr.name.!).selectMany(tr.indices.!)
+  implicit object ParseTaskRefN extends Denotation[TaskRefN, Cube[PointedCube[Task]]] {
+    def denotation(tr: TaskRefN) = getTask(tr.name.!).currySelectMany(tr.indices.!)
   }
 
   implicit object ParsePlan extends Denotation[PlanDef, Plan] {
-    def denotation(pd: PlanDef) = new Plan(pd.taskRefs.map(_.!))
+    def denotation(pd: PlanDef) = new Plan(pd.taskRefs.map(_.!.map(_.default)))
   }
 
   /**
@@ -297,9 +297,9 @@ class SemanticParser(implicit val ctx: Context) {
     semanticParse(readFileToStmts(file))
   }
 
-  def parseTask(tr: TaskRef1) = tr.!
+  def parseTask(tr: TaskRef1) = tr.!.default
 
   def parseTarget(tr: TaskRefN) =
-    plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!))
+    plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!.map(_.default)))
 
 }

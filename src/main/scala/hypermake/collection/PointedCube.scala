@@ -61,6 +61,9 @@ trait PointedCube[+A] extends Cube[A] { self =>
     } yield b
   }
 
+  override def currySelectMany(cc: CaseCube): Cube[PointedCube[A]] =
+    curry(vars diff cc.vars).selectMany(cc)
+
   override def toString = s"[${cases.vars.mkString(", ")}] default = $default"
 
 }

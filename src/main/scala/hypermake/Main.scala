@@ -86,10 +86,10 @@ object Main extends App {
                     s"  $name: ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")}"
                   }.mkString("\n"))
                   _ <- putStrLn(s"Tasks:")
-                  _ <- putStrLn(ctx.tasks.map { case (name, task) =>
+                  u <- putStrLn(ctx.tasks.map { case (name, task) =>
                     s"  $name[${task.vars.mkString(", ")}]"
                   }.mkString("\n"))
-                } yield ()
+                } yield u
 
               case Subcommand.Run =>
                 val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
