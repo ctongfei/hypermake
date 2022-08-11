@@ -15,7 +15,7 @@ class Plan(val targets: Seq[Cube[Job]]) {
    */
   def dependencyGraph: Graph[Job] = {
     val targetJobs = targets.flatMap(_.allElements)
-    Graph.traverse(targetJobs, _.dependentJobs)
+    Graph.explore(targetJobs, _.dependentJobs)
   }
 
 }

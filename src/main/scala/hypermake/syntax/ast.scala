@@ -234,6 +234,11 @@ case class ValDef(name: Identifier, value: Expr) extends Statement {
   def children = Iterable(name, value)
 }
 
+case class GlobalValDef(name: Identifier, value: Expr) extends Statement {
+  def str = s"global $name = $value"
+  def children = Iterable(name, value)
+}
+
 case class TaskDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, outputs: Assignments, impl: Impl) extends Statement {
   def str = s"${decorators}task $name$env($inputs) -> ($outputs)$impl"
   def children = decorators.calls ++ Iterable(env, name, inputs, outputs, impl)

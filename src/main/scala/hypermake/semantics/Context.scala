@@ -17,6 +17,7 @@ class Context(implicit val runtime: RuntimeContext) {
   private[hypermake] val localEnv: Env = new Env.Local()(this)
 
   private[hypermake] val valueTable = mutable.HashMap[Name, PointedCube[Value]]()
+  private[hypermake] val globalValueTable = mutable.HashMap[Name, PointedCube[Value]]()
   private[hypermake] val funcTable = mutable.HashMap[Name, Func]()
   private[hypermake] val taskTable = mutable.HashMap[Name, PointedCubeTask]()
   private[hypermake] val packageTable = mutable.HashMap[Name, PointedCubePackage]()
@@ -24,6 +25,7 @@ class Context(implicit val runtime: RuntimeContext) {
   private[hypermake] val envTable = mutable.HashMap[Name, Env](Name("local") -> localEnv)
 
   def values: Map[Name, PointedCube[Value]] = valueTable
+  def globalValues: Map[Name, PointedCube[Value]] = globalValueTable
   def functions: Map[Name, Func] = funcTable
   def tasks: Map[Name, PointedCubeTask] = taskTable
   def plans: Map[Name, Plan] = planTable
@@ -32,9 +34,14 @@ class Context(implicit val runtime: RuntimeContext) {
 
   def getAxis(name: Name) = allCases.underlying.getOrElse(name, throw UndefinedException("Axis", name))
 
-  def getValue(name: Name) =
+  def getValue(name: Name) = {
     valueTable.getOrElse(name, throw UndefinedException("Value", name))
+  }
+  def getGlobalValue(name: Name) = {
+    globalValueTable.getOrElse(name, throw UndefinedException("Global value", name))
+  }
   def getValueOpt(name: Name) = valueTable.get(name)
+  def getGlobalValueOpt(name: Name) = globalValueTable.get(name)
 
   def getPackage(name: Name) =
     packageTable.getOrElse(name, throw UndefinedException("Package", name))

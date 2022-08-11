@@ -243,9 +243,11 @@ class SemanticParser(implicit val ctx: Context) {
       case ValDef(id, value) =>
         val a = id.!
         if (valueTable contains a) throw DuplicatedDefinitionException("Value", a.name)
-        else {
-          valueTable += a -> value.!!
-        }
+        else valueTable += a -> value.!!
+      case GlobalValDef(id, value) =>
+        val a = id.!
+        if (globalValueTable contains a) throw DuplicatedDefinitionException("Global value", a.name)
+        else globalValueTable += a -> value.!!
       case fd: FuncDef =>
         val f = fd.name.!
         if (funcTable contains f) throw DuplicatedDefinitionException("Function", f.name)

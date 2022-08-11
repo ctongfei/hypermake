@@ -145,6 +145,10 @@ object SyntacticParser {
     identifier ~ "=" ~ expr
   } map { case (id, v) => ValDef(id, v) }
 
+  def globalValDef[_: P] = P {
+    "global" ~ identifier ~ "=" ~ expr
+  } map { case (id, v) => GlobalValDef(id, v) }
+
   def funcDef[_: P] = P {
       "def" ~ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
   } map { case (name, params, inputScript, impl) =>
@@ -177,7 +181,8 @@ object SyntacticParser {
     "import" ~ string
   } map { filename => ImportStatement(filename) }
 
-  def statement[_: P]: P[Statement] = valDef | funcDef | taskDef | serviceDef | packageDef | planDef | importStatement
+  def statement[_: P]: P[Statement] =
+    valDef | globalValDef | funcDef | taskDef | serviceDef | packageDef | planDef | importStatement
 
   def top[_: P]: P[Seq[Statement]] = P { ws ~ statement.rep ~ End }
 

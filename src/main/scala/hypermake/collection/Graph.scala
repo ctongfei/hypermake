@@ -31,24 +31,42 @@ class Graph[A](
     revAdjMap(b).add(a)
   }
 
-  def topologicalSort: Seq[A] = {
-    val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
-    val zeroInDegrees = mutable.HashSet.from(inDegrees.view.filter(_._2 == 0).keys)
-    val buffer = mutable.ArrayBuffer[A]()
-    var n = 0
-    while (n < nodes.size) {
-      val i = zeroInDegrees.headOption.getOrElse(throw CyclicWorkflowException())
-      zeroInDegrees -= i
-      buffer += i
-      for (j <- outgoingNodes(i)) {
-        inDegrees(j) -= 1
-        if (inDegrees(j) == 0)
-          zeroInDegrees += j
+  def topologicalSort: Iterable[A] = new Iterable[A] {
+    def iterator: Iterator[A] = new Iterator[A] {
+      private[this] val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
+      private[this] val zeroInDegrees = mutable.Queue.from(inDegrees.view.filter(_._2 == 0).keys)
+      private[this] var n = 0
+      def hasNext = n < nodes.size
+      def next() = {
+        if (zeroInDegrees.isEmpty) throw CyclicWorkflowException()
+        val i = zeroInDegrees.dequeue()
+        for (j <- outgoingNodes(i)) {
+          inDegrees(j) -= 1
+          if (inDegrees(j) == 0)
+            zeroInDegrees.enqueue(j)
+        }
+        n += 1
+        i
       }
-      n += 1
     }
-    buffer
   }
+//
+//   def toStringIfAcyclic: String = {
+//     val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
+//     val zeroInDegrees = mutable.HashSet.from(inDegrees.view.filter(_._2 == 0).keys)
+//     val indents = mutable.HashMap.from(nodes.makeMap(_ => -1))
+//     val buffer = mutable.ArrayBuffer[A]()
+//
+//     }
+//
+//     val lines = Array.fill(numNodes)(new mutable.StringBuilder())
+//     for ((v, i) <- sorted.zipWithIndex) {
+//       lines(i).append(" " * indents(v))
+//       lines(i).append("• ")
+//       lines(i).append(v.toString)
+//     }
+//     lines.map(_.toString()).mkString("\n")
+//   }
 
 }
 
@@ -64,7 +82,7 @@ object Graph {
    * @param sources A collection of target tasks
    * @return The task dependency DAG
    */
-  def traverse[A](sources: Iterable[A], next: A => Iterable[A]): Graph[A] = {
+  def explore[A](sources: Iterable[A], next: A => Iterable[A]): Graph[A] = {
     val g = Graph[A]()
     val s = mutable.HashSet[A]()
     val q = mutable.Queue.from(sources)

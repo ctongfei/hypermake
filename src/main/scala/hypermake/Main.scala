@@ -92,8 +92,8 @@ object Main extends App {
                 } yield u
 
               case Subcommand.Run =>
-                val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
-                val sortedJobs = jobGraph.topologicalSort
+                val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
+                val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs will be run:")
                   _ <- ZIO.foreach_(sortedJobs)(printJobStatus(_, cli))
@@ -102,7 +102,7 @@ object Main extends App {
                 } yield u
 
               case Subcommand.DryRun =>
-                val jobGraph = Graph.traverse[Job](jobs, _.dependentJobs)
+                val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
                   u <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
@@ -113,8 +113,8 @@ object Main extends App {
                 val allRunJobs = allRuns.flatMap(_.lines).toSet[String].map { s =>
                   parser.parseTask(fastparse.parse(s, SyntacticParser.taskRef1(_)).get.value)
                 }
-                val jobGraph = Graph.traverse[Job](allRunJobs, _.dependentJobs)
-                val jobsToBeInvalidated = Graph.traverse[Job](jobs, jobGraph.outgoingNodes)
+                val jobGraph = Graph.explore[Job](allRunJobs, _.dependentJobs)
+                val jobsToBeInvalidated = Graph.explore[Job](jobs, jobGraph.outgoingNodes)
                 val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
                 for {
                   _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:")
