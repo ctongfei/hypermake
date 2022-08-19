@@ -36,6 +36,15 @@ abstract class Job(implicit ctx: Context) {
   def decorators: Seq[Call]
   def rawScript: Script
 
+  /** Global variables included for this job. */
+  lazy val globalArgs = ctx.globalValues.map { case (k, v) => k.name -> v.select(`case`).default.value }
+
+  lazy val jobCaseArgs = Map(
+    "HYPERMAKE_JOB_ID" -> id,
+    "HYPERMAKE_JOB_NAME" -> name.name,
+    "HYPERMAKE_JOB_CASE" -> argsString,
+  )
+
   /**
    * Path to store the output of this task, relative to the output root.
    * This is the working directory of this task if executed.
@@ -44,8 +53,8 @@ abstract class Job(implicit ctx: Context) {
 
   lazy val absolutePath = env.resolvePath(path)
 
-  /** The canonical string identifier for this task. */
-  lazy val id = s"$name[$percentEncodedArgsString]"
+  /** The canonical string identifier for this task, in the percent-encoded URL format. */
+  lazy val id = s"$name?$percentEncodedArgsString"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -63,10 +72,12 @@ abstract class Job(implicit ctx: Context) {
   } yield exitCode == 0 && outputsExist
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
-  def linkInputs: HIO[Map[String, Option[String]]] = ZIO.collectAllPar {
+  def linkInputs: HIO[Map[String, String]] = ZIO.collectAll {
     for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
       yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _)
-  }.map(_.toMap)
+  } map { effs =>
+    effs.collect({ case (k, Some(v)) => k -> v }).toMap
+  }
 
   /** An operation that checks the output of this job and the exit status of this job. */
   def checkOutputs: HIO[Boolean] = {
@@ -77,11 +88,7 @@ abstract class Job(implicit ctx: Context) {
   }
 
   /** Writes the script and decorating calls to the working directory. */
-  def writeScript(linkedArgs: Map[String, Option[String]]): HIO[Map[String, String]] = {
-
-    def mergeArgs(args: Map[String, String], linkedArgs: Map[String, Option[String]]) = {
-      args ++ linkedArgs.collect { case (k, Some(v)) => k -> v }
-    }
+  def writeScript(linkedArgs: Map[String, String]): HIO[Map[String, String]] = {
 
     val scriptNames = decorators.map(_.inputScriptFilename)
     for {
@@ -89,7 +96,7 @@ abstract class Job(implicit ctx: Context) {
         env.write(absolutePath / name, scr.script) as c(scr)
       }  // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
-      mergedArgs = mergeArgs(finalScript.strArgs, linkedArgs)
+      mergedArgs = jobCaseArgs ++ globalArgs ++ linkedArgs ++ finalScript.strArgs
       _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k=${Shell.escape(v)}"""}
         .mkString("", "\n", "\n")
       )

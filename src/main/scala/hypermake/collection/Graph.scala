@@ -4,39 +4,33 @@ import scala.collection._
 import hypermake.exception._
 import hypermake.util._
 
+trait Graph[A] {
+  self =>
 
-class Graph[A](
-                val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
-                val revAdjMap: mutable.HashMap[A, mutable.HashSet[A]]
-              ) {
+  def adjMap: Map[A, Set[A]]
 
-  def nodes: Set[A] = adjMap.keySet
+  def revAdjMap: Map[A, Set[A]]
+
+  def nodes: Set[A]
+
   def numNodes = nodes.size
 
   def containsNode(a: A) = adjMap.contains(a)
+
   def containsArc(a: A, b: A): Boolean = adjMap.contains(a) && adjMap(a).contains(b)
 
   def outgoingNodes(a: A): Set[A] = adjMap(a)
+
   def incomingNodes(a: A): Set[A] = revAdjMap(a)
-
-  def addNode(a: A): Unit = {
-    if (!adjMap.contains(a)) {
-      adjMap += a -> mutable.HashSet()
-      revAdjMap += a -> mutable.HashSet()
-    }
-  }
-
-  def addArc(a: A, b: A): Unit = {
-    adjMap(a).add(b)
-    revAdjMap(b).add(a)
-  }
 
   def topologicalSort: Iterable[A] = new Iterable[A] {
     def iterator: Iterator[A] = new Iterator[A] {
       private[this] val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
       private[this] val zeroInDegrees = mutable.Queue.from(inDegrees.view.filter(_._2 == 0).keys)
       private[this] var n = 0
+
       def hasNext = n < nodes.size
+
       def next() = {
         if (zeroInDegrees.isEmpty) throw CyclicWorkflowException()
         val i = zeroInDegrees.dequeue()
@@ -50,33 +44,130 @@ class Graph[A](
       }
     }
   }
-//
-//   def toStringIfAcyclic: String = {
-//     val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
-//     val zeroInDegrees = mutable.HashSet.from(inDegrees.view.filter(_._2 == 0).keys)
-//     val indents = mutable.HashMap.from(nodes.makeMap(_ => -1))
-//     val buffer = mutable.ArrayBuffer[A]()
-//
-//     }
-//
-//     val lines = Array.fill(numNodes)(new mutable.StringBuilder())
-//     for ((v, i) <- sorted.zipWithIndex) {
-//       lines(i).append(" " * indents(v))
-//       lines(i).append("• ")
-//       lines(i).append(v.toString)
-//     }
-//     lines.map(_.toString()).mkString("\n")
-//   }
+
+  def traverseBothDirections(start: A): Iterable[A] = new Iterable[A] {
+    def iterator: Iterator[A] = new Iterator[A] {
+      private[this] val visited = mutable.HashSet.empty[A]
+      private[this] val queue = mutable.Queue[A](start)
+
+      def hasNext = queue.nonEmpty
+
+      def next() = {
+        val c = queue.dequeue()
+        visited += c
+        (outgoingNodes(c) | incomingNodes(c)).filterNot(visited).foreach(queue.enqueue)
+        c
+      }
+    }
+  }
+
+  def subgraph(subgraphNodes: Set[A]): Graph[A] = new Graph[A] {
+    def adjMap = self.adjMap.filterKeysL(subgraphNodes).mapValuesL(_ & subgraphNodes)
+
+    def revAdjMap = self.revAdjMap.filterKeysL(subgraphNodes).mapValuesL(_ & subgraphNodes)
+
+    def nodes = self.nodes & subgraphNodes
+  }
+
+  def weaklyConnectedComponents: Iterable[Graph[A]] = new Iterable[Graph[A]] {
+    def iterator: Iterator[Graph[A]] = new Iterator[Graph[A]] {
+      private[this] val visited = mutable.HashSet[A]()
+      private[this] val nodeIter = self.nodes.iterator
+
+      def hasNext = visited.size < nodes.size
+
+      def next: Graph[A] = {
+        while (nodeIter.hasNext) {
+          val a = nodeIter.next
+          if (!visited.contains(a)) {
+            val subgraphNodes = traverseBothDirections(a).toSet
+            visited ++= subgraphNodes
+            return subgraph(subgraphNodes)
+          }
+        }
+        throw new IllegalStateException() // should never happen
+      }
+    }
+  }
+
+  def computeIndentation = {
+    val rows = mutable.ArrayBuffer[A]()
+    val nodeToRow = mutable.HashMap[A, Int]()
+    val indents = mutable.ArrayBuffer[Int]()
+
+    def processDag(g: Graph[A], indent: Int): Unit = {
+      for (sg <- g.weaklyConnectedComponents)
+        processComponent(sg, indent)
+    }
+
+    def processComponent(g: Graph[A], indent: Int): Unit = {
+      val sources = g.nodes.filter(g.incomingNodes(_).isEmpty)
+      for ((s, i) <- sources.toSeq.zipWithIndex) {
+        nodeToRow(s) = rows.size
+        rows += s
+        indents += (indent + i)
+      }
+      processDag(g.subgraph(g.nodes &~ sources), indent + sources.size)
+    }
+
+    processDag(this, 0)
+    (rows, nodeToRow, indents)
+  }
+
+  def toStringIfAcyclic(display: A => HIO[String]): HIO[String] = {
+    import zio._
+    topologicalSort.toSeq.foreach(_ => {}) // throw error if not acyclic
+    val (rows, nodeToRow, indents) = computeIndentation
+    val a = Array.tabulate(rows.size)(i => Array.fill(indents(i) * 2)(' '))
+    for ((u, i) <- rows.zipWithIndex) {
+      val succ = outgoingNodes(u).toSeq.sortBy(nodeToRow)
+      if (succ.nonEmpty) {
+        val l = nodeToRow(succ.last) // row of last successor
+        for (j <- (i + 1) until l)
+          a(j)(indents(i) * 2) = '│'
+        for (v <- succ.init) {
+          val j = nodeToRow(v)
+          a(j)(indents(i) * 2) = if (indents(i) > 0 && a(j)(indents(i) * 2 - 1) == '─') '┼' else '├'
+          for (k <- (indents(i) * 2 + 1) until indents(j) * 2)
+            a(j)(k) = '─'
+        }
+        a(l)(indents(i) * 2) = if (indents(i) > 0 && a(l)(indents(i) * 2 - 1) == '─') '┴' else '└'
+        for (k <- (indents(i) * 2 + 1) until indents(l) * 2)
+          a(l)(k) = '─'
+      }
+    }
+    ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => s"${String.valueOf(row)}• $s") }).map(_.mkString("\n"))
+  }
+}
+
+
+class MutableGraph[A](
+                val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
+                val revAdjMap: mutable.HashMap[A, mutable.HashSet[A]]
+              ) extends Graph[A] {
+
+  def nodes: Set[A] = adjMap.keySet
+
+  def addNode(a: A): Unit = {
+    if (!adjMap.contains(a)) {
+      adjMap += a -> mutable.HashSet()
+      revAdjMap += a -> mutable.HashSet()
+    }
+  }
+
+  def addArc(a: A, b: A): Unit = {
+    adjMap(a).add(b)
+    revAdjMap(b).add(a)
+  }
 
 }
 
 object Graph {
 
-  def apply[A]() = new Graph[A](
+  def apply[A]() = new MutableGraph[A](
     mutable.HashMap[A, mutable.HashSet[A]](),
     mutable.HashMap[A, mutable.HashSet[A]]()
   )
-
   /**
    * Performs a traversal to resolve all dependent tasks of the given targets.
    * @param sources A collection of target tasks

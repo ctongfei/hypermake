@@ -74,6 +74,11 @@ object Main extends App {
           _ <- cli.update(job, if (done) Status.Complete else Status.Pending)
         } yield ()
 
+        def showJobStatus(job: Job, cli: CLI.Service) = for {
+          done <- job.isDone
+          r <- cli.show(job, if (done) Status.Complete else Status.Pending)
+        } yield r
+
         val eff = for {
           managedCli <- cli
           task <- managedCli.use { cli =>
@@ -105,7 +110,8 @@ object Main extends App {
                 val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
-                  u <- ZIO.foreach_(jobGraph.topologicalSort)(printJobStatus(_, cli))
+                  s <- jobGraph.toStringIfAcyclic(showJobStatus(_, cli))
+                  u <- putStrLn(s)
                 } yield u
 
               case Subcommand.Invalidate =>

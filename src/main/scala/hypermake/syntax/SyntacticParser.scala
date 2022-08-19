@@ -27,7 +27,7 @@ object SyntacticParser {
   } map { sl => Key1(sl) }
 
   def keys[_: P] = P {
-    "[" ~ string.rep(1) ~ "]"
+    "{" ~ string.rep(1) ~ "}"
   } map { sls => Keys(sls.toSet) }
 
   def star[_: P] = P { "*" } map { _ => Star() }

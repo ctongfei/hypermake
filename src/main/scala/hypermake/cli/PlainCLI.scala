@@ -57,6 +57,8 @@ class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
 
   def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)
 
+  def show(job: Job, status: Status) = ZIO.succeed(style.render(job, status))
+
   def update(job: Job, status: Status) = putStrLn(style.render(job, status))
 
   def ask: HIO[Boolean] = for {
