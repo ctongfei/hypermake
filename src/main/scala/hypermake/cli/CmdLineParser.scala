@@ -28,7 +28,7 @@ object CmdLineParser {
   def version[_: P]: P[Cmd] = P { "--version" | "-V" } map { _ => Cmd.Version }
 
   def numJobs[_: P] =
-    P { "-j" ~ Lexer.digit.rep.! } map { j => RunOpt.NumJobs(j.toInt) }
+    P { ("-j" | "--jobs") ~ Lexer.digit.rep.! } map { j => RunOpt.NumJobs(j.toInt) }
 
   def switch[_: P](short: String, long: String, out: RunOpt): P[RunOpt] =
     P { long | short } map { _ => out }

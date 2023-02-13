@@ -18,34 +18,33 @@ object Main extends App {
   val version = "0.1.0"
 
   lazy val helpMessage = {
-
     s"""
-      | Hypermake $version
-      | Usage:
-      |   ${Bold.On("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
+      | ${B("Hypermake")} $version -- A parameterized workflow manager
+      | ${B("Usage:")}
+      |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
       |
-      | Options:
-      |  -I ${A("$file")}, --include=${A("$file")}  : Includes the specific Hypermake script ${A("file")} to parse.
+      | ${B("Options:")}
+      |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
+      |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
+      |  -S ${V("$path")}, --shell ${V("$path")}    : Specify default shell to use. By default this is "${V("bash")}".
       |  -H, --help                 : Prints this message and exit.
-      |  -S, --shell                : Specify outer shell to use. By default this is "bash".
       |  -V, --version              : Shows Hypermake version and exit.
       |
-      | Running options:
-      |  -j ${A("$n")}, --jobs=${A("$n")}           : Allow ${A("n")} jobs running in parallel at once.
+      | ${B("Commands:")}
+      |  list                       : Lists the variables and tasks in this pipeline.
+      |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
+      |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
+      |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
+      |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
+      |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
+      |  mark-as-done ${V("$targets")}      : Mark the given tasks as normally exited.
+      |
+      | ${B("Running options:")}
+      |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
       |  -k, --keep-going           : Keep going even when some jobs failed.
-      |  -s, --silent               : Silent mode: redirect stdout and stderr to files without printing them.
+      |  -s, --silent               : Silent mode: redirect stdout and stderr to files.
       |  -v, --verbose              : Verbose mode.
       |  -y, --yes                  : Automatic "yes" to prompts.
-      |
-      | Commands:
-      |  list                               : Lists the variables and tasks in this pipeline.
-      |  run ${A("$targets")}               : Runs the given tasks or plans (space delimited).
-      |  dry-run ${A("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
-      |  invalidate ${A("$targets")}        : Invalidates the given tasks or plans.
-      |  unlock ${A("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
-      |  remove ${A("$targets")}            : Removes the output of the given tasks or plans.
-      |  mark-as-done ${A("$targets")}      : Mark the given tasks as normally exited.
-      |
       |""".stripMargin
   }
 
@@ -92,7 +91,7 @@ object Main extends App {
                   _ <- putStrLn(s"The pipeline in $scriptFile contains:")
                   _ <- putStrLn(s"Variables:")
                   _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
-                    s"  $name: ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")}"
+                    s"  $name: { ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")} }"
                   }.mkString("\n"))
                   _ <- putStrLn(s"Tasks:")
                   s <- {
