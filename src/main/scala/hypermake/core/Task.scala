@@ -56,4 +56,19 @@ class PointedCubeTask(val name: Name,
       Some(new Task(name, env, cc, is, inputEnvs, os, outputEnvs, calls, scr))
     } else None
   }
+
+  def dependentTaskCubes(implicit ctx: Context) = {
+    val allTaskNames = inputs.values.flatMap { pcv =>
+      pcv.allElements.flatMap(_.dependencies.map(_.name).toSet)
+    }
+    allTaskNames.map(ctx.getTask)
+  }
+
+  override def equals(obj: Any) = obj match {
+    case obj: PointedCubeTask => this.name == obj.name
+    case _ => false
+  }
+
+  override def hashCode() = name.hashCode()
+
 }

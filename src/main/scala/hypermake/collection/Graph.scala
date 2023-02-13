@@ -136,7 +136,7 @@ trait Graph[A] {
           a(l)(k) = '─'
       }
     }
-    ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => s"${String.valueOf(row)}• $s") }).map(_.mkString("\n"))
+    ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => s"${String.valueOf(row)}$s") }).map(_.mkString("\n"))
   }
 }
 
@@ -173,7 +173,7 @@ object Graph {
    * @param sources A collection of target tasks
    * @return The task dependency DAG
    */
-  def explore[A](sources: Iterable[A], next: A => Iterable[A]): Graph[A] = {
+  def explore[A](sources: Iterable[A], prev: A => Iterable[A]): Graph[A] = {
     val g = Graph[A]()
     val s = mutable.HashSet[A]()
     val q = mutable.Queue.from(sources)
@@ -183,7 +183,7 @@ object Graph {
       if (!s.contains(c)) {
         g.addNode(c)
         s.add(c)
-        for (d <- next(c)) {
+        for (d <- prev(c)) {
           g.addNode(d)
           g.addArc(d, c)
           q.enqueue(d)

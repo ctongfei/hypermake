@@ -48,8 +48,20 @@ class Context(implicit val runtime: RuntimeContext) {
   def getPackageOpt(name: Name) = packageTable.get(name)
 
   def getFunc(name: Name) = funcTable.getOrElse(name, throw UndefinedException("Function", name))
-  def getTask(name: Name) = taskTable.getOrElse(name, throw UndefinedException("Task", name))
+
+  def getTask(name: Name) = taskTable.getOrElse(
+    name,
+    {
+      try {  // somePackage@someEnv
+        val Array(packageName, packageEnv) = name.name.split("@")
+        getPackage(Name(packageName)).on(Env(Name(packageEnv))(this))(this)
+      }
+      catch { _ => throw UndefinedException("Task", name) }
+    }
+  )
+
   def getPlan(name: Name) = planTable.getOrElse(name, throw UndefinedException("Plan", name))
+
   def getEnv(name: Name) = envTable.getOrElse(name, throw UndefinedException("Environment", name))
 
   def normalizeCase(c: Case): Case = {

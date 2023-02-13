@@ -17,6 +17,7 @@ trait Style {
 
   def render(j: Job): String
   def render(j: Job, s: Status): String
+  def renderInGraph(j: Job, s: Status): String
 
 }
 
@@ -65,6 +66,15 @@ object Style {
       }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(args(s)("default "))
       val statusStr = (bgAsFg(s) ++ Bold.On)(s.text)
       (b(" ") ++ jobName ++ b("  ") ++ jobArgs ++ f(" ") ++ statusStr).render
+    }
+
+    def renderInGraph(j: Job, s: Status): String = {
+      val c = s.color
+      val statusName = (c ++ Bold.On)(s"${s.symbol} ${j.name.name}")
+      val jobArgs =  j.argsDefault.map {
+        case (k, v) => c(s"$k:") ++ (c ++ Bold.On)(v)
+      }.reduceOption(_ ++ c(", ") ++ _).map(c("[") ++ _ ++ c("]")).getOrElse(c(""))
+      (statusName ++ jobArgs ++ c(": " + s.text)).render
     }
   }
 

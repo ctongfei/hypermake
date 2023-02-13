@@ -7,9 +7,9 @@ import zio.console._
 import hypermake.cli.CmdLineAST._
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
-import hypermake.core.{Job, Plan}
+import hypermake.core.{Job, Plan, PointedCubeTask}
 import hypermake.execution.{Executor, RuntimeContext, Status}
-import hypermake.semantics.{SemanticParser, Context}
+import hypermake.semantics.{Context, SemanticParser}
 import hypermake.syntax.SyntacticParser
 import hypermake.util.printing._
 
@@ -76,8 +76,12 @@ object Main extends App {
 
         def showJobStatus(job: Job, cli: CLI.Service) = for {
           done <- job.isDone
-          r <- cli.show(job, if (done) Status.Complete else Status.Pending)
+          r <- cli.showInGraph(job, if (done) Status.Complete else Status.Pending)
         } yield r
+
+        def showTaskCube(pct: PointedCubeTask) = {
+          "• " + pct.name + (if (pct.vars.isEmpty) "" else pct.vars.mkString("[", ", ", "]"))
+        }
 
         val eff = for {
           managedCli <- cli
@@ -91,9 +95,14 @@ object Main extends App {
                     s"  $name: ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")}"
                   }.mkString("\n"))
                   _ <- putStrLn(s"Tasks:")
-                  u <- putStrLn(ctx.tasks.map { case (name, task) =>
-                    s"  $name[${task.vars.mkString(", ")}]"
-                  }.mkString("\n"))
+                  s <- {
+                    val g = Graph.explore[PointedCubeTask](
+                      ctx.tasks.values,
+                      _.dependentTaskCubes(ctx)
+                    )
+                    g.toStringIfAcyclic(t => ZIO.succeed(showTaskCube(t)))
+                  }
+                  u <- putStrLn(s)
                 } yield u
 
               case Subcommand.Run =>
