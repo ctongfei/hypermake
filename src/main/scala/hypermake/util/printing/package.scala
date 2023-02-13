@@ -12,6 +12,8 @@ package object printing {
   def B(s: String) = Bold.On(s).render
   def CC(s: String) = (Yellow ++ Bold.On)(s).render
   def K(s: String): String = (LightGreen ++ Bold.On)(s).render
+  def Kx(s: String): String = (LightGreen)(s).render
   def V(s: String): String = (LightBlue ++ Bold.On)(s).render
+  def Vx(s: String): String = (LightBlue)(s).render
 
 }

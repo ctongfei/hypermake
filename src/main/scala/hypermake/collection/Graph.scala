@@ -114,8 +114,9 @@ trait Graph[A] {
     (rows, nodeToRow, indents)
   }
 
-  def toStringIfAcyclic(display: A => HIO[String]): HIO[String] = {
+  def toStringIfAcyclic(display: A => HIO[String], indent: Int = 0): HIO[String] = {
     import zio._
+    val prefixSpaces = " " * indent
     topologicalSort.toSeq.foreach(_ => {}) // throw error if not acyclic
     val (rows, nodeToRow, indents) = computeIndentation
     val a = Array.tabulate(rows.size)(i => Array.fill(indents(i) * 2)(' '))
@@ -136,7 +137,7 @@ trait Graph[A] {
           a(l)(k) = '─'
       }
     }
-    ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => s"${String.valueOf(row)}$s") }).map(_.mkString("\n"))
+    ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s") }).map(_.mkString("\n"))
   }
 }
 

@@ -284,8 +284,13 @@ class SemanticParser(implicit val ctx: Context) {
    * @param f Script file to be read
    * @return A sequence of top-level definitions
    */
-  def readFileToStmts(f: File): Seq[Statement] = {
-    val content = f.lines.mkString("\n")
+  def readFileToStmts(f: File): Seq[Statement] = readLinesToStmts(f.lines)
+
+  /**
+   * Reads a stream of Hypermake script lines and parses them to statements.
+   */
+  def readLinesToStmts(lines: Iterable[String]): Seq[Statement] = {
+    val content = lines.mkString("\n")
     val stmts = SyntacticParser.syntacticParse(content)
     val expandedStmts = stmts.flatMap {
       case ImportStatement(fn) =>

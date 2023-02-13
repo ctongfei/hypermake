@@ -17,9 +17,11 @@ object Main extends App {
 
   val version = "0.1.0"
 
+  lazy val headerMessage = s"${B("Hypermake")} $version -- A parameterized workflow manager"
+
   lazy val helpMessage = {
     s"""
-      | ${B("Hypermake")} $version -- A parameterized workflow manager
+      |$headerMessage
       | ${B("Usage:")}
       |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
       |
@@ -61,9 +63,13 @@ object Main extends App {
         implicit val runtime: RuntimeContext = RuntimeContext.createFromCLIOptions(options, runOptions)
         val cli = PlainCLI.create()
 
+        // Constructs semantic parser and its accompanying parsing context
         implicit val ctx: Context = new Context()
         val parser = new SemanticParser()
+        // Imports files specified with the -I switch
         runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
+        // Defines variables specified with the -D switch
+        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v"}))
         parser.semanticParse(File(scriptFile))
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
@@ -79,7 +85,7 @@ object Main extends App {
         } yield r
 
         def showTaskCube(pct: PointedCubeTask) = {
-          "• " + pct.name + (if (pct.vars.isEmpty) "" else pct.vars.mkString("[", ", ", "]"))
+          "• " + B(pct.name.name) + (if (pct.vars.isEmpty) "" else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
         }
 
         val eff = for {
@@ -88,18 +94,19 @@ object Main extends App {
             val effect = subtask match {
               case Subcommand.List =>
                 for {
-                  _ <- putStrLn(s"The pipeline in $scriptFile contains:")
-                  _ <- putStrLn(s"Variables:")
+                  _ <- putStrLn(headerMessage)
+                  _ <- putStrLn(s"Workflow file: ${O(scriptFile)}")
+                  _ <- putStrLn(B("\nVariables:"))
                   _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
-                    s"  $name: { ${Bold.On(values.default)} ${values.diff(Set(values.default)).mkString(" ")} }"
+                    s"  • ${K(name.name)}: { ${V(values.default)} ${values.diff(Set(values.default)).map(Vx).mkString(" ")} }"
                   }.mkString("\n"))
-                  _ <- putStrLn(s"Tasks:")
+                  _ <- putStrLn(B("\nTasks:"))
                   s <- {
                     val g = Graph.explore[PointedCubeTask](
                       ctx.tasks.values,
                       _.dependentTaskCubes(ctx)
                     )
-                    g.toStringIfAcyclic(t => ZIO.succeed(showTaskCube(t)))
+                    g.toStringIfAcyclic(t => ZIO.succeed(showTaskCube(t)), indent = 2)
                   }
                   u <- putStrLn(s)
                 } yield u
