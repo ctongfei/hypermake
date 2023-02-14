@@ -10,7 +10,7 @@ def venv(env) <- script="venv.internal.sh":
   deactivate
 
 @git(repo="https://github.com/ctongfei/unli")
-package unli:
+package unli -> out:
   true
 
 task unliEnv(unli=$) -> env:

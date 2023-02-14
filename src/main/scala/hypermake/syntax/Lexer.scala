@@ -47,7 +47,7 @@ object Lexer {
     scriptLine.rep(min = 1, sep = "\n")
   } map { lines => Verbatim(lines.mkString("\n")) }
 
-  def scriptImpl[_: P] = P {
+  def scriptImpl[_: P]: P[ScriptImpl] = P {
     ":\n" ~ script
   } map ScriptImpl
 

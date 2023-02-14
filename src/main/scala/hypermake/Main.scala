@@ -85,7 +85,8 @@ object Main extends App {
         } yield r
 
         def showTaskCube(pct: PointedCubeTask) = {
-          "• " + B(pct.name.name) + (if (pct.vars.isEmpty) "" else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
+          val name = if (pct.name.name contains "@") BU(pct.name.name) else B(pct.name.name)
+          "• " + name + (if (pct.vars.isEmpty) "" else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
         }
 
         val eff = for {
@@ -94,7 +95,6 @@ object Main extends App {
             val effect = subtask match {
               case Subcommand.List =>
                 for {
-                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"Workflow file: ${O(scriptFile)}")
                   _ <- putStrLn(B("\nVariables:"))
                   _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
@@ -176,6 +176,7 @@ object Main extends App {
             }
             for {
               _ <- cli.setup
+              _ <- putStrLn(headerMessage)
               _ <- effect
               u <- cli.teardown
             } yield u

@@ -116,6 +116,7 @@ trait Graph[A] {
 
   def toStringIfAcyclic(display: A => HIO[String], indent: Int = 0): HIO[String] = {
     import zio._
+    import hypermake.util.printing.BoxDrawing._
     val prefixSpaces = " " * indent
     topologicalSort.toSeq.foreach(_ => {}) // throw error if not acyclic
     val (rows, nodeToRow, indents) = computeIndentation
@@ -125,16 +126,16 @@ trait Graph[A] {
       if (succ.nonEmpty) {
         val l = nodeToRow(succ.last) // row of last successor
         for (j <- (i + 1) until l)
-          a(j)(indents(i) * 2) = '│'
+          a(j)(indents(i) * 2) = V
         for (v <- succ.init) {
           val j = nodeToRow(v)
-          a(j)(indents(i) * 2) = if (indents(i) > 0 && a(j)(indents(i) * 2 - 1) == '─') '┼' else '├'
+          a(j)(indents(i) * 2) = if (indents(i) > 0 && a(j)(indents(i) * 2 - 1) == H) VH else VR
           for (k <- (indents(i) * 2 + 1) until indents(j) * 2)
-            a(j)(k) = '─'
+            a(j)(k) = H
         }
-        a(l)(indents(i) * 2) = if (indents(i) > 0 && a(l)(indents(i) * 2 - 1) == '─') '┴' else '└'
+        a(l)(indents(i) * 2) = if (indents(i) > 0 && a(l)(indents(i) * 2 - 1) == H) HT else TR
         for (k <- (indents(i) * 2 + 1) until indents(l) * 2)
-          a(l)(k) = '─'
+          a(l)(k) = H
       }
     }
     ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s") }).map(_.mkString("\n"))
