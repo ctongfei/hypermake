@@ -42,19 +42,19 @@ abstract class Job(implicit ctx: Context) {
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name.name,
-    "HYPERMAKE_JOB_CASE" -> argsString,
+    "HYPERMAKE_JOB_CASE" -> caseInJson,
   )
 
   /**
    * Path to store the output of this task, relative to the output root.
    * This is the working directory of this task if executed.
    */
-  lazy val path = s"$name/$percentEncodedArgsString"
+  lazy val path = s"$name/$percentEncodedCaseString"
 
   lazy val absolutePath = env.resolvePath(path)
 
   /** The canonical string identifier for this task, in the percent-encoded URL format. */
-  lazy val id = s"$name?$percentEncodedArgsString"
+  lazy val id = s"$name?$percentEncodedCaseString"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -150,14 +150,15 @@ abstract class Job(implicit ctx: Context) {
   def invalidate: HIO[Unit] =
     env.delete(absolutePath / "exitcode")
 
-  def argsDefault = ctx.argsDefault(`case`.underlying)
+  def canonicalCase = ctx.canonicalizeCase(`case`)
 
-  def percentEncodedArgsString = ctx.percentEncodedArgsString(`case`.underlying)
-  def argsString = ctx.argsString(`case`.underlying)
+  def percentEncodedCaseString = ctx.percentEncodedCaseString(`case`)
+  def caseString = ctx.caseString(`case`)
+  def caseInJson = ctx.caseInJson(`case`)
 
   def colorfulString = {
     import fansi._
-    s"${Bold.On(Color.LightBlue(name.name)).render}[${argsStringDefault(`case`.underlying)}]"
+    s"${Bold.On(Color.LightBlue(name.name)).render}[${colorfulCaseString(`case`)}]"
   }
 
   override def toString = id

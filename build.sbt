@@ -10,8 +10,11 @@ Compile/mainClass := Some("hypermake.Main")
 libraryDependencies ++= Seq(
   "org.scala-lang.modules"  %% "scala-collection-contrib" % "0.2.2",
   "org.typelevel"           %% "cats-core"                % "2.9.0",
-  "dev.zio"                 %% "zio"                      % "1.0.15",
+  "dev.zio"                 %% "zio"                      % "1.0.18",
   "dev.zio"                 %% "zio-process"              % "0.6.1",
+  "io.circe"                %% "circe-core"               % "0.14.4",
+  "io.circe"                %% "circe-generic"            % "0.14.4",
+  "io.circe"                %% "circe-parser"             % "0.14.4",
   "com.lihaoyi"             %% "fastparse"                % "2.3.3",
   "com.lihaoyi"             %% "fansi"                    % "0.4.0",
   "com.github.pathikrit"    %% "better-files"             % "3.9.2",

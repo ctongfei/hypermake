@@ -1,4 +1,5 @@
 task t0(a = {A: a b c d}) -> out:
+  echo $HYPERMAKE_JOB_CASE
   echo $a > $out
 
 plan Run = { t0[A: *] }

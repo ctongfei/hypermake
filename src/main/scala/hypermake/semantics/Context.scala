@@ -1,12 +1,14 @@
 package hypermake.semantics
 
+import scala.collection._
+import io.circe.syntax._
+
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
 import hypermake.execution.RuntimeContext
 import hypermake.util.Escaper._
 
-import scala.collection._
 
 /**
  * Contexts kept for each parsing run.
@@ -71,39 +73,33 @@ class Context(implicit val runtime: RuntimeContext) {
     Case(assignments)
   }
 
-  /**
-   * Encodes the arguments as a percent-encoded string.
-   */
-  def percentEncodedArgsString(args: Map[Name, String]) = {
-    val sortedArgs = args.toArray.sortBy(_._1)
-    val clauses = sortedArgs.collect {
-      case (a, k) if getAxis(a).default != k =>
-        s"$a=${Percent.escape(k)}"
-    }
-    if (clauses.isEmpty) "default" else clauses.mkString("&")  // URL style ID
-  }
-
-  def argsString(args: Map[Name, String]) = {
-    val sortedArgs = args.toArray.sortBy(_._1)
-    val clauses = sortedArgs.collect {
-      case (a, k) if getAxis(a).default != k =>
-        s"$a: $k"
-    }
-    clauses.mkString(", ")
-  }
-
-  def argsDefault(args: Map[Name, String]): Seq[(String, String)] = {
-    val sortedArgs = args.toArray.sortBy(_._1)
-    val clauses = sortedArgs.collect {
+  def canonicalizeCase(args: Case): Seq[(String, String)] = {
+    val sortedArgs = args.underlying.toArray.sortBy(_._1)
+    sortedArgs.collect {
       case (a, k) if getAxis(a).default != k =>
         a.name -> k
     }
-    clauses
   }
 
-  def argsStringDefault(args: Map[Name, String]) = {
+  def caseInJson(args: Case) =
+    immutable.SeqMap.from(canonicalizeCase(args)).asJson.noSpaces
+
+  def caseString(args: Case) =
+    canonicalizeCase(args).map { case (a, k) => s"$a: $k" }.mkString(", ")
+
+  /**
+   * Encodes the arguments as a percent-encoded string.
+   * This is the name of the output directory in the file system.
+   */
+  def percentEncodedCaseString(args: Case) = {
+    val clauses = canonicalizeCase(args).map { case (a, k) =>
+      s"$a=${Percent.escape(k)}" }
+    if (clauses.isEmpty) "default" else clauses.mkString("&")  // URL style ID
+  }
+
+  def colorfulCaseString(args: Case) = {
     import fansi._
-    val clauses = argsDefault(args)
+    val clauses = canonicalizeCase(args)
     if (clauses.isEmpty)
       Color.LightGreen("default").render
     else clauses.map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }.mkString(", ")

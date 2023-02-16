@@ -50,7 +50,7 @@ object Style {
       val a = Back.Black ++ Color.DarkGray
       val n = Back.Black ++ Bold.On ++ Color.DarkGray
       val jobName = n(j.name.name)
-      val jobArgs = j.argsDefault.map {
+      val jobArgs = j.canonicalCase.map {
         case (k, v) => a(s"$k:") ++ (a ++ Bold.On)(v)
       }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(n("default "))
       (b(" ") ++ jobName ++ a("  ") ++ jobArgs ++ f(" ")).render
@@ -61,7 +61,7 @@ object Style {
       val f = bgAsFg(s)
       val a = args(s)
       val jobName = name(s)(j.name.name)
-      val jobArgs = j.argsDefault.map {
+      val jobArgs = j.canonicalCase.map {
         case (k, v) => a(s"$k:") ++ (a ++ Bold.On)(v)
       }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(args(s)("default "))
       val statusStr = (bgAsFg(s) ++ Bold.On)(s.text)
@@ -71,7 +71,7 @@ object Style {
     def renderInGraph(j: Job, s: Status): String = {
       val c = s.color
       val statusName = (c ++ Bold.On)(s"${s.symbol} ${j.name.name}")
-      val jobArgs =  j.argsDefault.map {
+      val jobArgs =  j.canonicalCase.map {
         case (k, v) => c(s"$k:") ++ (c ++ Bold.On)(v)
       }.reduceOption(_ ++ c(", ") ++ _).map(c("[") ++ _ ++ c("]")).getOrElse(c(""))
       (statusName ++ jobArgs ++ c(": " + s.text)).render

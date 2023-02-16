@@ -26,7 +26,9 @@ case class Script(
 
   def withNewOutputArgs(newArgs: Map[Name, Value]) = Script(script, args, outputArgs ++ newArgs)
 
-  def strArgs: Map[String, String] = (args ++ outputArgs).map { case (k, v) => k.name -> v.absValue }
+  def strArgs: Map[String, String] = {
+    (args).map { case (k, v) => k.name -> v.absValue } ++ outputArgs.map { case (k, v) => k.name -> v.value }
+  }
 
   /**
    * Writes this script as a local temporary file and executes it with its arguments.
