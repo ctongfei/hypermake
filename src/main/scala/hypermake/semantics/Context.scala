@@ -6,14 +6,14 @@ import io.circe.syntax._
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
-import hypermake.execution.RuntimeContext
+import hypermake.execution.RuntimeConfig
 import hypermake.util.Escaper._
 
 
 /**
  * Contexts kept for each parsing run.
  */
-class Context(implicit val runtime: RuntimeContext) {
+class Context(implicit val runtime: RuntimeConfig) {
 
   private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
   private[hypermake] val localEnv: Env = new Env.Local()(this)

@@ -22,11 +22,11 @@ trait PointedCube[+A] extends Cube[A] { self =>
   override def select(c: Case): PointedCube[A] = new Selected(self, c)
 
   override def curry(innerVars: Set[Name]): PointedCube[PointedCube[A]] = new PointedCube[PointedCube[A]] {
-    private[this] val outerAxes = self.vars.filterNot(innerVars)
-    def cases = self.cases.filterVars(outerAxes)
+    private[this] val outerVars = self.vars.filterNot(innerVars)
+    def cases = self.cases.filterVars(outerVars)
     def get(c: Case) = {
       if (c.assignments.forall { case (a, k) =>
-        (!(outerAxes contains a) || ((outerAxes contains a) && (cases(a) contains k)))
+        (!(outerVars contains a) || ((outerVars contains a) && (cases(a) contains k)))
       })
         Some(self.select(c))
       else None
@@ -91,7 +91,7 @@ object PointedCube {
     val innerCases = outerCase.head._2.cases
     val innerAxes = innerCases.vars
     assert(outerCase.forall { case (_, c) => c.vars == innerAxes })  // make sure inner axes are identical
-    def cases = PointedCaseCube(Map(a -> outerCase.keySet) ++ innerCases.underlying)
+    def cases = PointedCaseCube(Map(a -> outerCase.keySet) ++ innerCases.assignments)
     def get(c: Case) = for {
       innerCube <- outerCase.get(c(a))
       a <- innerCube.get(c)

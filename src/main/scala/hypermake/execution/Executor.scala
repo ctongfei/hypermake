@@ -26,7 +26,7 @@ object Executor {
     } yield u
   }
 
-  def run(jobs: Iterable[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeContext): HIO[Unit] = {
+  def run(jobs: Iterable[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeConfig): HIO[Unit] = {
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
       u <- ZIO.foreach_(jobs) { j => semaphore.withPermit(action(j)).orElseSucceed(()) }
@@ -36,7 +36,7 @@ object Executor {
   /**
    * Runs an action over all jobs specified in the given acyclic directed graph.
    */
-  def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeContext): HIO[Unit] = {
+  def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeConfig): HIO[Unit] = {
     val sortedJobs = jobs.topologicalSort.toIndexedSeq  // may throw CyclicWorkflowException
     val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()
     for {

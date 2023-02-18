@@ -8,7 +8,7 @@ import hypermake.cli.CmdLineAST._
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
 import hypermake.core.{Job, Plan, PointedCubeTask}
-import hypermake.execution.{Executor, RuntimeContext, Status}
+import hypermake.execution.{Executor, RuntimeConfig, Status}
 import hypermake.semantics.{Context, SemanticParser}
 import hypermake.syntax.SyntacticParser
 import hypermake.util.printing._
@@ -28,7 +28,7 @@ object Main extends App {
       | ${B("Options:")}
       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
-      |  -S ${V("$path")}, --shell ${V("$path")}    : Specify default shell to use. By default this is "${V("bash")}".
+      |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
       |  -H, --help                 : Prints this message and exit.
       |  -V, --version              : Shows Hypermake version and exit.
       |
@@ -39,7 +39,7 @@ object Main extends App {
       |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
       |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
       |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
-      |  mark-as-done ${V("$targets")}      : Mark the given tasks as normally exited.
+      |  mark-as-done ${V("$targets")}      : Marks the given tasks as normally exited.
       |
       | ${B("Running options:")}
       |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
@@ -60,7 +60,7 @@ object Main extends App {
 
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
 
-        implicit val runtime: RuntimeContext = RuntimeContext.createFromCLIOptions(options, runOptions)
+        implicit val runtime: RuntimeConfig = RuntimeConfig.createFromCLIOptions(options, runOptions)
         val cli = PlainCLI.create()
 
         // Constructs semantic parser and its accompanying parsing context

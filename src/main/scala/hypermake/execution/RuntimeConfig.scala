@@ -10,36 +10,38 @@ import scala.jdk.CollectionConverters._
 
 
 /**
- * Encapsulates the runtime context of a Forge run.
+ * Encapsulates the runtime environment of a Hypermake run.
+ *
  * @param workDir Working directory
  * @param envVars Inherited environment variables from the parent process
  */
-class RuntimeContext private(
-                              val workDir: String,
-                              val shell: String,
-                              val envVars: Map[String, String],
-                              val definedVars: Map[String, String],
-                              val includePaths: Seq[String],
-                              val numParallelJobs: Int,
-                              val keepGoing: Boolean,
-                              val silent: Boolean,
-                              val yes: Boolean
-                            ) {
+class RuntimeConfig private(
+                             val workDir: String,
+                             val shell: String,
+                             val envVars: Map[String, String],
+                             val definedVars: Map[String, String],
+                             val includePaths: Seq[String],
+                             val numParallelJobs: Int,
+                             val keepGoing: Boolean,
+                             val silent: Boolean,
+                             val yes: Boolean
+                           ) {
 
   /**
    * Environment variable containing paths where HyperMake resolves import statements;
    * akin to C's `CPATH` or Python's `PYTHONPATH`.
    */
-  final val HYPERMAKEPATH = "HYPERMAKEPATH"
+  final val HYPERMAKE_PATH = "HYPERMAKE_PATH"
 
   /**
    * Element separator for sequences of variables in a single shell string.
-   */ // TODO: do we really want to inherit IFS from outside shell?
-  final val IFS = envVars.getOrElse("IFS", " \t\n")  // Space&tab&newline is default for bash
+   */
+  // TODO: do we really want to inherit IFS from outside shell?
+  final val IFS = envVars.getOrElse("IFS", " \t\n") // Space&tab&newline is default for bash
 
   final val IFS_CHAR = IFS.head.toString
 
-  lazy val paths = envVars.get(HYPERMAKEPATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
+  lazy val paths = envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
   lazy val resolutionPaths = workDir +: paths
 
@@ -47,26 +49,30 @@ class RuntimeContext private(
 
   lazy val tempDir = tempPath.toString
 
-  lazy val nullFile = if (System.getProperty("os.name").toLowerCase contains "win") "NUL" else "/dev/null"
+  lazy val nullFile = {
+    if (System.getProperty("os.name").toLowerCase contains "win")
+      "NUL"
+    else "/dev/null"
+  }
 
   def tempFile(prefix: String = "", suffix: String = "") =
     JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
   /**
-   * Resolves a script file from `HYPERMAKEPATH`.
+   * Resolves a script file from `HYPERMAKE_PATH`.
    * @param fn File name to resolve
    * @return The file
    */
   def resolveFile(fn: String): File = {
     resolutionPaths.collectFirst {
       case path if File(path, fn).exists => File(path, fn)
-    }.getOrElse(throw new FileNotFoundException(s"HyperMake script $fn not found."))
+    }.getOrElse(throw new FileNotFoundException(s"Hypermake script $fn not found."))
   }
 
   override def toString = {
     s"""workDir = $workDir
        |shell = $shell
-       |definedVars = $definedVars
+       |definedVars = ${definedVars.map { case (k, v) => s"$k = $v" }.mkString("{", ", ", "}")}
        |includePaths = ${includePaths.mkString("[", ", ", "]")}
        |numParallelJobs = $numParallelJobs
        |keepGoing = $keepGoing
@@ -76,7 +82,7 @@ class RuntimeContext private(
   }
 }
 
-object RuntimeContext {
+object RuntimeConfig {
 
   private val defaultShell = "bash -e"
 
@@ -88,8 +94,8 @@ object RuntimeContext {
               keepGoing: Boolean = false,
               silent: Boolean = false,
               yes: Boolean = false
-            ): RuntimeContext =
-    new RuntimeContext(
+            ): RuntimeConfig =
+    new RuntimeConfig(
       workDir = System.getProperty("user.dir"),
       envVars = System.getenv().asScala.toMap,
       definedVars = definedVars,

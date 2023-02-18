@@ -17,7 +17,7 @@ case class Script(
                    script: String,
                    args: Map[Name, Value] = Map(),
                    outputArgs: Map[Name, Value] = Map()
-                 )(implicit runtime: RuntimeContext) {
+                 )(implicit runtime: RuntimeConfig) {
 
   def withNewArgs(newArgs: Map[Name, Value]) = Script(script, args ++ newArgs, outputArgs)
 

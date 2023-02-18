@@ -18,7 +18,7 @@ import hypermake.util.Escaper._
 abstract class Job(implicit ctx: Context) {
 
   import ctx._
-  implicit val runtime: RuntimeContext = ctx.runtime
+  implicit val runtime: RuntimeConfig = ctx.runtime
 
   def name: Name
   def env: Env

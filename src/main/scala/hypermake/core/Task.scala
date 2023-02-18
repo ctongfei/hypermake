@@ -6,11 +6,15 @@ import scala.collection._
 import scala.sys._
 import zio._
 import hypermake.collection._
-import hypermake.execution.RuntimeContext
+import hypermake.execution.RuntimeConfig
 import hypermake.semantics.Context
 import hypermake.util._
 
 
+/**
+ * A task is a job that is declared by the `task` definition.
+ * It is a job that is specific to a running environment.
+ */
 class Task(val name: Name,
            val env: Env,
            val `case`: Case,
@@ -19,19 +23,10 @@ class Task(val name: Name,
            val outputFileNames: Map[Name, Value],
            val outputEnvs: Map[Name, Env],
            val decorators: Seq[Call],
-           val rawScript: Script)
-          (implicit ctx: Context) extends Job()(ctx) {
+           val rawScript: Script
+          )
+          (implicit ctx: Context) extends Job()(ctx) { }
 
-  override lazy val hashCode = id.hashCode
-
-  override def equals(o: Any) = o match {
-    case that: Task => this.id == that.id
-    case _ => false
-  }
-
-  override def toString = id
-
-}
 
 class PointedCubeTask(val name: Name,
                       val env: Env,
@@ -42,7 +37,8 @@ class PointedCubeTask(val name: Name,
                       val outputEnvs: Map[Name, Env],
                       val decorators: Seq[PointedCube[Call]],
                       val script: PointedCube[Script]
-                     )(implicit ctx: Context)
+                     )
+                     (implicit ctx: Context)
   extends PointedCube[Task]
 { self =>
 

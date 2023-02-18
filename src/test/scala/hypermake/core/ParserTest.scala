@@ -14,7 +14,7 @@ object ParserTest extends App {
   val src = "task a:\n  r"
   val ast = parse(src, SyntacticParser.taskDef(_)).get.get
 
-  implicit val rt = RuntimeContext.create()
+  implicit val rt = RuntimeConfig.create()
   implicit val ctx = new Context()
   val workflow = new SemanticParser()
   workflow.semanticParse(File("src/test/resources/tutorial/decorators.hm"))

@@ -5,7 +5,7 @@ import zio._
 import zio.console._
 import zio.stream._
 import hypermake.core.Job
-import hypermake.execution.{RuntimeContext, Status}
+import hypermake.execution.{RuntimeConfig, Status}
 import hypermake.util._
 import hypermake.util.printing.Style
 
@@ -38,7 +38,7 @@ class PrefixedOutputStream(os: OutputStream, prefix: String) extends FilterOutpu
 
 }
 
-class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
+class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
 
   def setup = ZIO.succeed()
 
@@ -73,7 +73,7 @@ class PlainCLI(style: Style, runtime: RuntimeContext) extends CLI.Service {
 
 object PlainCLI {
 
-  def create(style: Style = Style.Powerline)(implicit runtime: RuntimeContext): HIO[Managed[Throwable, PlainCLI]] = IO {
+  def create(style: Style = Style.Powerline)(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
     Managed.succeed(new PlainCLI(style, runtime))
   }
 
