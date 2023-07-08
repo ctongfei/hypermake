@@ -56,6 +56,10 @@ class PointedCubeTask(val name: Name,
   def dependentTaskCubes(implicit ctx: Context) = {
     val allTaskNames = inputs.values.flatMap { pcv =>
       pcv.allElements.flatMap(_.dependencies.map(_.name).toSet)
+    } ++ decorators.flatMap { pcc =>
+      pcc.allElements.flatMap(_.args.values.collect {
+        case Value.Output(_, _, j) => j.name
+      })
     }
     allTaskNames.map(ctx.getTask)
   }

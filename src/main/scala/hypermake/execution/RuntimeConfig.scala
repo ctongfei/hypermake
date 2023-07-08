@@ -43,7 +43,9 @@ class RuntimeConfig private(
 
   lazy val paths = envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
-  lazy val resolutionPaths = workDir +: paths
+  lazy val bundledStdLibPath = this.getClass.getClassLoader.getResource("lib").getPath
+
+  lazy val resolutionPaths = workDir +: paths :+ bundledStdLibPath
 
   private lazy val tempPath = JFiles.createTempDirectory("hypermake").toAbsolutePath
 
@@ -66,7 +68,14 @@ class RuntimeConfig private(
   def resolveFile(fn: String): File = {
     resolutionPaths.collectFirst {
       case path if File(path, fn).exists => File(path, fn)
-    }.getOrElse(throw new FileNotFoundException(s"Hypermake script $fn not found."))
+    } getOrElse {
+      val newFn = fn.replace('.', JFile.separatorChar) + ".hm"
+      resolutionPaths.collectFirst {
+        case path if File(path, newFn).exists => File(path, newFn)
+      } getOrElse {
+        throw new FileNotFoundException(s"Hypermake script $fn not found.")
+      }
+    }
   }
 
   override def toString = {

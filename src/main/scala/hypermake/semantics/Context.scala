@@ -106,8 +106,7 @@ class Context(implicit val runtime: RuntimeConfig) {
   }
 
   def envOutputRoot(envName: Name): String = {
-    val env = getEnv(envName)
-    val path = getValueOpt(Name(s"${env.name}_root")).map(_.default.value).getOrElse("out")
+    val path = getValueOpt(Name(s"${envName}_root")).map(_.default.value).getOrElse("out")
     path
   }
 

@@ -42,17 +42,27 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
 
   def setup = ZIO.succeed()
 
+  def globalSinks: StdSinks = {
+    if (runtime.silent)
+      StdSinks(ZSink.drain.map(_ => 0), ZSink.drain.map(_ => 0))
+    else {
+      val os = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.out, style.render0))
+      val es = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render0))
+      StdSinks(os, es)
+    }
+  }
+
   /**
    * Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
    */
-  def getSinks(job: Job) = IO {
+  def sinks(job: Job) = {
     val os = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.out, style.render(job)))
     val es = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render(job)))
     val ofs = ZSink.fromFile(Paths.get(job.absolutePath, "stdout"))
     val efs = ZSink.fromFile(Paths.get(job.absolutePath, "stderr"))
     if (runtime.silent)
-      (ofs, efs)
-    else ((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
+      StdSinks(ofs, efs)
+    else StdSinks((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
   }
 
   def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)

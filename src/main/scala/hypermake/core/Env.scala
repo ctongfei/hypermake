@@ -10,6 +10,7 @@ import zio.stream._
 import zio.duration._
 import hypermake.cli._
 import hypermake.collection._
+import hypermake.exception.DataTransferFailedException
 import hypermake.semantics.Context
 import hypermake.util._
 
@@ -35,6 +36,8 @@ trait Env {
    */
   def pathSeparator: Char
 
+  def / = separator
+
   /**
    * Output root on this environment. Intermediate results will be stored in this directory.
    */
@@ -54,40 +57,40 @@ trait Env {
   /**
    * Reads the content of a file as a string.
    */
-  def read(f: String): HIO[String]
+  def read(f: String)(implicit std: StdSinks): HIO[String]
 
-  def write(f: String, content: String): HIO[Unit]
+  def write(f: String, content: String)(implicit std: StdSinks): HIO[Unit]
 
-  def mkdir(f: String): HIO[Unit]
+  def mkdir(f: String)(implicit std: StdSinks): HIO[Unit]
 
   /**
    * Checks if a file exists on this file system.
    */
-  def exists(f: String): HIO[Boolean]
+  def exists(f: String)(implicit std: StdSinks): HIO[Boolean]
 
   /**
    * Creates a symbolic link from [[src]] to [[dst]].
    */
-  def link(src: String, dst: String): HIO[Unit]
+  def link(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
   /**
    * Creates an empty file at the given path.
    */
-  def touch(f: String): HIO[Unit]
+  def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
-  def delete(f: String): HIO[Unit]
-  def copyFrom(src: String, srcEnv: Env, dst: String): HIO[Unit]
-  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]): HIO[ExitCode]
+  def delete(f: String)(implicit std: StdSinks): HIO[Unit]
+  def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks): HIO[Unit]
+  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks): HIO[ExitCode]
 
-  def isLocked(f: String): HIO[Boolean] = exists(s"$f/.lock")
-  def lock(f: String): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f/.lock")
-  def unlock(f: String): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f/.lock")
-  def forceUnlock(f: String): HIO[Unit] = for {
+  def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
+  def lock(f: String)(implicit std: StdSinks): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f${/}.lock")
+  def unlock(f: String)(implicit std: StdSinks): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f${/}.lock")
+  def forceUnlock(f: String)(implicit std: StdSinks): HIO[Unit] = for {
     isLocked <- isLocked(f)
-    u <- if (isLocked) delete(s"$f/.lock") else ZIO.succeed(())
+    u <- if (isLocked) delete(s"$f${/}.lock") else ZIO.succeed(())
   } yield u
 
-  def linkValue(x: Value, dst: String)(implicit ctx: Context): HIO[Option[String]] = {
+  def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] = {
     x match {
       case Value.Pure(_) => ZIO.none  // do nothing
       case Value.Input(path, env) =>
@@ -106,7 +109,7 @@ trait Env {
           _ <- mkdir(dst)
           r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
             val argsString = ctx.percentEncodedCaseString(c)
-            linkValue(v, s"$dst/$argsString") as s"$dst/$argsString"
+            linkValue(v, s"$dst${/}$argsString") as s"$dst${/}$argsString"
           }
         } yield Some(r.mkString(ctx.runtime.IFS_CHAR))
     }
@@ -146,51 +149,53 @@ object Env {
 
     import ctx._
 
-    final def name = "local"
-    def separator = java.io.File.separatorChar
-    def pathSeparator = java.io.File.pathSeparatorChar
-    def root = ctx.envOutputRoot(Name("local"))
+    final val name = "local"
+    val separator = java.io.File.separatorChar
+    val pathSeparator = java.io.File.pathSeparatorChar
+    lazy val root = ctx.envOutputRoot(Name("local"))
+    val systemRoot = new JFile("/").getAbsolutePath  // TODO: on windows, use java.nio.Path::getRoot
     def refreshInterval = 100.milliseconds
 
-    def read(f: String) = IO {
+    def read(f: String)(implicit std: StdSinks) = IO {
       File(f).contentAsString
     }
 
-    def write(f: String, content: String) = IO {
+    def write(f: String, content: String)(implicit std: StdSinks) = IO {
       File(f).writeText(content)
     }
 
-    def mkdir(f: String) = IO {
+    def mkdir(f: String)(implicit std: StdSinks) = IO {
       File(f).createDirectoryIfNotExists(createParents = true)
     }
 
-    def exists(f: String) = IO {
+    def exists(f: String)(implicit std: StdSinks) = IO {
       File(f).exists
     }
 
-    def touch(f: String) = IO {
+    def touch(f: String)(implicit std: StdSinks) = IO {
       File(f).touch()
     }
 
-    def delete(f: String) = IO {
+    def delete(f: String)(implicit std: StdSinks) = IO {
       File(f).delete(swallowIOExceptions = true)
     }
 
-    def link(src: String, dst: String) = IO {
+    def link(src: String, dst: String)(implicit std: StdSinks) = IO {
       val dstPath = Paths.get(dst)
       val relativePath = dstPath.getParent.relativize(Paths.get(src))
       JFiles.deleteIfExists(dstPath);
       JFiles.createSymbolicLink(dstPath, relativePath)
     }
 
-    override def copyFrom(src: String, srcEnv: Env, dst: String) = for {
-      process: Process <- getScriptByName(s"copy_from_${srcEnv}_to_local")
+    override def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
+      proc <- getScriptByName(s"copy_from_${srcEnv}_to_local")
         .withArgs("src" -> src, "dst" -> dst)
         .executeLocally()
-      u <- process.successfulExitCode.unit
+      exitCode <- proc.exitCode
+      u <- if (exitCode.code == 0) ZIO.succeed(()) else ZIO.fail(DataTransferFailedException(srcEnv.name, src))
     } yield u
 
-    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = {
+    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
       val pb = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
         .workingDirectory(File(wd).toJava.getAbsoluteFile)
@@ -199,9 +204,9 @@ object Env {
         .stdout(ProcessOutput.Pipe)
       for {
         process <- pb.run
-        _ <- process.stdout.stream.run(out) <&> process.stderr.stream.run(err)
+        _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
         exitCode <- process.exitCode
-        _ <- write(s"$wd/exitcode", exitCode.code.toString)
+        _ <- write(s"$wd${/}exitcode", exitCode.code.toString)
       } yield exitCode
     }
 
@@ -222,12 +227,12 @@ object Env {
     def refreshInterval =
       getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds  // by default, 5s
 
-    def read(f: String) = for {
+    def read(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()
       stdout <- process.stdout.string
     } yield stdout
 
-    def write(f: String, content: String) = {
+    def write(f: String, content: String)(implicit std: StdSinks) = {
       val tempScriptFile = runtime.tempFile()
       for {
         _ <- IO {
@@ -237,43 +242,43 @@ object Env {
       } yield u
     }
 
-    def mkdir(f: String) = for {
+    def mkdir(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_mkdir").withArgs("dir" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    def exists(f: String) = for {
+    def exists(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_exists").withArgs("file" -> f).executeLocally()
       exitCode <- process.exitCode
     } yield exitCode.code == 0
 
-    def link(src: String, dst: String) = for {
+    def link(src: String, dst: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_link").withArgs("src" -> src, "dst" -> dst).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    def touch(f: String) = for {
+    def touch(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_touch").withArgs("file" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    def delete(f: String) = for {
+    def delete(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_delete").withArgs("file" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    def copyFrom(src: String, srcEnv: Env, dst: String) = for {
+    def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"copy_from_${srcEnv}_to_$name")
         .withArgs("src" -> src, "dst" -> dst).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String], out: HSink[Byte], err: HSink[Byte]) = for {
+    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_execute")
         .withArgs("command" ->
           s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args.mkString(" ")}"
         ).executeLocally(wd)
-      _ <- process.stdout.stream.run(out) <&> process.stderr.stream.run(err)
+      _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
       exitCode <- process.exitCode
     } yield exitCode
 

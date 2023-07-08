@@ -264,7 +264,9 @@ case class PlanDef(name: Identifier, taskRefs: Seq[TaskRefN]) extends Statement 
   def children = Iterable(name) ++ taskRefs
 }
 
-case class ImportStatement(fileName: String) extends Statement {
-  def str = s"import $fileName"
+case class ImportStatement(fileName: String, params: Map[String, String]) extends Statement {
+  def str = if (params.isEmpty)
+    s"import $fileName"
+    else s"import $fileName with ${params.map { case (k, v) => s"$k = $v"}.mkString("(", ", ", ")")}"
   def children = Nil
 }

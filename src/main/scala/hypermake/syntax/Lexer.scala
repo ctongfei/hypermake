@@ -35,6 +35,10 @@ object Lexer {
     (letter | digit | specialChars | "_").rep(1).!.filter(x => !keywords.contains(x))
   }
 
+  def moduleString[_: P] = P {
+    unquotedString.rep(min = 1, sep = ".")
+  } map { s => s.mkString(java.io.File.separator) + ".hm" }
+
   def pathString[_: P] = P {
     (letter | digit | CharPred(c => !(" *?<>\"".contains(c)))).rep(1).!
   }

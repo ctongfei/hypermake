@@ -1,5 +1,5 @@
-def git(repo, args="") <- build="build.sh":
+def git(repo, args="") <- build="git-build.sh":
    git clone $args $repo package
    ln -s $build package/build.sh
    cd package
-   . build.sh
+   . git-build.sh

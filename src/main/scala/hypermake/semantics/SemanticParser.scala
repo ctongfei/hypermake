@@ -10,6 +10,7 @@ import hypermake.syntax._
 import hypermake.util._
 
 import scala.collection._
+import scala.util.matching.Regex
 
 
 /**
@@ -284,24 +285,33 @@ class SemanticParser(implicit val ctx: Context) {
    * @param f Script file to be read
    * @return A sequence of top-level definitions
    */
-  def readFileToStmts(f: File): Seq[Statement] = readLinesToStmts(f.lines)
+  def readFileToStmts(f: File, macroParams: Map[String, String]): Seq[Statement] =
+    readLinesToStmts(f.lines, macroParams)
 
   /**
    * Reads a stream of Hypermake script lines and parses them to statements.
    */
-  def readLinesToStmts(lines: Iterable[String]): Seq[Statement] = {
-    val content = lines.mkString("\n")
+  def readLinesToStmts(lines: Iterable[String], macroParams: Map[String, String]): Seq[Statement] = {
+    val content = lines.map { line =>
+      macroParams.foldLeft(line) { case (l, (k, v)) => l.replace("$$" + k, v)}  // macro replacement
+    }.mkString("\n")
+
+    // Test for any unbound parameters in macro application
+    val unboundParams = "\\$\\$\\w+".r.findAllIn(content).toSet
+    if (unboundParams.nonEmpty)
+      throw ParametersUnboundException(unboundParams.map(Name(_)), Name("macro application"))
+
     val stmts = SyntacticParser.syntacticParse(content)
     val expandedStmts = stmts.flatMap {
-      case ImportStatement(fn) =>
-        readFileToStmts(resolveFile(fn))
+      case ImportStatement(fn, params) =>
+        readFileToStmts(resolveFile(fn), params)
       case stmt => Seq(stmt)
     }
     expandedStmts
   }
 
   def semanticParse(file: File): Unit = {
-    semanticParse(readFileToStmts(file))
+    semanticParse(readFileToStmts(file, Map()))
   }
 
   def parseTask(tr: TaskRef1) = tr.!.default

@@ -104,6 +104,10 @@ object SyntacticParser {
     parameter
   } map { param => ExplicitAssignment(param, StringLiteral(param.name.name)) }
 
+  def macroStringAssignment[_: P] = P {
+    identifier ~ "=" ~ string
+  }
+
   def assignment[_: P]: P[Assignment] = explicitAssignment | refAssignment | sameNameAssignment
 
   def inputParamList[_: P] = P {
@@ -113,6 +117,10 @@ object SyntacticParser {
   def assignments[_: P] = P {
     ("(" ~ assignment.rep(sep = ",") ~ ")").?.map(_.getOrElse(Seq()))
   } map Assignments
+
+  def macroStringAssignments[_: P] = P {
+    ("(" ~ macroStringAssignment.rep(sep = ",").map(_.toMap) ~ ")")
+  }
 
   def funcCall[_: P] = P {
     identifier ~ assignments
@@ -150,7 +158,7 @@ object SyntacticParser {
   } map { case (id, v) => GlobalValDef(id, v) }
 
   def funcDef[_: P] = P {
-      "def" ~ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
+      "def" ~/ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
   } map { case (name, params, inputScript, impl) =>
     val (inputName, inputFilename) = inputScript.getOrElse(Identifier("NULL") -> StringLiteral("/dev/null"))
     FuncDef(name, params, inputName, inputFilename, impl)
@@ -158,28 +166,31 @@ object SyntacticParser {
 
   def taskDef[_: P] = P {
     decoratorCalls ~
-      "task" ~ identifier ~ envModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
+      "task" ~/ identifier ~ envModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
   } map { case (decorators, name, envMod, inputs, outputs, impl) =>
     TaskDef(decorators, name, envMod, inputs, outputs.getOrElse(Assignments(Seq())), impl)
   }
 
   def serviceDef[_: P] = P {
     decoratorCalls ~
-      "service" ~ identifier ~ envModifier ~ assignments ~ impl
+      "service" ~/ identifier ~ envModifier ~ assignments ~ impl
   } map { case (decorators, name, envMod, inputs, impl) => ServiceDef(decorators, name, envMod, inputs, impl) }
 
   def packageDef[_: P] = P {
     decoratorCalls ~
-      "package" ~ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl
+      "package" ~/ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl
   } map { case (decorators, name, inputs, output, impl) => PackageDef(decorators, name, inputs, output, impl) }
 
   def planDef[_: P] = P {
-    "plan" ~ identifier ~ "=" ~ "{" ~ taskRefN.rep ~ "}"
+    "plan" ~/ identifier ~ "=" ~ "{" ~/ taskRefN.rep ~ "}"
   } map { case (name, taskRefs) => PlanDef(name, taskRefs) }
 
   def importStatement[_: P] = P {
-    "import" ~ string
-  } map { filename => ImportStatement(filename) }
+    "import" ~ (string | moduleString) ~ ("with" ~ macroStringAssignments).?
+  } map { case (fileName, params) => ImportStatement(
+    fileName,
+    params.fold[Map[String, String]](Map())(_.map { case (k, v) => (k.name, v)}))
+  }
 
   def statement[_: P]: P[Statement] =
     valDef | globalValDef | funcDef | taskDef | serviceDef | packageDef | planDef | importStatement
@@ -187,7 +198,7 @@ object SyntacticParser {
   def top[_: P]: P[Seq[Statement]] = P { ws ~ statement.rep ~ End }
 
   def syntacticParse(fileContent: String): Seq[Statement] = {
-    parse(fileContent, top(_)) match {
+    parse(fileContent, top(_), verboseFailures = true) match {
       case Parsed.Success(a, _) => a
       case f: Parsed.Failure => throw ParsingException(f)
     }

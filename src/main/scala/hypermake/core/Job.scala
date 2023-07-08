@@ -66,21 +66,21 @@ abstract class Job(implicit ctx: Context) {
     outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, absolutePath) }
 
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
-  def isDone: HIO[Boolean] = for {
+  def isDone(implicit std: StdSinks): HIO[Boolean] = for {
     exitCode <- env.read(env.resolvePath("exitcode", absolutePath)).map(_.toInt).catchAll(_ => IO.succeed(-1))
     outputsExist <- checkOutputs
   } yield exitCode == 0 && outputsExist
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
-  def linkInputs: HIO[Map[String, String]] = ZIO.collectAll {
+  def linkInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
     for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
-      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).map(name -> _)
+      yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).as(name -> Some(name))
   } map { effs =>
     effs.collect({ case (k, Some(v)) => k -> v }).toMap
   }
 
   /** An operation that checks the output of this job and the exit status of this job. */
-  def checkOutputs: HIO[Boolean] = {
+  def checkOutputs(implicit std: StdSinks): HIO[Boolean] = {
     ZIO.collectAll {
       for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
         yield outputEnv.exists(outputPath)
@@ -88,22 +88,23 @@ abstract class Job(implicit ctx: Context) {
   }
 
   /** Writes the script and decorating calls to the working directory. */
-  def writeScript(linkedArgs: Map[String, String]): HIO[Map[String, String]] = {
-
+  def writeScript(linkedArgs: Map[String, String])(implicit std: StdSinks): HIO[Map[String, String]] = {
     val scriptNames = decorators.map(_.inputScriptFilename)
     for {
       finalScript <- ZIO.foldLeft(decorators zip scriptNames)(script) { case (scr, (c, name)) =>
         env.write(absolutePath / name, scr.script) as c(scr)
       }  // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
-      mergedArgs = jobCaseArgs ++ globalArgs ++ linkedArgs ++ finalScript.strArgs
+
+      // Linked args are of the highest precedence since they are resolved from envs
+      mergedArgs = jobCaseArgs ++ globalArgs ++ finalScript.strArgs ++ linkedArgs
       _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k=${Shell.escape(v)}"""}
         .mkString("", "\n", "\n")
       )
     } yield mergedArgs
   }
 
-  def execute(cli: CLI.Service): HIO[Boolean] = {
+  def execute(cli: CLI.Service)(implicit std: StdSinks): HIO[Boolean] = {
     val effect = for {
       _ <- removeOutputs
       _ <- env.mkdir(absolutePath)
@@ -112,20 +113,23 @@ abstract class Job(implicit ctx: Context) {
       linkedArgs <- linkInputs
       args <- writeScript(linkedArgs)
       _ <- cli.update(this, Status.Running)
-      (outSink, errSink) <- cli.getSinks(this)
-      exitCode <- env.execute(absolutePath, runtime.shell, Seq("script.sh"), args, outSink, errSink)
+      exitCode <- env.execute(absolutePath, runtime.shell, Seq("script.sh"), args)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
   }
 
-  def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = for {
-    done <- isDone
-    (hasRun, successful) <- if (done) ZIO.succeed((false, true))
+  def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = {
+    implicit val std: StdSinks = cli.sinks(this)
+    for {
+      done <- isDone
+      (hasRun, successful) <- if (done) ZIO.succeed((false, true))
       else execute(cli).map((true, _))
-  } yield (hasRun, successful)
+    } yield (hasRun, successful)
+  }
 
   def markAsDone(cli: CLI.Service): HIO[Boolean] = {
+    implicit val std: StdSinks = cli.globalSinks
     val effect = for {
       _ <- env.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
@@ -138,16 +142,32 @@ abstract class Job(implicit ctx: Context) {
     effect.ensuring(env.unlock(absolutePath).orElseSucceed())
   }
 
-  def isLocked: HIO[Boolean] =
+  def printStatus(cli: CLI.Service): HIO[Unit] = {
+    implicit val std: StdSinks = cli.globalSinks
+    for {
+      done <- isDone
+      _ <- cli.update(this, if (done) Status.Complete else Status.Pending)
+    } yield ()
+  }
+
+  def statusString(cli: CLI.Service): HIO[String] = {
+    implicit val std: StdSinks = cli.globalSinks
+    for {
+      done <- isDone
+      r <- cli.showInGraph(this, if (done) Status.Complete else Status.Pending)
+    } yield r
+  }
+
+  def isLocked(implicit std: StdSinks): HIO[Boolean] =
     env.isLocked(absolutePath)
 
-  def forceUnlock: HIO[Unit] =
+  def forceUnlock(implicit std: StdSinks): HIO[Unit] =
     env.forceUnlock(absolutePath)
 
-  def removeOutputs: HIO[Unit] =
+  def removeOutputs(implicit std: StdSinks): HIO[Unit] =
     env.delete(absolutePath)
 
-  def invalidate: HIO[Unit] =
+  def invalidate(implicit std: StdSinks): HIO[Unit] =
     env.delete(absolutePath / "exitcode")
 
   def canonicalCase = ctx.canonicalizeCase(`case`)

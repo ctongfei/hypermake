@@ -4,7 +4,7 @@ shimaokaDataUrl = "http://www.cl.ecei.tohoku.ac.jp/~shimaoka/corpus.zip"
 shimaokaDataset = {ShimaokaDataset: Figer OntoNotes}
 hiertype = "/home/tongfei/proj/hierarchical-typing"
 
-task shimaokaDataDownload(shimaokaDataUrl=$) -> corpus:
+task shimaokaDataDownload(shimaokaDataUrl=$) -> corpus^:
   wget -O corpus.zip $shimaokaDataUrl
   unzip corpus.zip
   rm corpus.zip

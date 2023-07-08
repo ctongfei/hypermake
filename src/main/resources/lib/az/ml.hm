@@ -1,12 +1,12 @@
 # Creates a job that runs on Azure ML.
-def azureml(resourceGroup, workspaceName) <- input="run.azureml.sh"
+def azure_ml(resource_group, workspace_name) <- input="run.azureml.sh"
   ## Create yaml configuration file
   ## .. > job.yaml
   ## Generate name
   az ml job create \
     --file job.yaml \
-    --resource-group $resourceGroup \
-    --workspace-name $workspaceName \
+    --resource-group $resource_group \
+    --workspace-name $workspace_name \
     --name $name \
     --save-as job-status.yaml \
     --stream True

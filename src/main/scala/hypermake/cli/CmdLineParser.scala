@@ -57,7 +57,7 @@ object CmdLineParser {
     case "unlock"       => Subcommand.Unlock
     case "remove"       => Subcommand.Remove
     case "mark-as-done" => Subcommand.MarkAsDone
-    case "export-shell" => Subcommand.ExportShell
+    // case "export-shell" => Subcommand.ExportShell
   }
 
   def run[_: P] = P {

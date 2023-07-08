@@ -15,6 +15,7 @@ trait Style {
   def name(s: Status) = bg(s) ++ nameFg(s)
   def args(s: Status) = bg(s) ++ argsFg(s)
 
+  def render0: String
   def render(j: Job): String
   def render(j: Job, s: Status): String
   def renderInGraph(j: Job, s: Status): String
@@ -43,6 +44,8 @@ object Style {
 
     def nameFg(s: Status) = Bold.On ++ Color.White
     def argsFg(s: Status) = Color.LightGray
+
+    override def render0 = "  "  // TODO: background
 
     def render(j: Job) = {
       val b = Back.Black

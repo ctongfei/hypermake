@@ -1,0 +1,43 @@
+def $$name_read(file):
+  az storage blob download \
+    --container-name $$container \
+    --name $file
+
+def $$name_mkdir(dir):
+  true
+
+def $$name_exists(file):
+  az storage blob exists \
+    --container-name $$container \
+    --name $file
+
+def $$name_link(src, dst):
+  az storage blob copy start \
+    --source-blob $src \
+    --destination-blob $dst \
+    --source-container $$container \
+    --destination-container $$container \
+    --requires-sync
+
+def $$name_touch(file):
+  az storage blob upload \
+    --data "" \
+    --container-name $$container \
+    --name $file
+
+def $$name_delete(file):
+  az storage blob delete \
+    --container-name $$container \
+    --name $file
+
+def copy_from_$$name_to_local(src, dst):
+  az storage blob download \
+    --container-name $$container \
+    --name $src \
+    --file $dst
+
+def copy_from_local_to_$$name(src, dst):
+  az storage blob upload \
+    --file $src \
+    --container-name $$container \
+    --name $dst

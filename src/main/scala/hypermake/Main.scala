@@ -11,13 +11,14 @@ import hypermake.core.{Job, Plan, PointedCubeTask}
 import hypermake.execution.{Executor, RuntimeConfig, Status}
 import hypermake.semantics.{Context, SemanticParser}
 import hypermake.syntax.SyntacticParser
+import hypermake.util.StdSinks
 import hypermake.util.printing._
 
 object Main extends App {
 
   val version = "0.1.0"
 
-  lazy val headerMessage = s"${B("Hypermake")} $version -- A parameterized workflow manager"
+  lazy val headerMessage = s"${B("hypermake")} $version -- A parameterized workflow manager"
 
   lazy val helpMessage = {
     s"""
@@ -69,20 +70,10 @@ object Main extends App {
         // Imports files specified with the -I switch
         runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
         // Defines variables specified with the -D switch
-        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v"}))
+        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v"}, Map()))
         parser.semanticParse(File(scriptFile))
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
-
-        def printJobStatus(job: Job, cli: CLI.Service) = for {
-          done <- job.isDone
-          _ <- cli.update(job, if (done) Status.Complete else Status.Pending)
-        } yield ()
-
-        def showJobStatus(job: Job, cli: CLI.Service) = for {
-          done <- job.isDone
-          r <- cli.showInGraph(job, if (done) Status.Complete else Status.Pending)
-        } yield r
 
         def showTaskCube(pct: PointedCubeTask) = {
           val name = if (pct.name.name contains "@") BU(pct.name.name) else B(pct.name.name)
@@ -92,6 +83,7 @@ object Main extends App {
         val eff = for {
           managedCli <- cli
           task <- managedCli.use { cli =>
+            implicit val std: StdSinks = cli.globalSinks
             val effect = subtask match {
               case Subcommand.List =>
                 for {
@@ -115,17 +107,18 @@ object Main extends App {
                 val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
                 for {
-                  _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs will be run:")
-                  _ <- ZIO.foreach_(sortedJobs)(printJobStatus(_, cli))
+                  _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
+                  s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
+                  _ <- putStrLn(s)
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
-                  u <- if (yes) Executor.backupJob(sortedJobs) *> Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
+                  u <- if (yes) Executor.backupJob(sortedJobs, cli) *> Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
                 } yield u
 
               case Subcommand.DryRun =>
                 val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 for {
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
-                  s <- jobGraph.toStringIfAcyclic(showJobStatus(_, cli))
+                  s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
                   u <- putStrLn(s)
                 } yield u
 
@@ -139,7 +132,7 @@ object Main extends App {
                 val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
                 for {
                   _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:")
-                  _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(printJobStatus(_, cli))
+                  _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(sortedJobsToBeInvalidated)(_.invalidate as true) else ZIO.succeed(())
                 } yield u
@@ -147,7 +140,7 @@ object Main extends App {
               case Subcommand.Unlock =>
                 for {
                   _ <- putStrLn("The following jobs will be unlocked:")
-                  _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
+                  _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(jobs)(_.forceUnlock as true) else ZIO.succeed(())
                 } yield u
@@ -155,7 +148,7 @@ object Main extends App {
               case Subcommand.Remove =>
                 for {
                   _ <- putStrLn(s"The output of the following jobs will be removed:")
-                  _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
+                  _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(jobs) { j =>
                     putStrLn(s"Removing job at ${j.absolutePath}") *> j.removeOutputs as true
@@ -165,7 +158,7 @@ object Main extends App {
               case Subcommand.MarkAsDone =>
                 for {
                   _ <- putStrLn("The following jobs will be marked as done:")
-                  _ <- ZIO.foreach_(jobs)(printJobStatus(_, cli))
+                  _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- if (yes) Executor.run(jobs)(_.markAsDone(cli)) else ZIO.succeed(())
                 } yield u

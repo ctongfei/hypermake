@@ -16,7 +16,8 @@ object Executor {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
 
-  def backupJob(jobs: Iterable[Job])(implicit ctx: Context): HIO[Unit] = {
+  def backupJob(jobs: Iterable[Job], cli: CLI.Service)(implicit ctx: Context): HIO[Unit] = {
+    implicit val std: StdSinks = cli.globalSinks
     val nowStr = dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
     val env = ctx.localEnv
     val logPath = s"${env.root}/.runs/$nowStr"
@@ -50,7 +51,7 @@ object Executor {
           (hasRun, successful) <- semaphore.withPermit(j.executeIfNotDone(cli))
           u <-
             if (!hasRun)
-              cli.update(j, Status.Complete) *> promises(j).succeed(())
+              promises(j).succeed(())  // do not print anything to the CLI
             else if (successful)
               cli.update(j, Status.Succeeded) *> promises(j).succeed(())
             else

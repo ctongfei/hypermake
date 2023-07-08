@@ -42,3 +42,6 @@ case class CyclicWorkflowException()
 
 case class JobFailedException(j: Job)
   extends Exception(s"Job ${j.colorfulString} failed.")
+
+case class DataTransferFailedException(src: String, name: String)
+  extends Exception(s"Failed to transfer file $name from “$src”.")
