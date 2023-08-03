@@ -19,8 +19,7 @@ case class Func(
                  inputScript: Name,
                  inputScriptFilename: String,
                  impl: PointedCube[Script]
-               )
-{
+               ) {
 
   /**
    * Constructs the complete script with the unbound variables assigned.

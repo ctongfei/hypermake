@@ -11,6 +11,7 @@ class Plan(val targets: Seq[Cube[Job]]) {
 
   /**
    * Performs a traversal to resolve all dependent tasks of a given plan.
+   *
    * @return The task dependency DAG
    */
   def dependencyGraph: Graph[Job] = {

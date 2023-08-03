@@ -2,7 +2,8 @@ package hypermake.execution
 
 import better.files.File
 import hypermake.cli.CmdLineAST
-import hypermake.cli.CmdLineAST.{Opt, RunOpt}
+import hypermake.cli.CmdLineAST._
+import hypermake.util.printing._
 
 import java.io.{File => JFile, _}
 import java.nio.file.{Files => JFiles, _}
@@ -62,6 +63,7 @@ class RuntimeConfig private(
 
   /**
    * Resolves a script file from `HYPERMAKE_PATH`.
+   *
    * @param fn File name to resolve
    * @return The file
    */
@@ -73,7 +75,7 @@ class RuntimeConfig private(
       resolutionPaths.collectFirst {
         case path if File(path, newFn).exists => File(path, newFn)
       } getOrElse {
-        throw new FileNotFoundException(s"Hypermake script $fn not found.")
+        throw new FileNotFoundException(s"Hypermake script ${O(fn)} not found.")
       }
     }
   }

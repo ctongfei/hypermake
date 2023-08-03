@@ -14,7 +14,9 @@ class StatusMonitor(jobs: IndexedSeq[Job], semaphore: Semaphore, style: Style = 
   val index = jobs.view.zipWithIndex.toMap
 
   val terminal = TerminalBuilder.builder().dumb(true).build()
+
   def width = terminal.getWidth
+
   def height = terminal.getHeight
 
   val maxJobIdLength = jobs.map(_.id.length).max
@@ -22,11 +24,14 @@ class StatusMonitor(jobs: IndexedSeq[Job], semaphore: Semaphore, style: Style = 
   val jobsToDisplay = jobs take (height - 1)
 
   def moveCursorUp(n: Int) = if (n > 0) putStr(s"\u001b[${n}A\r") else putStr("\r")
+
   def moveCursorDown(n: Int) = if (n > 0) putStr(s"\u001b[${n}B\r") else putStr("\r")
 
   def initialize: HIO[Unit] = semaphore.withPermit {
     for {
-      _ <- IO { terminal.puts(InfoCmp.Capability.clear_screen) }
+      _ <- IO {
+        terminal.puts(InfoCmp.Capability.clear_screen)
+      }
       _ <- ZIO.foreach_(jobsToDisplay)(j => putStrLn(style.render(j, Status.Pending)))
       _ <- moveCursorUp(jobsToDisplay.length)
     } yield ()

@@ -6,6 +6,7 @@ import java.net.{URLDecoder, URLEncoder}
 trait Escaper {
 
   def escape(s: String): String
+
   def unescape(s: String): String
 
 }
@@ -17,6 +18,7 @@ object Escaper {
    */
   object Percent extends Escaper {
     def escape(s: String) = URLEncoder.encode(s, "UTF-8")
+
     def unescape(s: String) = URLDecoder.decode(s, "UTF-8")
   }
 
@@ -37,6 +39,7 @@ object Escaper {
       '\"' -> '\"',
       '\'' -> '\'',
     )
+
     def escape(s: String) = {
       val sb = new StringBuilder()
       for (c <- s)
@@ -53,6 +56,7 @@ object Escaper {
   object Shell extends Escaper {
     // Credit to https://stackoverflow.com/a/33949338/2990673
     def escape(s: String) = "'" + s.replace("'", "'\\''") + "'"
+
     def unescape(s: String) = {
       if (s.startsWith("'") && s.endsWith("'"))
         s.substring(1, s.length - 1).replace("'\\''", "'")

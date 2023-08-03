@@ -20,7 +20,8 @@ case class Script(
                    script: String,
                    args: Map[Name, Value] = Map(),
                    outputArgs: Map[Name, Value] = Map()
-                 )(implicit runtime: RuntimeConfig) {
+                 )(implicit runtime: RuntimeConfig)
+{
 
   def withNewArgs(newArgs: Map[Name, Value]) = Script(script, args ++ newArgs, outputArgs)
 
@@ -35,6 +36,7 @@ case class Script(
 
   /**
    * Writes this script as a local temporary file and executes it with its arguments.
+   *
    * @param workDir The working directory to run this temporary script.
    *                By default this is the working directory of the outer Hypermake process.
    */
@@ -44,10 +46,12 @@ case class Script(
     val command = s"${runtime.shell} $tempScriptFile".split(' ')
 
     for {
-      _ <- IO { File(tempScriptFile).write(script) }
+      _ <- IO {
+        File(tempScriptFile).write(script)
+      }
       process <- Command(command.head, command.tail: _*)
         .workingDirectory(new JFile(workDir))
-        .env(strArgs.toMap ++ runtime.envVars)  // Hypermake args are injected as environment vars
+        .env(strArgs.toMap ++ runtime.envVars) // Hypermake args are injected as environment vars
         .stderr(ProcessOutput.Pipe)
         .stdout(ProcessOutput.Pipe)
         .run

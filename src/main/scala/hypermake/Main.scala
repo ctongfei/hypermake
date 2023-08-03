@@ -1,7 +1,6 @@
 package hypermake
 
 import better.files.File
-import fansi.Bold
 import zio._
 import zio.console._
 import hypermake.cli.CmdLineAST._
@@ -22,33 +21,34 @@ object Main extends App {
 
   lazy val helpMessage = {
     s"""
-      |$headerMessage
-      | ${B("Usage:")}
-      |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
-      |
-      | ${B("Options:")}
-      |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
-      |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
-      |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
-      |  -H, --help                 : Prints this message and exit.
-      |  -V, --version              : Shows Hypermake version and exit.
-      |
-      | ${B("Commands:")}
-      |  list                       : Lists the variables and tasks in this pipeline.
-      |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
-      |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
-      |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
-      |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
-      |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
-      |  mark-as-done ${V("$targets")}      : Marks the given tasks as normally exited.
-      |
-      | ${B("Running options:")}
-      |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
-      |  -k, --keep-going           : Keep going even when some jobs failed.
-      |  -s, --silent               : Silent mode: redirect stdout and stderr to files.
-      |  -v, --verbose              : Verbose mode.
-      |  -y, --yes                  : Automatic "yes" to prompts.
-      |""".stripMargin
+       |$headerMessage
+       | ${B("Usage:")}
+       |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
+       |
+       | ${B("Options:")}
+       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
+       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
+       |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
+       |  -H, --help                 : Prints this message and exit.
+       |  -V, --version              : Shows Hypermake version and exit.
+       |
+       | ${B("Commands:")}
+       |  list                       : Lists the variables and tasks in this pipeline.
+       |  get-path ${V("$targets")}          : Prints the path of the given tasks.
+       |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
+       |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
+       |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
+       |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
+       |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
+       |  mark-as-done ${V("$targets")}      : Marks the given tasks as normally exited.
+       |
+       | ${B("Running options:")}
+       |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
+       |  -k, --keep-going           : Keep going even when some jobs failed.
+       |  -s, --silent               : Silent mode: redirect stdout and stderr to files.
+       |  -v, --verbose              : Verbose mode.
+       |  -y, --yes                  : Automatic "yes" to prompts.
+       |""".stripMargin
   }
 
   def run(args: List[String]) = {
@@ -70,7 +70,7 @@ object Main extends App {
         // Imports files specified with the -I switch
         runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
         // Defines variables specified with the -D switch
-        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v"}, Map()))
+        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }, Map()))
         parser.semanticParse(File(scriptFile))
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
@@ -87,6 +87,7 @@ object Main extends App {
             val effect = subtask match {
               case Subcommand.List =>
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"Workflow file: ${O(scriptFile)}")
                   _ <- putStrLn(B("\nVariables:"))
                   _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
@@ -103,20 +104,31 @@ object Main extends App {
                   u <- putStrLn(s)
                 } yield u
 
+              case Subcommand.GetPath =>
+                for {
+                  u <- ZIO.foreach_(jobs.map(_.absolutePath))(putStrLn(_))
+                } yield u
+
               case Subcommand.Run =>
                 val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
                   s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
                   _ <- putStrLn(s)
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
-                  u <- if (yes) Executor.backupJob(sortedJobs, cli) *> Executor.runDAG(jobGraph, cli) else ZIO.succeed(())
+                  u <- {
+                    if (yes)
+                      Executor.recordJobsRun(sortedJobs, cli) *> Executor.runDAG(jobGraph, cli)
+                    else ZIO.succeed(())
+                  }
                 } yield u
 
               case Subcommand.DryRun =>
                 val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
                   s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
                   u <- putStrLn(s)
@@ -131,6 +143,7 @@ object Main extends App {
                 val jobsToBeInvalidated = Graph.explore[Job](jobs, jobGraph.outgoingNodes)
                 val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:")
                   _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
@@ -139,6 +152,7 @@ object Main extends App {
 
               case Subcommand.Unlock =>
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn("The following jobs will be unlocked:")
                   _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
@@ -147,6 +161,7 @@ object Main extends App {
 
               case Subcommand.Remove =>
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"The output of the following jobs will be removed:")
                   _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
@@ -157,6 +172,7 @@ object Main extends App {
 
               case Subcommand.MarkAsDone =>
                 for {
+                  _ <- putStrLn(headerMessage)
                   _ <- putStrLn("The following jobs will be marked as done:")
                   _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
@@ -169,14 +185,13 @@ object Main extends App {
             }
             for {
               _ <- cli.setup
-              _ <- putStrLn(headerMessage)
               _ <- effect
               u <- cli.teardown
             } yield u
           }
         } yield task
 
-        (eff as ExitCode(0)).orDie
+        eff.exitCode
     }
   }
 

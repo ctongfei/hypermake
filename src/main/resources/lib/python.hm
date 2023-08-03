@@ -1,10 +1,3 @@
 # Execute the script with the given Python interpreter.
-def python(interpreter="python") <- input="script.py":
-  $interpreter $input
-
-# Wraps the given script in a Conda environment.
-def conda(env) <- _internalCondaScript="conda-internal.sh":
-  eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-  conda activate $env
-  . $_internalCondaScript
-  conda deactivate
+def python(interpreter="python", extra_args="") <- input="script.py":
+  $interpreter $extra_args $input

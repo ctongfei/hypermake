@@ -16,7 +16,7 @@ object Executor {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
 
-  def backupJob(jobs: Iterable[Job], cli: CLI.Service)(implicit ctx: Context): HIO[Unit] = {
+  def recordJobsRun(jobs: Iterable[Job], cli: CLI.Service)(implicit ctx: Context): HIO[Unit] = {
     implicit val std: StdSinks = cli.globalSinks
     val nowStr = dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
     val env = ctx.localEnv
@@ -38,7 +38,7 @@ object Executor {
    * Runs an action over all jobs specified in the given acyclic directed graph.
    */
   def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeConfig): HIO[Unit] = {
-    val sortedJobs = jobs.topologicalSort.toIndexedSeq  // may throw CyclicWorkflowException
+    val sortedJobs = jobs.topologicalSort.toIndexedSeq // may throw CyclicWorkflowException
     val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
@@ -51,7 +51,7 @@ object Executor {
           (hasRun, successful) <- semaphore.withPermit(j.executeIfNotDone(cli))
           u <-
             if (!hasRun)
-              promises(j).succeed(())  // do not print anything to the CLI
+              promises(j).succeed(()) // do not print anything to the CLI
             else if (successful)
               cli.update(j, Status.Succeeded) *> promises(j).succeed(())
             else

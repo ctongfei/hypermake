@@ -2,7 +2,8 @@ package hypermake.collection
 
 import scala.collection._
 
-class CaseCube(val underlying: Map[Name, Set[String]]) { self =>
+class CaseCube(val underlying: Map[Name, Set[String]]) {
+  self =>
 
   def filterVars(p: Name => Boolean) = CaseCube {
     underlying.view.filterKeys(p).toMap
@@ -64,6 +65,7 @@ class CaseCube(val underlying: Map[Name, Set[String]]) { self =>
         private[this] var finished = false
 
         def hasNext = !finished
+
         def next(): Case = {
           if (n == 0) {
             finished = true
@@ -79,7 +81,7 @@ class CaseCube(val underlying: Map[Name, Set[String]]) { self =>
             else indices(i) = 0
             i += 1
           }
-          throw new IllegalStateException()  // bad state, should never be here
+          throw new IllegalStateException() // bad state, should never be here
         }
       }
     }

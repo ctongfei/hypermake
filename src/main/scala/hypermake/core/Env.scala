@@ -79,12 +79,17 @@ trait Env {
   def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
   def delete(f: String)(implicit std: StdSinks): HIO[Unit]
+
   def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks): HIO[Unit]
+
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks): HIO[ExitCode]
 
   def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
+
   def lock(f: String)(implicit std: StdSinks): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f${/}.lock")
+
   def unlock(f: String)(implicit std: StdSinks): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f${/}.lock")
+
   def forceUnlock(f: String)(implicit std: StdSinks): HIO[Unit] = for {
     isLocked <- isLocked(f)
     u <- if (isLocked) delete(s"$f${/}.lock") else ZIO.succeed(())
@@ -92,7 +97,7 @@ trait Env {
 
   def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] = {
     x match {
-      case Value.Pure(_) => ZIO.none  // do nothing
+      case Value.Pure(_) => ZIO.none // do nothing
       case Value.Input(path, env) =>
         val e = if (env == this) link(path, dst)
         else copyFrom(path, env, dst)
@@ -127,6 +132,7 @@ trait Env {
 object Env {
 
   def getValueByName(name: String)(implicit ctx: Context) = ctx.getValue(Name(name)).default.value
+
   def getValueByNameOpt(name: String)(implicit ctx: Context) = ctx.getValueOpt(Name(name)).map(_.default.value)
 
   def getScriptByName(name: String)(implicit ctx: Context) = ctx.getFunc(Name(name)).impl.default
@@ -153,7 +159,7 @@ object Env {
     val separator = java.io.File.separatorChar
     val pathSeparator = java.io.File.pathSeparatorChar
     lazy val root = ctx.envOutputRoot(Name("local"))
-    val systemRoot = new JFile("/").getAbsolutePath  // TODO: on windows, use java.nio.Path::getRoot
+
     def refreshInterval = 100.milliseconds
 
     def read(f: String)(implicit std: StdSinks) = IO {
@@ -225,7 +231,7 @@ object Env {
     def root = getValueByName(s"${name}_root")
 
     def refreshInterval =
-      getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds  // by default, 5s
+      getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds // by default, 5s
 
     def read(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()

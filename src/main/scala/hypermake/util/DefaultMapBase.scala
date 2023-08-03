@@ -7,5 +7,6 @@ import scala.collection._
  */
 abstract class DefaultMapBase[A, +B] extends immutable.Map[A, B] {
   override def removed(key: A) = view.filterKeys(_ != key).toMap
+
   override def updated[V1 >: B](key: A, value: V1) = view.toMap.updated(key, value)
 }

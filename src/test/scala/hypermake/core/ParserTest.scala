@@ -11,6 +11,7 @@ import hypermake.syntax.SyntacticParser
 object ParserTest extends App {
 
   import fastparse._
+
   val src = "task a:\n  r"
   val ast = parse(src, SyntacticParser.taskDef(_)).get.get
 

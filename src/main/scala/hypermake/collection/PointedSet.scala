@@ -15,7 +15,9 @@ trait PointedSet[A] extends Set[A] {
   def underlying: Set[A]
 
   def contains(elem: A) = underlying contains elem
+
   def diff(that: Set[A]) = underlying diff that
+
   def iterator = underlying.iterator
 
   def intersect(that: PointedSet[A]): PointedSet[A] = {
@@ -38,6 +40,7 @@ object PointedSet {
     assert(underlyingSet contains defaultElem)
     new PointedSet[A] {
       def default = defaultElem
+
       def underlying = underlyingSet
     }
   }

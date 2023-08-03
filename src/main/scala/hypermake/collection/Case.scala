@@ -13,6 +13,7 @@ class Case(val underlying: Map[Name, String]) {
   def vars = underlying.keySet
 
   def apply(a: Name) = underlying(a)
+
   def get(a: Name) = underlying get a
 
   def contains(a: Name) = underlying contains a
@@ -25,5 +26,6 @@ class Case(val underlying: Map[Name, String]) {
 
 object Case {
   def apply(underlying: Map[Name, String]) = new Case(underlying)
+
   def from(indices: (Name, String)*) = new Case(indices.toMap)
 }

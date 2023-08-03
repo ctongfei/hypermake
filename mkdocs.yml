@@ -35,3 +35,7 @@ nav:
       - "07 Packages": 'tutorial/07-packages.md'
       - "08 Macros": 'tutorial/08-macros.md'
       - "09 Environments": 'tuntorial/09-environments.md'
+  - 'Library Reference':
+      - "Azure": 'stdlib/az.md'
+      - "Git": 'stdlib/git.md'
+      - "Python": 'stdlib/python.md'

@@ -4,7 +4,6 @@ import scala.collection._
 import fastparse._
 import hypermake.collection._
 import hypermake.core._
-import hypermake.syntax._
 
 
 case class ParsingException(failure: Parsed.Failure)
@@ -25,6 +24,9 @@ case class DuplicatedDefinitionException(kind: String, name: String)
 case class ParametersUnboundException(names: Set[Name], func: Name)
   extends Exception(s"Parameters {${names.mkString(", ")}} unbound in “$func”.")
 
+case class MacroParametersUnboundException(params: Set[String])
+  extends Exception(s"Parameters {${params.mkString(", ")}} unbound in macro application.")
+
 case class UndefinedException(kind: String, name: Name)
   extends Exception(s"$kind “$name” not defined.")
 
@@ -32,7 +34,7 @@ case class OutputNotDefinedException(name: String, task: Task)
   extends Exception(s"Output “$name” not defined in task “$task”.")
 
 case class AmbiguousOutputException(task: PointedCubeTask)
-  extends Exception(s"There are more than one output of task “$task”: which one is specified is unclear.")
+  extends Exception(s"There are more than one output of task “$task”: it is unclear which one is specified.")
 
 case class NonStringForOutputException(output: String)
   extends Exception(s"Only string literals are allowed for an output “$output”.")

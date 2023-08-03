@@ -2,7 +2,8 @@ package hypermake.collection
 
 import scala.collection._
 
-class PointedCaseCube(override val underlying: Map[Name, PointedSet[String]]) extends CaseCube(underlying) { self =>
+class PointedCaseCube(override val underlying: Map[Name, PointedSet[String]]) extends CaseCube(underlying) {
+  self =>
 
   def default: Case = Case(underlying.view.mapValues(_.default).toMap)
 

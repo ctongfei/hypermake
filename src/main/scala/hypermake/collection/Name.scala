@@ -7,6 +7,7 @@ import cats._
  */
 case class Name(name: String) {
   override def toString = name
+
   override def hashCode() = name.hashCode
 }
 

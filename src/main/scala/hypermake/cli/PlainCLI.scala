@@ -62,7 +62,7 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     val efs = ZSink.fromFile(Paths.get(job.absolutePath, "stderr"))
     if (runtime.silent)
       StdSinks(ofs, efs)
-    else StdSinks((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
+    else StdSinks((os zipWithPar ofs) ((a, _) => a), (es zipWithPar efs) ((a, _) => a))
   }
 
   def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)
@@ -83,7 +83,7 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
 
 object PlainCLI {
 
-  def create(style: Style = Style.Powerline)(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
+  def create(style: Style = Style.Plain)(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
     Managed.succeed(new PlainCLI(style, runtime))
   }
 

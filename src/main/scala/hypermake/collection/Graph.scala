@@ -144,9 +144,9 @@ trait Graph[A] {
 
 
 class MutableGraph[A](
-                val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
-                val revAdjMap: mutable.HashMap[A, mutable.HashSet[A]]
-              ) extends Graph[A] {
+                       val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
+                       val revAdjMap: mutable.HashMap[A, mutable.HashSet[A]]
+                     ) extends Graph[A] {
 
   def nodes: Set[A] = adjMap.keySet
 
@@ -170,8 +170,10 @@ object Graph {
     mutable.HashMap[A, mutable.HashSet[A]](),
     mutable.HashMap[A, mutable.HashSet[A]]()
   )
+
   /**
    * Performs a traversal to resolve all dependent tasks of the given targets.
+   *
    * @param sources A collection of target tasks
    * @return The task dependency DAG
    */

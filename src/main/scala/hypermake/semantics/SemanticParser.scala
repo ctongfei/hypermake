@@ -15,6 +15,7 @@ import scala.util.matching.Regex
 
 /**
  * A semantic parsing run.
+ *
  * @param ctx Global context
  */
 class SemanticParser(implicit val ctx: Context) {
@@ -29,11 +30,13 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit class ContextualDenotationExtension[C, S, D](s: S)(implicit ssi: ContextualDenotation[C, S, D]) {
     def !(ctx: C = ssi.defaultContext) = ssi.denotation(s, ctx)
+
     def !! : D = ssi.denotation(s, ssi.defaultContext)
   }
 
   implicit object ParseEnv extends ContextualDenotation[Env, EnvModifier, Env] {
     override def defaultContext = Env(Name("local"))
+
     def denotation(env: EnvModifier, parent: Env) =
       env.optEnv.fold(parent)(e => Env(Name(e.name)))
   }
@@ -49,10 +52,12 @@ class SemanticParser(implicit val ctx: Context) {
   }
 
   implicit object ParseCaseCube extends Denotation[IndicesN, CaseCube] {
-    def denotation(is: IndicesN): CaseCube = CaseCube { is.map {
-      case (a, Keys(ks)) => a.! -> ks
-      case (a, Star()) => a.! -> getAxis(a.!) // *: all values in axis a
-    }}
+    def denotation(is: IndicesN): CaseCube = CaseCube {
+      is.map {
+        case (a, Keys(ks)) => a.! -> ks
+        case (a, Star()) => a.! -> getAxis(a.!) // *: all values in axis a
+      }
+    }
   }
 
   implicit object ParseScript extends Denotation[Verbatim, Script] {
@@ -61,13 +66,14 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParseValRef extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), ValRef, PointedCube[Value]] {
     def defaultContext = (Map(), Env.local)
+
     def denotation(r: ValRef, localsEnv: (Map[Name, PointedCube[Value]], Env)): PointedCube[Value] = {
       val name = r.name.!
       val indices = r.indices.!
       val (locals, env) = localsEnv
-      val referred = locals.get(name)  // local variables override global variables
-        .orElse(getPackageOpt(name).map(_.output.map(_.on(env))))  // get package output on contextual env
-        .getOrElse(getValue(name))  // falls back to global values
+      val referred = locals.get(name) // local variables override global variables
+        .orElse(getPackageOpt(name).map(_.output.map(_.on(env)))) // get package output on contextual env
+        .getOrElse(getValue(name)) // falls back to global values
 
       referred.select(indices)
     }
@@ -75,7 +81,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParseStringLiteral extends Denotation[StringLiteral, PointedCube[Value]] {
     def denotation(sl: StringLiteral) = {
-      val env = sl.envModifier.!(null)  // no env modifier means pure input
+      val env = sl.envModifier.!(null) // no env modifier means pure input
       val v = if (env eq null) Value.Pure(sl.value) else Value.Input(sl.value, env)
       PointedCube.Singleton(v)
     }
@@ -114,6 +120,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParseExpr extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Expr, PointedCube[Value]] {
     def defaultContext = (Map(), Env.local)
+
     def denotation(e: Expr, localsEnv: (Map[Name, PointedCube[Value]], Env)) = e match {
       case sl: StringLiteral => sl.!
       case dl: DictLiteral => dl.!
@@ -125,6 +132,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParseFuncCallImpl extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), FuncCallImpl, PointedCube[Script]] {
     def defaultContext = (Map(), Env.local)
+
     def denotation(impl: FuncCallImpl, localParamsEnv: (Map[Name, PointedCube[Value]], Env)) = {
       val func = getFunc(impl.call.funcName.!)
       val funcArgs = impl.call.inputs
@@ -139,6 +147,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParseImpl extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Impl, PointedCube[Script]] {
     def defaultContext = (Map(), Env(Name("local")))
+
     def denotation(impl: Impl, localParamsEnv: (Map[Name, PointedCube[Value]], Env)) = impl match {
       case impl: FuncCallImpl => impl.!(localParamsEnv)
       case impl: ScriptImpl => impl.!
@@ -218,6 +227,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   /**
    * From definitions, deduces all declared axes.
+   *
    * @param stmts All definitions
    * @return All declared axes; fail if there is any axis mis-alignments.
    */
@@ -238,7 +248,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   def semanticParse(stmts: Iterable[Statement]): Unit = {
     val all = getAllCases(stmts)
-    allCases = allCases outerJoin all  // updates all cases
+    allCases = allCases outerJoin all // updates all cases
 
     stmts foreach {
       case ValDef(id, value) =>
@@ -282,6 +292,7 @@ class SemanticParser(implicit val ctx: Context) {
 
   /**
    * Reads a Hypermake script while expanding all import statements. This function processes `import` statements.
+   *
    * @param f Script file to be read
    * @return A sequence of top-level definitions
    */
@@ -293,13 +304,13 @@ class SemanticParser(implicit val ctx: Context) {
    */
   def readLinesToStmts(lines: Iterable[String], macroParams: Map[String, String]): Seq[Statement] = {
     val content = lines.map { line =>
-      macroParams.foldLeft(line) { case (l, (k, v)) => l.replace("$$" + k, v)}  // macro replacement
+      macroParams.foldLeft(line) { case (l, (k, v)) => l.replace("$$" + k, v) } // macro replacement
     }.mkString("\n")
 
     // Test for any unbound parameters in macro application
     val unboundParams = "\\$\\$\\w+".r.findAllIn(content).toSet
     if (unboundParams.nonEmpty)
-      throw ParametersUnboundException(unboundParams.map(Name(_)), Name("macro application"))
+      throw MacroParametersUnboundException(unboundParams.map(_.drop(2)))
 
     val stmts = SyntacticParser.syntacticParse(content)
     val expandedStmts = stmts.flatMap {

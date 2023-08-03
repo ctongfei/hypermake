@@ -15,25 +15,42 @@ object CmdLineParser {
   import hypermake.syntax.SyntacticParser._
 
   def define[_: P] =
-    P { ("-D" | "--define") ~ Lexer.identifier ~ "=" ~ string }
+    P {
+      ("-D" | "--define") ~ Lexer.identifier ~ "=" ~ string
+    }
       .map { case (name, value) => Opt.Define(name.name, value) }
 
   def include[_: P] =
-    P { ("-I" | "--include") ~ string } map Opt.Include
+    P {
+      ("-I" | "--include") ~ string
+    } map Opt.Include
 
   def shell[_: P] =
-    P { ("-S" | "--shell") ~ string } map Opt.Shell
+    P {
+      ("-S" | "--shell") ~ string
+    } map Opt.Shell
 
-  def help[_: P]: P[Cmd] = P { "--help" | "-H" | "-h" } map { _ => Cmd.Help }
-  def version[_: P]: P[Cmd] = P { "--version" | "-V" } map { _ => Cmd.Version }
+  def help[_: P]: P[Cmd] = P {
+    "--help" | "-H" | "-h"
+  } map { _ => Cmd.Help }
+
+  def version[_: P]: P[Cmd] = P {
+    "--version" | "-V"
+  } map { _ => Cmd.Version }
 
   def numJobs[_: P] =
-    P { ("-j" | "--jobs") ~ Lexer.digit.rep.! } map { j => RunOpt.NumJobs(j.toInt) }
+    P {
+      ("-j" | "--jobs") ~ Lexer.digit.rep.!
+    } map { j => RunOpt.NumJobs(j.toInt) }
 
   def switch[_: P](short: String, long: String, out: RunOpt): P[RunOpt] =
-    P { long | short } map { _ => out }
+    P {
+      long | short
+    } map { _ => out }
 
-  def opt[_: P]: P[Opt] = P { define | include | shell }
+  def opt[_: P]: P[Opt] = P {
+    define | include | shell
+  }
 
   def runtimeOpts[_: P] = P {
     numJobs |
@@ -45,17 +62,20 @@ object CmdLineParser {
 
   def target[_: P] = SyntacticParser.taskRefN
 
-  def fileNameString[_: P] = P { Lexer.quotedString | Lexer.pathString }
+  def fileNameString[_: P] = P {
+    Lexer.quotedString | Lexer.pathString
+  }
 
   def command[_: P]: P[Subcommand] = P {
-    "list".! | "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! // "export-shell".!
+    "list".! | "get-path".! | "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! // "export-shell".!
   } map {
-    case "list"         => Subcommand.List
-    case "run"          => Subcommand.Run
-    case "dry-run"      => Subcommand.DryRun
-    case "invalidate"   => Subcommand.Invalidate
-    case "unlock"       => Subcommand.Unlock
-    case "remove"       => Subcommand.Remove
+    case "list" => Subcommand.List
+    case "get-path" => Subcommand.GetPath
+    case "run" => Subcommand.Run
+    case "dry-run" => Subcommand.DryRun
+    case "invalidate" => Subcommand.Invalidate
+    case "unlock" => Subcommand.Unlock
+    case "remove" => Subcommand.Remove
     case "mark-as-done" => Subcommand.MarkAsDone
     // case "export-shell" => Subcommand.ExportShell
   }

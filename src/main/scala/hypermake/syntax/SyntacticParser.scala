@@ -7,14 +7,19 @@ import hypermake.util.Escaper.Percent
 
 
 object SyntacticParser {
+
   import Lexer._
   import fastparse.ScriptWhitespace._
 
   def ws(implicit prev: P[_]) = whitespace(prev)
 
-  def string[_: P] = P { quotedString | unquotedString }
+  def string[_: P] = P {
+    quotedString | unquotedString
+  }
 
-  def envModifier[_: P] = P { ("@" ~ identifier).? } map EnvModifier
+  def envModifier[_: P] = P {
+    ("@" ~ identifier).?
+  } map EnvModifier
 
   def keyValuePair[_: P] = P {
     string ~ ("=" ~ expr).?
@@ -27,19 +32,21 @@ object SyntacticParser {
   } map { sl => Key1(sl) }
 
   def keys[_: P] = P {
-    "{" ~ string.rep(1) ~ "}"
+    "{" ~ string.rep(1, sep = ",") ~ "}"
   } map { sls => Keys(sls.toSet) }
 
-  def star[_: P] = P { "*" } map { _ => Star() }
+  def star[_: P] = P {
+    "*"
+  } map { _ => Star() }
 
   def index1[_: P]: P[Index1] = P {
     identifier ~ ":" ~ key1
   } map { case (id, k) => Index1(id, k) }
 
   def indexN[_: P]: P[IndexN] = P {
-    identifier ~ ":" ~ (key1 | keys | star)  // | star
+    identifier ~ ":" ~ (key1 | keys | star) // | star
   } map {
-    case (id, k: Key1)  => IndexN(id, Keys(Set(k.key)))
+    case (id, k: Key1) => IndexN(id, Keys(Set(k.key)))
     case (id, ks: KeyN) => IndexN(id, ks)
     //case Star() => Index(Identifier("*"), Star())  // all other indices: e.g. [A: 3, B: 4, *]
   }
@@ -62,7 +69,7 @@ object SyntacticParser {
 
   def valRef[_: P] = P {
     "$" ~ identifier ~ indices1
-  } map  { case (id, indices) => ValRef(id, indices) }
+  } map { case (id, indices) => ValRef(id, indices) }
 
   def taskValRef1[_: P] = P {
     "$" ~ taskRef1 ~ "." ~ identifier
@@ -79,8 +86,8 @@ object SyntacticParser {
   def dictLiteral[_: P]: P[DictLiteral] = P {
     "{" ~ identifier ~ ":" ~
       (
-        keyValuePair.rep(1).map(orderedMap)
-        | inlineCommand.map(cmd => orderedMap(cmd.result().map(k => (Percent.escape(k), StringLiteral(k)))))
+        keyValuePair.rep(1, sep = ",").map(orderedMap)
+          | inlineCommand.map(cmd => orderedMap(cmd.result().map(k => (Percent.escape(k), StringLiteral(k)))))
       ) ~ "}"
   } map { case (id, ps) => DictLiteral(id, ps) }
 
@@ -158,7 +165,7 @@ object SyntacticParser {
   } map { case (id, v) => GlobalValDef(id, v) }
 
   def funcDef[_: P] = P {
-      "def" ~/ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
+    "def" ~/ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
   } map { case (name, params, inputScript, impl) =>
     val (inputName, inputFilename) = inputScript.getOrElse(Identifier("NULL") -> StringLiteral("/dev/null"))
     FuncDef(name, params, inputName, inputFilename, impl)
@@ -186,16 +193,18 @@ object SyntacticParser {
   } map { case (name, taskRefs) => PlanDef(name, taskRefs) }
 
   def importStatement[_: P] = P {
-    "import" ~ (string | moduleString) ~ ("with" ~ macroStringAssignments).?
+    "import" ~ (string | moduleString) ~ macroStringAssignments.?
   } map { case (fileName, params) => ImportStatement(
     fileName,
-    params.fold[Map[String, String]](Map())(_.map { case (k, v) => (k.name, v)}))
+    params.fold[Map[String, String]](Map())(_.map { case (k, v) => (k.name, v) }))
   }
 
   def statement[_: P]: P[Statement] =
     valDef | globalValDef | funcDef | taskDef | serviceDef | packageDef | planDef | importStatement
 
-  def top[_: P]: P[Seq[Statement]] = P { ws ~ statement.rep ~ End }
+  def top[_: P]: P[Seq[Statement]] = P {
+    ws ~ statement.rep ~ End
+  }
 
   def syntacticParse(fileContent: String): Seq[Statement] = {
     parse(fileContent, top(_), verboseFailures = true) match {

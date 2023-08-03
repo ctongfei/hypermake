@@ -10,30 +10,41 @@ import hypermake.semantics.Context
 import hypermake.util._
 import hypermake.util.Escaper._
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+
 /**
  * A job is any block of shell script that is executed by HyperMake.
  * A job can either be a task, a package, or a service.
+ *
  * @param ctx Parsing context that yielded this job
  */
 abstract class Job(implicit ctx: Context) {
 
   import ctx._
+
   implicit val runtime: RuntimeConfig = ctx.runtime
 
   def name: Name
+
   def env: Env
 
   def `case`: Case
+
   def inputs: Map[Name, Value]
+
   def inputEnvs: Map[Name, Env]
+
   def outputFileNames: Map[Name, Value]
 
   def outputs: Map[Name, Value.Output] = outputFileNames.map { case (k, v) =>
     k -> Value.Output(v.value, outputEnvs.getOrElse(k, env), this)
   }
+
   def outputEnvs: Map[Name, Env]
 
   def decorators: Seq[Call]
+
   def rawScript: Script
 
   /** Global variables included for this job. */
@@ -49,7 +60,7 @@ abstract class Job(implicit ctx: Context) {
    * Path to store the output of this task, relative to the output root.
    * This is the working directory of this task if executed.
    */
-  lazy val path = s"$name/$percentEncodedCaseString"
+  lazy val path = s"$name/$potentiallyHashedPercentEncodedCaseString"
 
   lazy val absolutePath = env.resolvePath(path)
 
@@ -93,12 +104,12 @@ abstract class Job(implicit ctx: Context) {
     for {
       finalScript <- ZIO.foldLeft(decorators zip scriptNames)(script) { case (scr, (c, name)) =>
         env.write(absolutePath / name, scr.script) as c(scr)
-      }  // wraps the script with decorator calls sequentially
+      } // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
 
       // Linked args are of the highest precedence since they are resolved from envs
       mergedArgs = jobCaseArgs ++ globalArgs ++ finalScript.strArgs ++ linkedArgs
-      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k=${Shell.escape(v)}"""}
+      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k=${Shell.escape(v)}""" }
         .mkString("", "\n", "\n")
       )
     } yield mergedArgs
@@ -173,7 +184,17 @@ abstract class Job(implicit ctx: Context) {
   def canonicalCase = ctx.canonicalizeCase(`case`)
 
   def percentEncodedCaseString = ctx.percentEncodedCaseString(`case`)
+
+  def potentiallyHashedPercentEncodedCaseString = {
+    val s = percentEncodedCaseString
+    val bytes = s.getBytes(StandardCharsets.UTF_8)
+    if (bytes.length > 255)
+      MessageDigest.getInstance("MD5").digest(bytes).map("%02x".format(_)).mkString
+    else s
+  }
+
   def caseString = ctx.caseString(`case`)
+
   def caseInJson = ctx.caseInJson(`case`)
 
   def colorfulString = {
@@ -182,6 +203,7 @@ abstract class Job(implicit ctx: Context) {
   }
 
   override def toString = id
+
   override lazy val hashCode = id.hashCode
 
   override def equals(o: Any) = o match {

@@ -25,7 +25,7 @@ class Task(val name: Name,
            val decorators: Seq[Call],
            val rawScript: Script
           )
-          (implicit ctx: Context) extends Job()(ctx) { }
+          (implicit ctx: Context) extends Job()(ctx) {}
 
 
 class PointedCubeTask(val name: Name,
@@ -39,8 +39,8 @@ class PointedCubeTask(val name: Name,
                       val script: PointedCube[Script]
                      )
                      (implicit ctx: Context)
-  extends PointedCube[Task]
-{ self =>
+  extends PointedCube[Task] {
+  self =>
 
   def get(c: Case): Option[Task] = {
     if (cases containsCase c) {
