@@ -1,12 +1,12 @@
 package hypermake.core
 
-import scala.collection._
 import hypermake.collection._
 import hypermake.semantics._
 import hypermake.util._
 
-/**
- * A call to a Hypermake [[Func]] that is used to wrap around a script.
+import scala.collection._
+
+/** A call to a Hypermake [[Func]] that is used to wrap around a script.
  */
 class Call(
             val args: Map[Name, Value],

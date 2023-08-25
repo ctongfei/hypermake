@@ -5,8 +5,7 @@ import hypermake.execution._
 
 import scala.collection._
 
-/**
- * This is essentially a string potentially paired with multiple dependent tasks.
+/** This is essentially a string potentially paired with multiple dependent tasks.
  */
 sealed trait Value {
   def value: String

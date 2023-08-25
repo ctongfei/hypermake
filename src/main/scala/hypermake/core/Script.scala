@@ -1,27 +1,22 @@
 package hypermake.core
 
-import java.io.{File => JFile}
-import scala.collection._
 import better.files._
-import hypermake.cli.CLI
-import zio._
-import zio.process._
 import hypermake.collection._
 import hypermake.execution._
-import hypermake.util.StandardStreams.out
 import hypermake.util._
-import zio.stream.ZSink
+import zio._
+import zio.process._
 
+import java.io.{File => JFile}
+import scala.collection._
 
-/**
- * Encapsulates a script together with its external arguments.
+/** Encapsulates a script together with its external arguments.
  */
 case class Script(
                    script: String,
                    args: Map[Name, Value] = Map(),
                    outputArgs: Map[Name, Value] = Map()
-                 )(implicit runtime: RuntimeConfig)
-{
+                 )(implicit runtime: RuntimeConfig) {
 
   def withNewArgs(newArgs: Map[Name, Value]) = Script(script, args ++ newArgs, outputArgs)
 
@@ -34,11 +29,11 @@ case class Script(
     (args).map { case (k, v) => k.name -> v.absValue } ++ outputArgs.map { case (k, v) => k.name -> v.value }
   }
 
-  /**
-   * Writes this script as a local temporary file and executes it with its arguments.
+  /** Writes this script as a local temporary file and executes it with its arguments.
    *
-   * @param workDir The working directory to run this temporary script.
-   *                By default this is the working directory of the outer Hypermake process.
+   * @param workDir
+   * The working directory to run this temporary script. By default this is the working directory of the outer
+   * Hypermake process.
    */
   def executeLocally(workDir: String = runtime.workDir)(implicit std: StdSinks): HIO[Process] = {
     val tempScriptFile = runtime.tempFile(prefix = "hypermake_temp_script")

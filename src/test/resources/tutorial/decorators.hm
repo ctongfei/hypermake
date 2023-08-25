@@ -11,11 +11,11 @@ def conda(env) <- internalCondaScript="conda-internal.sh":
 task helloWorldInPython:
   print("Hello World" + " " + "in Python!")
 
-@conda(env={Env: base myenv})
+@conda(env={Env: base, myenv})
 task helloWorldFromEnv:
   python -c "print('Hello World in Python from $env!')"
 
-@conda(env={Env: base myenv})
+@conda(env={Env: base, myenv})
 @python
 task helloWorldInPythonFromEnv:
   import os

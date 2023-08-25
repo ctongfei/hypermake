@@ -1,9 +1,10 @@
 package hypermake.core
 
-import scala.collection._
 import hypermake.collection._
 import hypermake.semantics.Context
 import hypermake.util._
+
+import scala.collection._
 
 class Package(
                val name: Name,
@@ -31,8 +32,7 @@ class Package(
   def output: Value.PackageOutput = Value.PackageOutput(this)
 }
 
-/**
- * A package can be realized on multiple environments, and cannot be dependent on any other task.
+/** A package can be realized on multiple environments, and cannot be dependent on any other task.
  */
 case class PointedCubePackage(
                                name: Name,
@@ -46,19 +46,20 @@ case class PointedCubePackage(
 
   def get(c: Case): Option[Package] = {
     if (cases containsCase c) {
-      Some(new Package(
-        name = name,
-        `case` = cases.normalizeCase(c),
-        inputs = inputs.mapValuesE(_.select(c).default),
-        outputs = (outputs._1, outputs._2.select(c).default),
-        decorators = decorators.map(_.select(c).default),
-        rawScript = rawScript.select(c).default,
-      ))
+      Some(
+        new Package(
+          name = name,
+          `case` = cases.normalizeCase(c),
+          inputs = inputs.mapValuesE(_.select(c).default),
+          outputs = (outputs._1, outputs._2.select(c).default),
+          decorators = decorators.map(_.select(c).default),
+          rawScript = rawScript.select(c).default
+        )
+      )
     } else None
   }
 
-  /**
-   * Returns a task that builds this package on a specific environment.
+  /** Returns a task that builds this package on a specific environment.
    */
   def on(env: Env)(implicit ctx: Context) = new PointedCubeTask(
     Name(s"${name.name}@${env.name}"), // package@ec2

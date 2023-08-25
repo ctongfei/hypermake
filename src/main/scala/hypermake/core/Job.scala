@@ -1,23 +1,23 @@
 package hypermake.core
 
-import scala.collection._
-import scala.collection.decorators._
-import zio._
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.execution._
 import hypermake.semantics.Context
-import hypermake.util._
 import hypermake.util.Escaper._
+import hypermake.util._
+import zio._
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import scala.collection._
+import scala.collection.decorators._
 
-/**
- * A job is any block of shell script that is executed by HyperMake.
- * A job can either be a task, a package, or a service.
+/** A job is any block of shell script that is executed by HyperMake. A job can either be a task, a package, or a
+ * service.
  *
- * @param ctx Parsing context that yielded this job
+ * @param ctx
+ * Parsing context that yielded this job
  */
 abstract class Job(implicit ctx: Context) {
 
@@ -53,12 +53,11 @@ abstract class Job(implicit ctx: Context) {
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name.name,
-    "HYPERMAKE_JOB_CASE" -> caseInJson,
+    "HYPERMAKE_JOB_CASE" -> caseInJson
   )
 
-  /**
-   * Path to store the output of this task, relative to the output root.
-   * This is the working directory of this task if executed.
+  /** Path to store the output of this task, relative to the output root. This is the working directory of this task if
+   * executed.
    */
   lazy val path = s"$name/$potentiallyHashedPercentEncodedCaseString"
 
@@ -92,10 +91,13 @@ abstract class Job(implicit ctx: Context) {
 
   /** An operation that checks the output of this job and the exit status of this job. */
   def checkOutputs(implicit std: StdSinks): HIO[Boolean] = {
-    ZIO.collectAll {
-      for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
-        yield outputEnv.exists(outputPath)
-    }.map(_.forall(identity)).catchAll(_ => IO.succeed(false))
+    ZIO
+      .collectAll {
+        for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
+          yield outputEnv.exists(outputPath)
+      }
+      .map(_.forall(identity))
+      .catchAll(_ => IO.succeed(false))
   }
 
   /** Writes the script and decorating calls to the working directory. */
@@ -109,8 +111,11 @@ abstract class Job(implicit ctx: Context) {
 
       // Linked args are of the highest precedence since they are resolved from envs
       mergedArgs = jobCaseArgs ++ globalArgs ++ finalScript.strArgs ++ linkedArgs
-      _ <- env.write(absolutePath / "args", mergedArgs.map { case (k, v) => s"""$k=${Shell.escape(v)}""" }
-        .mkString("", "\n", "\n")
+      _ <- env.write(
+        absolutePath / "args",
+        mergedArgs
+          .map { case (k, v) => s"""$k=${Shell.escape(v)}""" }
+          .mkString("", "\n", "\n")
       )
     } yield mergedArgs
   }
@@ -134,8 +139,9 @@ abstract class Job(implicit ctx: Context) {
     implicit val std: StdSinks = cli.sinks(this)
     for {
       done <- isDone
-      (hasRun, successful) <- if (done) ZIO.succeed((false, true))
-      else execute(cli).map((true, _))
+      (hasRun, successful) <-
+        if (done) ZIO.succeed((false, true))
+        else execute(cli).map((true, _))
     } yield (hasRun, successful)
   }
 

@@ -1,16 +1,17 @@
 package hypermake.exception
 
-import scala.collection._
 import fastparse._
 import hypermake.collection._
 import hypermake.core._
 
+import scala.collection._
 
-case class ParsingException(failure: Parsed.Failure)
-  extends Exception(s"Parsing error: \n${failure.trace().longMsg}")
+case class ParsingException(failure: Parsed.Failure) extends Exception(s"Parsing error: \n${failure.trace().longMsg}")
 
 case class AxesAlignmentException(name: Name, v1: Seq[String], v2: Seq[String])
-  extends Exception(s"Axis “$name” does not align in two occurrences: {${v1.mkString(", ")}} != {${v2.mkString(", ")}}")
+  extends Exception(
+    s"Axis “$name” does not align in two occurrences: {${v1.mkString(", ")}} != {${v2.mkString(", ")}}"
+  )
 
 case class AxesDefaultKeyMismatchException(name: Option[Name], p1: String, p2: String)
   extends Exception(s"Default keys of ${name.fold("axis")(a => f"axis “$a”")} do not match: “$p1” != “$p2”")
@@ -27,8 +28,7 @@ case class ParametersUnboundException(names: Set[Name], func: Name)
 case class MacroParametersUnboundException(params: Set[String])
   extends Exception(s"Parameters {${params.mkString(", ")}} unbound in macro application.")
 
-case class UndefinedException(kind: String, name: Name)
-  extends Exception(s"$kind “$name” not defined.")
+case class UndefinedException(kind: String, name: Name) extends Exception(s"$kind “$name” not defined.")
 
 case class OutputNotDefinedException(name: String, task: Task)
   extends Exception(s"Output “$name” not defined in task “$task”.")
@@ -39,11 +39,9 @@ case class AmbiguousOutputException(task: PointedCubeTask)
 case class NonStringForOutputException(output: String)
   extends Exception(s"Only string literals are allowed for an output “$output”.")
 
-case class CyclicWorkflowException()
-  extends Exception(s"Cyclic workflow detected.")
+case class CyclicWorkflowException() extends Exception(s"Cyclic workflow detected.")
 
-case class JobFailedException(j: Job)
-  extends Exception(s"Job ${j.colorfulString} failed.")
+case class JobFailedException(j: Job) extends Exception(s"Job ${j.colorfulString} failed.")
 
 case class DataTransferFailedException(src: String, name: String)
   extends Exception(s"Failed to transfer file $name from “$src”.")

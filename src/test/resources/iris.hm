@@ -1,0 +1,28 @@
+import python
+
+local_root = "./out/iris"
+
+iris_classes = {Iris:
+  setosa,
+  versicolor,
+  virginica
+}
+
+task download_iris_data() -> (data="iris.csv"):
+  wget https://archive.ics.uci.edu/static/public/53/iris.zip -O iris.zip
+  unzip iris.zip
+  mv bezdekIris.data iris.csv
+
+@python
+task train_iris_model(data=$download_iris_data.data) -> (model="model.pkl"):
+  import os
+  import pandas as pd
+  from sklearn import svm
+  from sklearn.externals import joblib
+
+  df = pd.read_csv(os.env["data"], header=None)
+  X = df.iloc[:, 0:4]
+  y = df.iloc[:, 4]
+  clf = svm.SVC()
+  clf.fit(X, y)
+  joblib.dump(clf, os.env["model"])

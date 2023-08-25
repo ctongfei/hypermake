@@ -1,15 +1,16 @@
 package hypermake.execution
 
-import scala.collection._
-import zio._
-import hypermake.collection._
-import hypermake.exception.JobFailedException
 import hypermake.cli._
+import hypermake.collection._
 import hypermake.core._
+import hypermake.exception.JobFailedException
 import hypermake.semantics.Context
 import hypermake.util._
+import zio._
+
 import java.time._
 import java.time.format._
+import scala.collection._
 
 
 object Executor {
@@ -55,7 +56,10 @@ object Executor {
             else if (successful)
               cli.update(j, Status.Succeeded) *> promises(j).succeed(())
             else
-              cli.update(j, Status.Failed) *> promises(j).fail(JobFailedException(j))
+              cli.update(j, Status.Failed) *> (
+                if (runtime.keepGoing) promises(j).succeed(()) // if keep-going, ignore failure and carry on
+                else promises(j).fail(JobFailedException(j))
+                )
         } yield u
       }
       allFibers <- ZIO.forkAll(effects)

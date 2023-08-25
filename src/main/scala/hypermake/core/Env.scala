@@ -1,52 +1,43 @@
 package hypermake.core
 
-import java.io.{File => JFile}
-import java.nio.file.{Path, Paths, Files => JFiles}
-import scala.collection._
 import better.files.File
-import zio._
-import zio.process._
-import zio.stream._
-import zio.duration._
-import hypermake.cli._
 import hypermake.collection._
 import hypermake.exception.DataTransferFailedException
 import hypermake.semantics.Context
 import hypermake.util._
+import zio._
+import zio.duration._
+import zio.process._
 
-/**
- * Encapsulates a running environment that could be local, or some remote grid.
- * Such an environment must possess a basic file system, as well as the capability
- * to run arbitrary shell script.
+import java.nio.file.{Paths, Files => JFiles}
+import scala.collection._
+
+/** Encapsulates a running environment that could be local, or some remote grid. Such an environment must possess a
+ * basic file system, as well as the capability to run arbitrary shell script.
  */
 trait Env {
 
-  /**
-   * Identifier of this environment.
+  /** Identifier of this environment.
    */
   def name: String
 
-  /**
-   * Separator character used to separate path components. By default this is '/'.
+  /** Separator character used to separate path components. By default this is '/'.
    */
   def separator: Char
 
-  /**
-   * Separator character used to separate a list of paths. By default this is ':'.
+  /** Separator character used to separate a list of paths. By default this is ':'.
    */
   def pathSeparator: Char
 
   def / = separator
 
-  /**
-   * Output root on this environment. Intermediate results will be stored in this directory.
+  /** Output root on this environment. Intermediate results will be stored in this directory.
    */
   def root: String
 
   def refreshInterval: Duration
 
-  /**
-   * Resolves a path relative to the given root directory.
+  /** Resolves a path relative to the given root directory.
    */
   def resolvePath(s: String, r: String = root) = {
     val p = s.trim
@@ -54,8 +45,7 @@ trait Env {
     else r + separator + p
   }
 
-  /**
-   * Reads the content of a file as a string.
+  /** Reads the content of a file as a string.
    */
   def read(f: String)(implicit std: StdSinks): HIO[String]
 
@@ -63,18 +53,15 @@ trait Env {
 
   def mkdir(f: String)(implicit std: StdSinks): HIO[Unit]
 
-  /**
-   * Checks if a file exists on this file system.
+  /** Checks if a file exists on this file system.
    */
   def exists(f: String)(implicit std: StdSinks): HIO[Boolean]
 
-  /**
-   * Creates a symbolic link from [[src]] to [[dst]].
+  /** Creates a symbolic link from [[src]] to [[dst]].
    */
   def link(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
-  /**
-   * Creates an empty file at the given path.
+  /** Creates an empty file at the given path.
    */
   def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
@@ -82,13 +69,17 @@ trait Env {
 
   def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks): HIO[Unit]
 
-  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks): HIO[ExitCode]
+  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
+                                                                                            std: StdSinks
+  ): HIO[ExitCode]
 
   def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
 
-  def lock(f: String)(implicit std: StdSinks): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f${/}.lock")
+  def lock(f: String)(implicit std: StdSinks): HIO[Unit] =
+    isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f${/}.lock")
 
-  def unlock(f: String)(implicit std: StdSinks): HIO[Unit] = isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f${/}.lock")
+  def unlock(f: String)(implicit std: StdSinks): HIO[Unit] =
+    isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f${/}.lock")
 
   def forceUnlock(f: String)(implicit std: StdSinks): HIO[Unit] = for {
     isLocked <- isLocked(f)
@@ -99,15 +90,17 @@ trait Env {
     x match {
       case Value.Pure(_) => ZIO.none // do nothing
       case Value.Input(path, env) =>
-        val e = if (env == this) link(path, dst)
-        else copyFrom(path, env, dst)
+        val e =
+          if (env == this) link(path, dst)
+          else copyFrom(path, env, dst)
         e as Some(dst)
       case Value.PackageOutput(pack) =>
         val p = pack.output.on(this).value
         link(p, dst) as Some(dst)
       case Value.Output(path, env, job) =>
-        val e = if (env == this) link(resolvePath(path, job.absolutePath), dst)
-        else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
+        val e =
+          if (env == this) link(resolvePath(path, job.absolutePath), dst)
+          else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
         e as Some(dst)
       case Value.Multiple(values, _) =>
         for {
@@ -152,8 +145,6 @@ object Env {
   def local(implicit ctx: Context) = ctx.localEnv
 
   class Local(implicit ctx: Context) extends Env {
-
-    import ctx._
 
     final val name = "local"
     val separator = java.io.File.separatorChar
@@ -201,9 +192,12 @@ object Env {
       u <- if (exitCode.code == 0) ZIO.succeed(()) else ZIO.fail(DataTransferFailedException(srcEnv.name, src))
     } yield u
 
-    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks) = {
+    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
+                                                                                                       std: StdSinks
+    ) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
-      val pb = zio.process.Command(interpreter, (interpreterArgs ++ args): _ *)
+      val pb = zio.process
+        .Command(interpreter, (interpreterArgs ++ args): _*)
         .workingDirectory(File(wd).toJava.getAbsoluteFile)
         .env(envArgs.toMap)
         .stderr(ProcessOutput.Pipe)
@@ -275,15 +269,18 @@ object Env {
 
     def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"copy_from_${srcEnv}_to_$name")
-        .withArgs("src" -> src, "dst" -> dst).executeLocally()
+        .withArgs("src" -> src, "dst" -> dst)
+        .executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}_execute")
-        .withArgs("command" ->
-          s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args.mkString(" ")}"
-        ).executeLocally(wd)
+        .withArgs(
+          "command" ->
+            s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args.mkString(" ")}"
+        )
+        .executeLocally(wd)
       _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
       exitCode <- process.exitCode
     } yield exitCode

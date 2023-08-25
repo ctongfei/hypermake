@@ -1,44 +1,37 @@
 package hypermake.core
 
-import better.files.File
-
-import scala.collection._
-import scala.sys._
-import zio._
 import hypermake.collection._
-import hypermake.execution.RuntimeConfig
 import hypermake.semantics.Context
 import hypermake.util._
 
+import scala.collection._
 
-/**
- * A task is a job that is declared by the `task` definition.
- * It is a job that is specific to a running environment.
+/** A task is a job that is declared by the `task` definition. It is a job that is specific to a running environment.
  */
-class Task(val name: Name,
-           val env: Env,
-           val `case`: Case,
-           val inputs: Map[Name, Value],
-           val inputEnvs: Map[Name, Env],
-           val outputFileNames: Map[Name, Value],
-           val outputEnvs: Map[Name, Env],
-           val decorators: Seq[Call],
-           val rawScript: Script
-          )
-          (implicit ctx: Context) extends Job()(ctx) {}
+class Task(
+            val name: Name,
+            val env: Env,
+            val `case`: Case,
+            val inputs: Map[Name, Value],
+            val inputEnvs: Map[Name, Env],
+            val outputFileNames: Map[Name, Value],
+            val outputEnvs: Map[Name, Env],
+            val decorators: Seq[Call],
+            val rawScript: Script
+          )(implicit ctx: Context)
+  extends Job()(ctx) {}
 
-
-class PointedCubeTask(val name: Name,
-                      val env: Env,
-                      val cases: PointedCaseCube,
-                      val inputs: Map[Name, PointedCube[Value]],
-                      val inputEnvs: Map[Name, Env],
-                      val outputNames: Map[Name, PointedCube[Value]],
-                      val outputEnvs: Map[Name, Env],
-                      val decorators: Seq[PointedCube[Call]],
-                      val script: PointedCube[Script]
-                     )
-                     (implicit ctx: Context)
+class PointedCubeTask(
+                       val name: Name,
+                       val env: Env,
+                       val cases: PointedCaseCube,
+                       val inputs: Map[Name, PointedCube[Value]],
+                       val inputEnvs: Map[Name, Env],
+                       val outputNames: Map[Name, PointedCube[Value]],
+                       val outputEnvs: Map[Name, Env],
+                       val decorators: Seq[PointedCube[Call]],
+                       val script: PointedCube[Script]
+                     )(implicit ctx: Context)
   extends PointedCube[Task] {
   self =>
 
@@ -57,8 +50,8 @@ class PointedCubeTask(val name: Name,
     val allTaskNames = inputs.values.flatMap { pcv =>
       pcv.allElements.flatMap(_.dependencies.map(_.name).toSet)
     } ++ decorators.flatMap { pcc =>
-      pcc.allElements.flatMap(_.args.values.collect {
-        case Value.Output(_, _, j) => j.name
+      pcc.allElements.flatMap(_.args.values.collect { case Value.Output(_, _, j) =>
+        j.name
       })
     }
     allTaskNames.map(ctx.getTask)
