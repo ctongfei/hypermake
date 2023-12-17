@@ -16,7 +16,7 @@
 #### Example: define an environment over SFTP
 
 ```sh
-import "sftp.hm" with (name = "xxx", host = "...")
+import sftp (name = "xxx", host = "...")
 ```
 
 

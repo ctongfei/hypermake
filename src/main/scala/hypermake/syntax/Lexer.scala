@@ -7,11 +7,22 @@ object Lexer {
   import fastparse.NoWhitespace._
 
   val keywords = Set(
-    "def", "task", "plan", "service", "package", "import", "global"
+    "def",
+    "task",
+    "package",
+    "plan",
+    "module",
+    "service",
+    "import",
+    "global"
   )
 
   def comment[_: P] = P {
     "#" ~ CharsWhile(_ != '\n', 0)
+  }
+
+  def wscomment[_: P] = P {
+    (CharsWhileIn(" \n") | comment).rep
   }
 
   def lowercase[_: P] = P {
@@ -31,11 +42,11 @@ object Lexer {
   }
 
   def specialChars[_: P] = P {
-    CharIn("\\-.~")
+    CharIn("\\-~")
   }
 
   def identifier[_: P] = P {
-    ((letter | "_") ~ (letter | digit | "_").rep).!.filter(x => !keywords.contains(x))
+    ((letter | "_" | ".") ~ (letter | digit | "_" | ".").rep).!.filter(x => !keywords.contains(x))
   } map { s => Identifier(s) }
 
   def inlineCommand[_: P] = P {
@@ -74,17 +85,20 @@ object Lexer {
     (letter | digit | CharPred(c => !(" *?<>\"".contains(c)))).rep(1).!
   }
 
-  def scriptLine[_: P]: P[String] = P {
-    (("  " | "\t") ~ CharsWhile(_ != '\n').!) | &("\n").!
+  def indentation[_: P](indent: Int) = P {
+    " ".repX(indent)
   }
 
-  def script[_: P]: P[Verbatim] = P {
-    scriptLine.rep(min = 1, sep = "\n")
+  def startIndentBlock[_: P] = P { ":\n" }
+
+  def scriptLine[_: P](indent: Int): P[String] = P { (indentation(indent + 2) ~ CharsWhile(_ != '\n').!) | &("\n").! }
+
+  def script[_: P](indent: Int): P[Verbatim] = P {
+    scriptLine(indent).rep(min = 1, sep = "\n")
   } map { lines => Verbatim(lines.mkString("\n")) }
 
-  def scriptImpl[_: P]: P[ScriptImpl] = P {
-    ":\n" ~ script
+  def scriptImpl[_: P](indent: Int): P[ScriptImpl] = P {
+    startIndentBlock ~ script(indent)
   } map ScriptImpl
 
 }
-

@@ -33,7 +33,7 @@ nav:
       - "05 Functions": 'tutorial/05-functions.md'
       - "06 Decorators": 'tutorial/06-decorators.md'
       - "07 Packages": 'tutorial/07-packages.md'
-      - "08 Macros": 'tutorial/08-macros.md'
+      - "08 Modules": 'tutorial/08-modules.md'
       - "09 Environments": 'tuntorial/09-environments.md'
   - 'Library Reference':
       - "AWS": 'stdlib/aws.md'

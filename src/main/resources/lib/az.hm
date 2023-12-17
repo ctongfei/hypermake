@@ -1,0 +1,66 @@
+# Defines an Azure Storage Blob environment.
+module az.storage.blob(container, extra_args):
+
+  def read(file):
+    az storage blob download \
+      --container-name $container \
+      --name $file \
+      $extra_args
+
+  def mkdir(dir):
+    true
+
+  def exists(file):
+    az storage blob exists \
+      --container-name $container \
+      --name $file \
+      $extra_args
+
+  def link(src, dst):
+    az storage blob copy start \
+      --source-blob $src \
+      --destination-blob $dst \
+      --source-container $container \
+      --destination-container $container \
+      --requires-sync \
+      $extra_args
+
+  def $name_touch(file):
+    az storage blob upload \
+      --data "" \
+      --container-name $container \
+      --name $file \
+      $extra_args
+  
+  def $name_delete(file):
+    az storage blob delete \
+      --container-name $container \
+      --name $file \
+      $extra_args
+  
+  def copy_from_$name_to_local(src, dst):
+    az storage blob download \
+      --container-name $container \
+      --name $src \
+      --file $dst \
+      $extra_args
+  
+  def copy_from_local_to_$name(src, dst):
+    az storage blob upload \
+      --file $src \
+      --container-name $container \
+      --name $dst \
+      $extra_args
+
+# Creates a job that runs on Azure ML.
+def azure.ml(resource_group, workspace_name) <- input="run.azureml.sh"
+  ## Create yaml configuration file
+  ## .. > job.yaml
+  ## Generate name
+  az ml job create \
+    --file job.yaml \
+    --resource-group $resource_group \
+    --workspace-name $workspace_name \
+    --name $name \
+    --save-as job-status.yaml \
+    --stream True

@@ -5,7 +5,6 @@ import hypermake.exception._
 import hypermake.util._
 import hypermake.util.Escaper.Percent
 
-
 object SyntacticParser {
 
   import Lexer._
@@ -46,9 +45,9 @@ object SyntacticParser {
   def indexN[_: P]: P[IndexN] = P {
     identifier ~ ":" ~ (key1 | keys | star) // | star
   } map {
-    case (id, k: Key1) => IndexN(id, Keys(Set(k.key)))
+    case (id, k: Key1)  => IndexN(id, Keys(Set(k.key)))
     case (id, ks: KeyN) => IndexN(id, ks)
-    //case Star() => Index(Identifier("*"), Star())  // all other indices: e.g. [A: 3, B: 4, *]
+    // case Star() => Index(Identifier("*"), Star())  // all other indices: e.g. [A: 3, B: 4, *]
   }
 
   def indices1[_: P]: P[Indices1] = P {
@@ -111,10 +110,6 @@ object SyntacticParser {
     parameter
   } map { param => ExplicitAssignment(param, StringLiteral(param.name.name)) }
 
-  def macroStringAssignment[_: P] = P {
-    identifier ~ "=" ~ string
-  }
-
   def assignment[_: P]: P[Assignment] = explicitAssignment | refAssignment | sameNameAssignment
 
   def inputParamList[_: P] = P {
@@ -122,29 +117,27 @@ object SyntacticParser {
   } map Identifiers
 
   def assignments[_: P] = P {
-    ("(" ~ assignment.rep(sep = ",") ~ ")").?.map(_.getOrElse(Seq()))
+    "(" ~ assignment.rep(sep = ",") ~ ")"
   } map Assignments
-
-  def macroStringAssignments[_: P] = P {
-    ("(" ~ macroStringAssignment.rep(sep = ",").map(_.toMap) ~ ")")
-  }
 
   def funcCall[_: P] = P {
     identifier ~ assignments
   } map { case (funcName, inputs) => FuncCall(funcName, inputs) }
 
-  def decoratorCall[_: P] = P {
-    "@" ~ funcCall
+  def decoratorCall[_: P](indent: Int = 0) = P {
+    indentation(indent) ~ "@" ~ funcCall ~ "\n"
   } map DecoratorCall
 
-  def decoratorCalls[_: P] =
-    decoratorCall.rep map (cs => DecoratorCalls(cs.reverse)) // reverse so that the first decorator is the outermost
+  def decoratorCalls[_: P](indent: Int = 0) =
+    decoratorCall(indent).rep map (cs =>
+      DecoratorCalls(cs.reverse)
+    ) // reverse so that the first decorator is the outermost
 
   def funcCallImpl[_: P] = P {
     "=" ~ funcCall
   } map FuncCallImpl
 
-  def impl[_: P]: P[Impl] = scriptImpl | funcCallImpl
+  def impl[_: P](indent: Int): P[Impl] = scriptImpl(indent) | funcCallImpl
 
   def outputParamList[_: P] = identifier.map(x => Identifiers(Seq(x))) | ("(" ~ inputParamList ~ ")")
 
@@ -156,51 +149,63 @@ object SyntacticParser {
     sameNameAssignment | explicitAssignment
   }
 
-  def valDef[_: P] = P {
-    identifier ~ "=" ~ expr
+  def valDef[_: P](indent: Int = 0) = P {
+    indentation(indent) ~ identifier ~ "=" ~ expr
   } map { case (id, v) => ValDef(id, v) }
 
   def globalValDef[_: P] = P {
     "global" ~ identifier ~ "=" ~ expr
   } map { case (id, v) => GlobalValDef(id, v) }
 
-  def funcDef[_: P] = P {
-    "def" ~/ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
+  def funcDef[_: P](indent: Int = 0) = P {
+    indentation(indent) ~ "def" ~/ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl(
+      indent
+    )
   } map { case (name, params, inputScript, impl) =>
     val (inputName, inputFilename) = inputScript.getOrElse(Identifier("NULL") -> StringLiteral("/dev/null"))
     FuncDef(name, params, inputName, inputFilename, impl)
   }
 
-  def taskDef[_: P] = P {
-    decoratorCalls ~
-      "task" ~/ identifier ~ envModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
+  def taskDef[_: P](indent: Int = 0) = P {
+    decoratorCalls(indent) ~
+      indentation(indent) ~ "task" ~ identifier ~ envModifier ~ assignments ~
+      ("->" ~ outputAssignments).? ~ impl(indent)
   } map { case (decorators, name, envMod, inputs, outputs, impl) =>
     TaskDef(decorators, name, envMod, inputs, outputs.getOrElse(Assignments(Seq())), impl)
   }
 
-  def serviceDef[_: P] = P {
-    decoratorCalls ~
-      "service" ~/ identifier ~ envModifier ~ assignments ~ impl
-  } map { case (decorators, name, envMod, inputs, impl) => ServiceDef(decorators, name, envMod, inputs, impl) }
+//  def serviceDef[_: P] = P {
+//    decoratorCalls ~
+//      "service" ~/ identifier ~ envModifier ~ assignments ~ impl
+//  } map { case (decorators, name, envMod, inputs, impl) => ServiceDef(decorators, name, envMod, inputs, impl) }
 
-  def packageDef[_: P] = P {
-    decoratorCalls ~
-      "package" ~/ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl
+  def packageDef[_: P](indent: Int = 0) = P {
+    decoratorCalls(indent) ~
+      indentation(indent) ~ "package" ~/ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl(indent)
   } map { case (decorators, name, inputs, output, impl) => PackageDef(decorators, name, inputs, output, impl) }
 
-  def planDef[_: P] = P {
-    "plan" ~/ identifier ~ "=" ~ "{" ~/ taskRefN.rep ~ "}"
+  def planDef[_: P](indent: Int = 0) = P {
+    indentation(indent) ~ "plan" ~/ identifier ~ "=" ~ "{" ~/ taskRefN.rep ~ "}"
   } map { case (name, taskRefs) => PlanDef(name, taskRefs) }
 
+  def moduleDef[_: P](indent: Int = 0) = P {
+    indentation(indent) ~ "module" ~/ identifier ~ assignments ~ startIndentBlock ~ definition(indent + 2).rep
+  } map { case (name, params, defs) => ModuleDef(name, params, defs) }
+
+  def moduleInstantiation[_: P](indent: Int = 0) = P {
+    indentation(indent) ~ identifier ~ "=" ~ identifier ~ assignments
+  } map { case (name, module, params) => ModuleInstantiation(name, module, params) }
+
   def importStatement[_: P] = P {
-    "import" ~ (string | moduleString) ~ macroStringAssignments.?
-  } map { case (fileName, params) => ImportStatement(
-    fileName,
-    params.fold[Map[String, String]](Map())(_.map { case (k, v) => (k.name, v) }))
-  }
+    "import" ~ (string | moduleString)
+  } map ImportStatement
+
+  def definition[_: P](indent: Int): P[Def] =
+    valDef(indent) | funcDef(indent) | taskDef(indent) | packageDef(indent) |
+      planDef(indent) | moduleDef(indent) | moduleInstantiation(indent)
 
   def statement[_: P]: P[Statement] =
-    valDef | globalValDef | funcDef | taskDef | serviceDef | packageDef | planDef | importStatement
+    definition(0) | globalValDef | importStatement
 
   def top[_: P]: P[Seq[Statement]] = P {
     ws ~ statement.rep ~ End
@@ -209,7 +214,7 @@ object SyntacticParser {
   def syntacticParse(fileContent: String): Seq[Statement] = {
     parse(fileContent, top(_), verboseFailures = true) match {
       case Parsed.Success(a, _) => a
-      case f: Parsed.Failure => throw ParsingException(f)
+      case f: Parsed.Failure    => throw ParsingException(f)
     }
   }
 

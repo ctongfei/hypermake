@@ -1,5 +1,6 @@
 package hypermake.core
 
+import cats.implicits._
 import hypermake.collection._
 import hypermake.semantics.Context
 import hypermake.util._
@@ -7,32 +8,32 @@ import hypermake.util._
 import scala.collection._
 
 /** A task is a job that is declared by the `task` definition. It is a job that is specific to a running environment.
- */
+  */
 class Task(
-            val name: Name,
-            val env: Env,
-            val `case`: Case,
-            val inputs: Map[Name, Value],
-            val inputEnvs: Map[Name, Env],
-            val outputFileNames: Map[Name, Value],
-            val outputEnvs: Map[Name, Env],
-            val decorators: Seq[Call],
-            val rawScript: Script
-          )(implicit ctx: Context)
-  extends Job()(ctx) {}
+    val name: Name,
+    val env: Env,
+    val `case`: Case,
+    val inputs: Map[Name, Value],
+    val inputEnvs: Map[Name, Env],
+    val outputFileNames: Map[Name, Value],
+    val outputEnvs: Map[Name, Env],
+    val decorators: Seq[Call],
+    val rawScript: Script
+)(implicit ctx: Context)
+    extends Job()(ctx) {}
 
 class PointedCubeTask(
-                       val name: Name,
-                       val env: Env,
-                       val cases: PointedCaseCube,
-                       val inputs: Map[Name, PointedCube[Value]],
-                       val inputEnvs: Map[Name, Env],
-                       val outputNames: Map[Name, PointedCube[Value]],
-                       val outputEnvs: Map[Name, Env],
-                       val decorators: Seq[PointedCube[Call]],
-                       val script: PointedCube[Script]
-                     )(implicit ctx: Context)
-  extends PointedCube[Task] {
+    val name: Name,
+    val env: Env,
+    val cases: PointedCaseCube,
+    val inputs: Map[Name, PointedCube[Value]],
+    val inputEnvs: Map[Name, Env],
+    val outputNames: Map[Name, PointedCube[Value]],
+    val outputEnvs: Map[Name, Env],
+    val decorators: Seq[PointedCube[Call]],
+    val script: PointedCube[Script]
+)(implicit ctx: Context)
+    extends PointedCube[Task] {
   self =>
 
   def get(c: Case): Option[Task] = {
@@ -57,9 +58,14 @@ class PointedCubeTask(
     allTaskNames.map(ctx.getTask)
   }
 
+  def withNewArgs(args: Map[Name, PointedCube[Value]]): PointedCubeTask = {
+    val outScript = script.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
+    new PointedCubeTask(name, env, cases, inputs, inputEnvs, outputNames, outputEnvs, decorators, outScript)
+  }
+
   override def equals(obj: Any) = obj match {
     case obj: PointedCubeTask => this.name == obj.name
-    case _ => false
+    case _                    => false
   }
 
   override def hashCode() = name.hashCode()

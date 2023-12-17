@@ -2,17 +2,15 @@ package hypermake.semantics
 
 import scala.collection._
 import io.circe.syntax._
-
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
 import hypermake.execution.RuntimeConfig
+import hypermake.syntax.Def
 import hypermake.util.Escaper._
 
-
-/**
- * Contexts kept for each parsing run.
- */
+/** Contexts kept for each parsing run.
+  */
 class Context(implicit val runtime: RuntimeConfig) {
 
   private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
@@ -25,6 +23,7 @@ class Context(implicit val runtime: RuntimeConfig) {
   private[hypermake] val packageTable = mutable.HashMap[Name, PointedCubePackage]()
   private[hypermake] val planTable = mutable.HashMap[Name, Plan]()
   private[hypermake] val envTable = mutable.HashMap[Name, Env](Name("local") -> localEnv)
+  private[hypermake] val moduleTable = mutable.HashMap[Name, Module]()
 
   def values: Map[Name, PointedCube[Value]] = valueTable
 
@@ -37,6 +36,8 @@ class Context(implicit val runtime: RuntimeConfig) {
   def plans: Map[Name, Plan] = planTable
 
   def packages: Map[Name, PointedCubePackage] = packageTable
+
+  def modules: Map[Name, Module] = moduleTable
 
   def envs: Map[Name, Env] = envTable
 
@@ -62,13 +63,11 @@ class Context(implicit val runtime: RuntimeConfig) {
   def getFunc(name: Name) = funcTable.getOrElse(name, throw UndefinedException("Function", name))
 
   def getTask(name: Name) = taskTable.getOrElse(
-    name,
-    {
+    name, {
       try { // somePackage@someEnv
         val Array(packageName, packageEnv) = name.name.split("@")
         getPackage(Name(packageName)).on(Env(Name(packageEnv))(this))(this)
-      }
-      catch { _ => throw UndefinedException("Task", name) }
+      } catch { _ => throw UndefinedException("Task", name) }
     }
   )
 
@@ -97,10 +96,8 @@ class Context(implicit val runtime: RuntimeConfig) {
   def caseString(args: Case) =
     canonicalizeCase(args).map { case (a, k) => s"$a: $k" }.mkString(", ")
 
-  /**
-   * Encodes the arguments as a percent-encoded string.
-   * This is the name of the output directory in the file system.
-   */
+  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in the file system.
+    */
   def percentEncodedCaseString(args: Case) = {
     val clauses = canonicalizeCase(args).map { case (a, k) =>
       s"$a=${Percent.escape(k)}"

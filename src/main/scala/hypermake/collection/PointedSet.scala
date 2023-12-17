@@ -4,9 +4,8 @@ import hypermake.exception.AxesDefaultKeyMismatchException
 
 import scala.collection._
 
-/**
- * A set with a default element.
- */
+/** A set with a default element.
+  */
 trait PointedSet[A] extends Set[A] {
 
   /** The default element in this set. */

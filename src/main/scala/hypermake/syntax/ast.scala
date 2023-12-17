@@ -5,26 +5,22 @@ import hypermake.util._
 
 import scala.collection._
 
-/**
- * Supertype of all node types in the Forge AST.
- */
+/** Supertype of all node types in the Forge AST.
+  */
 sealed trait Node {
   self =>
 
-  /**
-   * A canonical string representation of this AST node, without any syntactic sugar.
-   * This string should be parsed back to an identical AST object, and serves as the `toString()` implementation.
-   */
+  /** A canonical string representation of this AST node, without any syntactic sugar. This string should be parsed back
+    * to an identical AST object, and serves as the `toString()` implementation.
+    */
   def str: String
 
-  /**
-   * Iterates over all of its immediate child nodes.
-   */
+  /** Iterates over all of its immediate child nodes.
+    */
   def children: Iterable[Node]
 
-  /**
-   * Iterates over all of its recursive child nodes.
-   */
+  /** Iterates over all of its recursive child nodes.
+    */
   def recursiveChildren: Iterable[Node] = new Iterable[Node] {
     def iterator: Iterator[Node] = new Iterator[Node] { // DFS
       private[this] val stack = mutable.Stack(self)
@@ -42,10 +38,9 @@ sealed trait Node {
   override def toString = str
 }
 
-/**
- * Represents any (potentially parameterized) String value.
- * An [[Expr]] can be either a [[Literal]] or a [[ValRef]], or a [[TaskOutputRef1]] or a [[TaskOutputRefN]].
- */
+/** Represents any (potentially parameterized) String value. An [[Expr]] can be either a [[Literal]] or a [[ValRef]], or
+  * a [[TaskOutputRef1]] or a [[TaskOutputRefN]].
+  */
 sealed trait Expr extends Node
 
 case class Identifier(name: String) extends Node {
@@ -79,9 +74,8 @@ case class InlineCommand(command: String) extends Node {
 
   def children = Nil
 
-  /**
-   * Executes this inline command while being parsed.
-   */
+  /** Executes this inline command while being parsed.
+    */
   def result() = {
     import scala.sys.process._
     command.!!.split(" ") // TODO: conform to IFS?
@@ -94,10 +88,9 @@ case class Verbatim(text: String) extends Node {
   def children = Nil
 }
 
-/**
- * Represents a literal. A literal can be either a String singleton ([[StringLiteral]])
- * or a nested dict literal ([[DictLiteral]]).
- */
+/** Represents a literal. A literal can be either a String singleton ([[StringLiteral]]) or a nested dict literal
+  * ([[DictLiteral]]).
+  */
 sealed trait Literal extends Expr
 
 case class StringLiteral(value: String, envModifier: EnvModifier = EnvModifier(None)) extends Literal {
@@ -225,8 +218,8 @@ case class Assignments(assignments: Seq[Assignment]) extends MapWrapper[Identifi
 
   val underlying = orderedMap(assignments.map {
     case ExplicitAssignment(param, v) => (param.name, (param.env, v))
-    case RefAssignment(param) => (param.name, (param.env, ValRef(param.name, Indices1(Nil))))
-    case SameNameAssignment(param) => (param.name, (param.env, StringLiteral(param.name.name, param.env)))
+    case RefAssignment(param)         => (param.name, (param.env, ValRef(param.name, Indices1(Nil))))
+    case SameNameAssignment(param)    => (param.name, (param.env, StringLiteral(param.name.name, param.env)))
   })
 }
 
@@ -264,52 +257,78 @@ case class FuncCallImpl(call: FuncCall) extends Impl {
 
 sealed trait Statement extends Node
 
-case class ValDef(name: Identifier, value: Expr) extends Statement {
+sealed trait Def extends Statement
+
+case class ValDef(name: Identifier, value: Expr) extends Def {
   def str = s"$name = $value"
 
   def children = Iterable(name, value)
 }
 
-case class GlobalValDef(name: Identifier, value: Expr) extends Statement {
+case class GlobalValDef(name: Identifier, value: Expr) extends Def {
   def str = s"global $name = $value"
 
   def children = Iterable(name, value)
 }
 
-case class TaskDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, outputs: Assignments, impl: Impl) extends Statement {
+case class TaskDef(
+    decorators: DecoratorCalls,
+    name: Identifier,
+    env: EnvModifier,
+    inputs: Assignments,
+    outputs: Assignments,
+    impl: Impl
+) extends Def {
   def str = s"${decorators}task $name$env($inputs) -> ($outputs)$impl"
 
   def children = decorators.calls ++ Iterable(env, name, inputs, outputs, impl)
 }
 
-case class ServiceDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, impl: Impl) extends Statement {
-  def str = s"${decorators}service $name($inputs)$impl"
+//case class ServiceDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, impl: Impl)
+//    extends Def {
+//  def str = s"${decorators}service $name($inputs)$impl"
+//
+//  def children = decorators.calls ++ Iterable(name, inputs, impl)
+//}
 
-  def children = decorators.calls ++ Iterable(name, inputs, impl)
-}
-
-case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assignments, output: ExplicitAssignment, impl: ScriptImpl) extends Statement {
+case class PackageDef(
+    decorators: DecoratorCalls,
+    name: Identifier,
+    inputs: Assignments,
+    output: ExplicitAssignment,
+    impl: ScriptImpl
+) extends Def {
   def str = s"${decorators}package $name($inputs) -> $output$impl"
 
   def children = decorators.calls ++ Iterable(name, inputs, output, impl)
 }
 
-case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: Impl) extends Statement {
+case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: Impl)
+    extends Def {
   def str = s"""def $name($params) <- ($input = "$inputName")$impl"""
 
   def children = Iterable(name, params, input, impl)
 }
 
-case class PlanDef(name: Identifier, taskRefs: Seq[TaskRefN]) extends Statement {
+case class PlanDef(name: Identifier, taskRefs: Seq[TaskRefN]) extends Def {
   def str = s"plan $name = {${taskRefs.mkString(" ")}}"
 
   def children = Iterable(name) ++ taskRefs
 }
 
-case class ImportStatement(fileName: String, params: Map[String, String]) extends Statement {
-  def str = if (params.isEmpty)
-    s"import $fileName"
-  else s"import $fileName with ${params.map { case (k, v) => s"$k = $v" }.mkString("(", ", ", ")")}"
+case class ModuleDef(name: Identifier, params: Assignments, defs: Seq[Def]) extends Def {
+  def str = s"module $name($params):${defs.mkString("\n", "\n", "\n").replace("\n", "\n  ")}"
 
+  def children = Iterable(name, params) ++ defs
+}
+
+case class ModuleInstantiation(name: Identifier, module: Identifier, params: Assignments) extends Def {
+  def str = s"$name = $module(${params.map { case (k, v) => s"$k=$v" }.mkString(", ")})"
+
+  def children = Iterable(name, module, params)
+}
+
+case class ImportStatement(fileName: String) extends Statement {
+  def str = s"import $fileName"
   def children = Nil
 }

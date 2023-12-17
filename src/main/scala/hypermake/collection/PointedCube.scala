@@ -1,15 +1,16 @@
 package hypermake.collection
 
-import scala.collection._
 import cats._
 import hypermake.util._
 
-/**
- * A [[Cube]] but with default value for each axis.
- * As a result, each `PointedCube[A]` value has a single default value `A`, similar to a pointed set.
- *
- * @tparam A Element type
- */
+import scala.collection._
+
+/** A [[Cube]] but with default value for each axis. As a result, each `PointedCube[A]` value has a single default value
+  * `A`, similar to a pointed set.
+  *
+  * @tparam A
+  *   Element type
+  */
 trait PointedCube[+A] extends Cube[A] {
   self =>
 
@@ -17,35 +18,17 @@ trait PointedCube[+A] extends Cube[A] {
 
   def cases: PointedCaseCube
 
-  /**
-   * Gets the default element of a cube.
-   */
-  def default: A = get(cases.default).get
-
-  override def select(c: Case): PointedCube[A] = new Selected(self, c)
-
-  override def curry(innerVars: Set[Name]): PointedCube[PointedCube[A]] = new PointedCube[PointedCube[A]] {
-    private[this] val outerVars = self.vars.filterNot(innerVars)
-
-    def cases = self.cases.filterVars(outerVars)
-
-    def get(c: Case) = {
-      if (c.assignments.forall { case (a, k) =>
-        (!(outerVars contains a) || ((outerVars contains a) && (cases(a) contains k)))
-      })
-        Some(self.select(c))
-      else None
-    }
-  }
-
   def pointedSelectMany(cc: PointedCaseCube): PointedCube[A] = new PointedCube[A] {
     def cases = self.cases.pointedSelectMany(cc)
 
     def get(d: Case) = {
       if (d.assignments.forall { case (a, k) => cc(a) contains k })
-        self.get(d) else None
+        self.get(d)
+      else None
     }
   }
+
+  def product[B](that: PointedCube[B]): PointedCube[(A, B)] = productWith(that)((_, _))
 
   def productWith[B, C](that: PointedCube[B])(f: (A, B) => C): PointedCube[C] = new PointedCube[C] {
     def cases = self.cases outerJoin that.cases
@@ -55,8 +38,6 @@ trait PointedCube[+A] extends Cube[A] {
       b <- that.get(c)
     } yield f(a, b)
   }
-
-  def product[B](that: PointedCube[B]): PointedCube[(A, B)] = productWith(that)((_, _))
 
   override def map[B](f: A => B): PointedCube[B] = new Mapped(self, f)
 
@@ -72,15 +53,39 @@ trait PointedCube[+A] extends Cube[A] {
   override def currySelectMany(cc: CaseCube): Cube[PointedCube[A]] =
     curry(vars diff cc.vars).selectMany(cc)
 
+  override def curry(innerVars: Set[Name]): PointedCube[PointedCube[A]] = new PointedCube[PointedCube[A]] {
+    private[this] val outerVars = self.vars.filterNot(innerVars)
+
+    def cases = self.cases.filterVars(outerVars)
+
+    def get(c: Case) = {
+      if (
+        c.assignments.forall { case (a, k) =>
+          (!(outerVars contains a) || ((outerVars contains a) && (cases(a) contains k)))
+        }
+      )
+        Some(self.select(c))
+      else None
+    }
+  }
+
+  override def select(c: Case): PointedCube[A] = new Selected(self, c)
+
   override def toString = s"[${cases.vars.mkString(", ")}] default = $default"
+
+  /** Gets the default element of a cube.
+    */
+  def default: A = get(cases.default).get
 
 }
 
 object PointedCube {
 
-  /**
-   * The `pure` operation of the PointedCube monad: construct a single value without parameterization.
-   */
+  def of[A](a: String, outerCase: (String, PointedCube[A])*) =
+    OfNestedMap(Name(a), outerCase.toMap.pointed(outerCase.head._1))
+
+  /** The `pure` operation of the PointedCube monad: construct a single value without parameterization.
+    */
   case class Singleton[A](x: A) extends PointedCube[A] {
     def cases = PointedCaseCube(Map()) // single case
 
@@ -111,12 +116,8 @@ object PointedCube {
     } yield a
   }
 
-  def of[A](a: String, outerCase: (String, PointedCube[A])*) =
-    OfNestedMap(Name(a), outerCase.toMap.pointed(outerCase.head._1))
-
-  /**
-   * `PointedCube` forms a commutative monad.
-   */
+  /** `PointedCube` forms a commutative monad.
+    */
   implicit object Monad extends StackSafeMonad[PointedCube] with CommutativeMonad[PointedCube] {
     def pure[A](x: A) = Singleton(x)
 

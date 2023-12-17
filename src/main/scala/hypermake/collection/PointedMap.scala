@@ -2,9 +2,8 @@ package hypermake.collection
 
 import scala.collection._
 
-/**
- * A map with a default key.
- */
+/** A map with a default key.
+  */
 trait PointedMap[K, +V] extends Map[K, V] {
   self =>
 
@@ -12,9 +11,9 @@ trait PointedMap[K, +V] extends Map[K, V] {
 
   def defaultKey: K
 
-  def defaultPair: (K, V) = (defaultKey, this (defaultKey))
+  def defaultPair: (K, V) = (defaultKey, this(defaultKey))
 
-  def defaultValue: V = this (defaultKey)
+  def defaultValue: V = this(defaultKey)
 
   def underlying: Map[K, V]
 

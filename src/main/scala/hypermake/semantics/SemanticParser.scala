@@ -12,17 +12,15 @@ import hypermake.util._
 import scala.collection._
 import scala.util.matching.Regex
 
-
-/**
- * A semantic parsing run.
- *
- * @param ctx Global context
- */
+/** A semantic parsing run.
+  *
+  * @param ctx
+  *   Global context
+  */
 class SemanticParser(implicit val ctx: Context) {
 
   import ctx._
   import ctx.runtime._
-
 
   implicit class DenotationExtension[S, D](s: S)(implicit ssi: Denotation[S, D]) {
     def ! : D = ssi.denotation(s)
@@ -55,7 +53,7 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(is: IndicesN): CaseCube = CaseCube {
       is.map {
         case (a, Keys(ks)) => a.! -> ks
-        case (a, Star()) => a.! -> getAxis(a.!) // *: all values in axis a
+        case (a, Star())   => a.! -> getAxis(a.!) // *: all values in axis a
       }
     }
   }
@@ -64,14 +62,16 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(verb: Verbatim): Script = Script(verb.text)
   }
 
-  implicit object ParseValRef extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), ValRef, PointedCube[Value]] {
+  implicit object ParseValRef
+      extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), ValRef, PointedCube[Value]] {
     def defaultContext = (Map(), Env.local)
 
     def denotation(r: ValRef, localsEnv: (Map[Name, PointedCube[Value]], Env)): PointedCube[Value] = {
       val name = r.name.!
       val indices = r.indices.!
       val (locals, env) = localsEnv
-      val referred = locals.get(name) // local variables override global variables
+      val referred = locals
+        .get(name) // local variables override global variables
         .orElse(getPackageOpt(name).map(_.output.map(_.on(env)))) // get package output on contextual env
         .getOrElse(getValue(name)) // falls back to global values
 
@@ -118,19 +118,21 @@ class SemanticParser(implicit val ctx: Context) {
     }
   }
 
-  implicit object ParseExpr extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Expr, PointedCube[Value]] {
+  implicit object ParseExpr
+      extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Expr, PointedCube[Value]] {
     def defaultContext = (Map(), Env.local)
 
     def denotation(e: Expr, localsEnv: (Map[Name, PointedCube[Value]], Env)) = e match {
-      case sl: StringLiteral => sl.!
-      case dl: DictLiteral => dl.!
-      case vr: ValRef => vr.!(localsEnv)
+      case sl: StringLiteral   => sl.!
+      case dl: DictLiteral     => dl.!
+      case vr: ValRef          => vr.!(localsEnv)
       case tor: TaskOutputRef1 => tor.!
       case tor: TaskOutputRefN => tor.!
     }
   }
 
-  implicit object ParseFuncCallImpl extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), FuncCallImpl, PointedCube[Script]] {
+  implicit object ParseFuncCallImpl
+      extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), FuncCallImpl, PointedCube[Script]] {
     def defaultContext = (Map(), Env.local)
 
     def denotation(impl: FuncCallImpl, localParamsEnv: (Map[Name, PointedCube[Value]], Env)) = {
@@ -145,12 +147,13 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(impl: ScriptImpl) = PointedCube.Singleton(impl.script.!)
   }
 
-  implicit object ParseImpl extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Impl, PointedCube[Script]] {
+  implicit object ParseImpl
+      extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Impl, PointedCube[Script]] {
     def defaultContext = (Map(), Env(Name("local")))
 
     def denotation(impl: Impl, localParamsEnv: (Map[Name, PointedCube[Value]], Env)) = impl match {
       case impl: FuncCallImpl => impl.!(localParamsEnv)
-      case impl: ScriptImpl => impl.!
+      case impl: ScriptImpl   => impl.!
     }
   }
 
@@ -206,9 +209,15 @@ class SemanticParser(implicit val ctx: Context) {
       val callParamAxes = calls.map(_.cases.vars)
       val axes = (callParamAxes ++ inputParamAxes).fold(Set())(_ union _)
       new PointedCubeTask(
-        name.!, taskEnv, allCases.filterVars(axes),
-        inputParams, inputEnvs, outputParams, outputEnvs,
-        calls, script
+        name.!,
+        taskEnv,
+        allCases.filterVars(axes),
+        inputParams,
+        inputEnvs,
+        outputParams,
+        outputEnvs,
+        calls,
+        script
       )
     }
   }
@@ -225,104 +234,127 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(pd: PlanDef) = new Plan(pd.taskRefs.map(_.!.map(_.default)))
   }
 
-  /**
-   * From definitions, deduces all declared axes.
-   *
-   * @param stmts All definitions
-   * @return All declared axes; fail if there is any axis mis-alignments.
-   */
+  implicit object ParseModule extends Denotation[ModuleDef, Module] {
+    def denotation(md: ModuleDef) = {
+      val ModuleDef(name, params, defs) = md
+      val ps = params.map { case (k, (_, v)) => k.! -> v.!! }
+      Module(name.!, ps, defs)
+    }
+  }
+
+  /** From definitions, deduces all declared axes.
+    *
+    * @param stmts
+    *   All definitions
+    * @return
+    *   All declared axes; fail if there is any axis mis-alignments.
+    */
   def getAllCases(stmts: Iterable[Statement]): PointedCaseCube = {
     val axesOccurrences: Iterable[(Name, Iterable[String])] =
-      stmts.view.flatMap(_.recursiveChildren).collect {
-        case DictLiteral(axisName, assignments) => (axisName.!, assignments.keys)
+      stmts.view.flatMap(_.recursiveChildren).collect { case DictLiteral(axisName, assignments) =>
+        (axisName.!, assignments.keys)
       }
-    val axes = axesOccurrences.groupBy(_._1).view.map { case (axis, xs) =>
-      val keys = xs.map(_._2.toSeq).toSeq
-      val keys0 = keys.head
-      if (keys.forall(_ == keys0))
-        axis -> PointedSet(keys0.toSet, keys0.head)
-      else throw AxesAlignmentException(axis, keys0, keys.find(_ != keys0).get)
-    }.toMap
+    val axes = axesOccurrences
+      .groupBy(_._1)
+      .view
+      .map { case (axis, xs) =>
+        val keys = xs.map(_._2.toSeq).toSeq
+        val keys0 = keys.head
+        if (keys.forall(_ == keys0))
+          axis -> PointedSet(keys0.toSet, keys0.head)
+        else throw AxesAlignmentException(axis, keys0, keys.find(_ != keys0).get)
+      }
+      .toMap
     PointedCaseCube(axes)
   }
 
-  def semanticParse(stmts: Iterable[Statement]): Unit = {
+  def semanticParse(
+      stmts: Iterable[Statement],
+      prefix: String = "",
+      extraArgs: Map[Name, PointedCube[Value]] = Map()
+  ): Unit = {
     val all = getAllCases(stmts)
     allCases = allCases outerJoin all // updates all cases
 
     stmts foreach {
       case ValDef(id, value) =>
         val a = id.!
-        if (valueTable contains a) throw DuplicatedDefinitionException("Value", a.name)
-        else valueTable += a -> value.!!
+        if (valueTable contains a) throw DuplicateDefinitionException("Value", a.name)
+        else valueTable += Name(prefix + a.name) -> value.!!
       case GlobalValDef(id, value) =>
         val a = id.!
-        if (globalValueTable contains a) throw DuplicatedDefinitionException("Global value", a.name)
-        else globalValueTable += a -> value.!!
+        if (globalValueTable contains a) throw DuplicateDefinitionException("Global value", a.name)
+        else globalValueTable += Name(prefix + a.name) -> value.!!
       case fd: FuncDef =>
         val f = fd.name.!
-        if (funcTable contains f) throw DuplicatedDefinitionException("Function", f.name)
+        if (funcTable contains f) throw DuplicateDefinitionException("Function", f.name)
         else {
           val func = fd.!
-          funcTable += f -> func
+          funcTable += Name(prefix + f.name) -> func.withNewArgs(extraArgs)
         }
       case td: TaskDef =>
         val t = td.name.!
-        if (taskTable contains t) throw DuplicatedDefinitionException("Task", t.name)
+        if (taskTable contains t) throw DuplicateDefinitionException("Task", t.name)
         else {
           val task = td.!
-          taskTable += t -> task
+          taskTable += Name(prefix + t.name) -> task.withNewArgs(extraArgs)
         }
       case pd: PackageDef =>
         val p = pd.name.!
-        if (packageTable contains p) throw DuplicatedDefinitionException("Package", p.name)
+        if (packageTable contains p) throw DuplicateDefinitionException("Package", p.name)
         else {
           val pack = pd.!
-          packageTable += p -> pack
+          packageTable += Name(prefix + p.name) -> pack.withNewArgs(extraArgs)
         }
       case pd: PlanDef =>
         val p = pd.name.!
-        if (planTable contains p) throw DuplicatedDefinitionException("Plan", p.name)
+        if (planTable contains p) throw DuplicateDefinitionException("Plan", p.name)
         else {
           val plan = pd.!
-          planTable += p -> plan
+          planTable += Name(prefix + p.name) -> plan
         }
+      case md: ModuleDef =>
+        val m = md.name.!
+        if (moduleTable contains m) throw DuplicateDefinitionException("Module", m.name)
+        else {
+          val module = md.!
+          moduleTable += Name(prefix + m.name) -> module.withNewArgs(extraArgs)
+        }
+      case mi: ModuleInstantiation =>
+        val m = moduleTable.getOrElse(mi.module.!, throw UndefinedException("Module", mi.module.!))
+        val prefix = mi.name.! + "."
+        val args = mi.params.map { case (k, (_, v)) => Name(prefix + k.!) -> v.!! }
+        for ((k, v) <- args)
+          valueTable += Name(prefix + k.name) -> v
+        semanticParse(m.defs, prefix, args)
     }
   }
 
-  /**
-   * Reads a Hypermake script while expanding all import statements. This function processes `import` statements.
-   *
-   * @param f Script file to be read
-   * @return A sequence of top-level definitions
-   */
-  def readFileToStmts(f: File, macroParams: Map[String, String]): Seq[Statement] =
-    readLinesToStmts(f.lines, macroParams)
+  /** Reads a Hypermake script while expanding all import statements. This function processes `import` statements.
+    *
+    * @param f
+    *   Script file to be read
+    * @return
+    *   A sequence of top-level definitions
+    */
+  def readFileToStmts(f: File): Seq[Statement] =
+    readLinesToStmts(f.lines)
 
-  /**
-   * Reads a stream of Hypermake script lines and parses them to statements.
-   */
-  def readLinesToStmts(lines: Iterable[String], macroParams: Map[String, String]): Seq[Statement] = {
-    val content = lines.map { line =>
-      macroParams.foldLeft(line) { case (l, (k, v)) => l.replace("$$" + k, v) } // macro replacement
-    }.mkString("\n")
-
-    // Test for any unbound parameters in macro application
-    val unboundParams = "\\$\\$\\w+".r.findAllIn(content).toSet
-    if (unboundParams.nonEmpty)
-      throw MacroParametersUnboundException(unboundParams.map(_.drop(2)))
+  /** Reads a stream of Hypermake script lines and parses them to statements. */
+  def readLinesToStmts(lines: Iterable[String]): Seq[Statement] = {
+    val content = lines.mkString("\n")
 
     val stmts = SyntacticParser.syntacticParse(content)
     val expandedStmts = stmts.flatMap {
-      case ImportStatement(fn, params) =>
-        readFileToStmts(resolveFile(fn), params)
+      case ImportStatement(fn) =>
+        readFileToStmts(resolveFile(fn))
       case stmt => Seq(stmt)
     }
     expandedStmts
   }
 
   def semanticParse(file: File): Unit = {
-    semanticParse(readFileToStmts(file, Map()))
+    semanticParse(readFileToStmts(file))
   }
 
   def parseTask(tr: TaskRef1) = tr.!.default

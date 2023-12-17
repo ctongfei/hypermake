@@ -1,2 +1,0 @@
-def $$name_read(file):
-  aws s3 cp s3://$$bucket/$file -

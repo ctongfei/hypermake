@@ -14,11 +14,11 @@ import scala.collection._
 import scala.collection.decorators._
 
 /** A job is any block of shell script that is executed by HyperMake. A job can either be a task, a package, or a
- * service.
- *
- * @param ctx
- * Parsing context that yielded this job
- */
+  * service.
+  *
+  * @param ctx
+  *   Parsing context that yielded this job
+  */
 abstract class Job(implicit ctx: Context) {
 
   import ctx._
@@ -57,14 +57,14 @@ abstract class Job(implicit ctx: Context) {
   )
 
   /** Path to store the output of this task, relative to the output root. This is the working directory of this task if
-   * executed.
-   */
-  lazy val path = s"$name/$potentiallyHashedPercentEncodedCaseString"
+    * executed.
+    */
+  lazy val path = s"${name.name.replace(".", "/")}/$potentiallyHashedPercentEncodedCaseString"
 
   lazy val absolutePath = env.resolvePath(path)
 
   /** The canonical string identifier for this task, in the percent-encoded URL format. */
-  lazy val id = s"$name?$percentEncodedCaseString"
+  lazy val id = s"${name.name.replace(".", "/")}?$percentEncodedCaseString"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -214,7 +214,7 @@ abstract class Job(implicit ctx: Context) {
 
   override def equals(o: Any) = o match {
     case that: Job => this.id == that.id
-    case _ => false
+    case _         => false
   }
 
 }

@@ -1,8 +1,9 @@
 package hypermake.collection
 
-import scala.collection._
 import hypermake.exception._
 import hypermake.util._
+
+import scala.collection._
 
 trait Graph[A] {
   self =>
@@ -115,8 +116,8 @@ trait Graph[A] {
   }
 
   def toStringIfAcyclic(display: A => HIO[String], indent: Int = 0): HIO[String] = {
-    import zio._
     import hypermake.util.printing.BoxDrawing._
+    import zio._
     val prefixSpaces = " " * indent
     topologicalSort.toSeq.foreach(_ => {}) // throw error if not acyclic
     val (rows, nodeToRow, indents) = computeIndentation
@@ -138,15 +139,16 @@ trait Graph[A] {
           a(l)(k) = H
       }
     }
-    ZIO.foreach(a zip rows)({ case (row, x) => display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s") }).map(_.mkString("\n"))
+    ZIO
+      .foreach(a zip rows)({ case (row, x) => display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s") })
+      .map(_.mkString("\n"))
   }
 }
 
-
 class MutableGraph[A](
-                       val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
-                       val revAdjMap: mutable.HashMap[A, mutable.HashSet[A]]
-                     ) extends Graph[A] {
+    val adjMap: mutable.HashMap[A, mutable.HashSet[A]],
+    val revAdjMap: mutable.HashMap[A, mutable.HashSet[A]]
+) extends Graph[A] {
 
   def nodes: Set[A] = adjMap.keySet
 
@@ -166,17 +168,13 @@ class MutableGraph[A](
 
 object Graph {
 
-  def apply[A]() = new MutableGraph[A](
-    mutable.HashMap[A, mutable.HashSet[A]](),
-    mutable.HashMap[A, mutable.HashSet[A]]()
-  )
-
-  /**
-   * Performs a traversal to resolve all dependent tasks of the given targets.
-   *
-   * @param sources A collection of target tasks
-   * @return The task dependency DAG
-   */
+  /** Performs a traversal to resolve all dependent tasks of the given targets.
+    *
+    * @param sources
+    *   A collection of target tasks
+    * @return
+    *   The task dependency DAG
+    */
   def explore[A](sources: Iterable[A], prev: A => Iterable[A]): Graph[A] = {
     val g = Graph[A]()
     val s = mutable.HashSet[A]()
@@ -196,5 +194,10 @@ object Graph {
     }
     g
   }
+
+  def apply[A]() = new MutableGraph[A](
+    mutable.HashMap[A, mutable.HashSet[A]](),
+    mutable.HashMap[A, mutable.HashSet[A]]()
+  )
 
 }

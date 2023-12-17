@@ -26,9 +26,13 @@ object Main extends App {
        |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
        |
        | ${B("Options:")}
-       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
+       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V(
+        "v"
+      )} in the script.
        |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
-       |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
+       |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V(
+        "bash -e"
+      )}".
        |  -H, --help                 : Prints this message and exit.
        |  -V, --version              : Shows Hypermake version and exit.
        |
@@ -38,7 +42,9 @@ object Main extends App {
        |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
        |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
        |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
-       |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
+       |  unlock ${V(
+        "$targets"
+      )}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
        |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
        |  mark-as-done ${V("$targets")}      : Marks the given tasks as normally exited.
        |
@@ -56,11 +62,10 @@ object Main extends App {
     val cmd = CmdLineParser.cmdLineParse(args.mkString(" "))
 
     cmd match {
-      case Cmd.Help => putStrLn(helpMessage).orDie as ExitCode(0)
+      case Cmd.Help    => putStrLn(helpMessage).orDie as ExitCode(0)
       case Cmd.Version => putStrLn(s"Hypermake $version").orDie as ExitCode(0)
 
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
-
         implicit val runtime: RuntimeConfig = RuntimeConfig.createFromCLIOptions(options, runOptions)
         val cli = PlainCLI.create()
 
@@ -70,7 +75,7 @@ object Main extends App {
         // Imports files specified with the -I switch
         runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
         // Defines variables specified with the -D switch
-        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }, Map()))
+        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
         parser.semanticParse(File(scriptFile))
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
@@ -90,9 +95,13 @@ object Main extends App {
                   _ <- putStrLn(headerMessage)
                   _ <- putStrLn(s"Workflow file: ${O(scriptFile)}")
                   _ <- putStrLn(B("\nVariables:"))
-                  _ <- putStrLn(ctx.allCases.assignments.map { case (name, values) =>
-                    s"  • ${K(name.name)}: { ${V(values.default)} ${values.diff(Set(values.default)).map(Vx).mkString(" ")} }"
-                  }.mkString("\n"))
+                  _ <- putStrLn(
+                    ctx.allCases.assignments
+                      .map { case (name, values) =>
+                        s"  • ${K(name.name)}: { ${V(values.default)} ${values.diff(Set(values.default)).map(Vx).mkString(" ")} }"
+                      }
+                      .mkString("\n")
+                  )
                   _ <- putStrLn(B("\nTasks:"))
                   s <- {
                     val g = Graph.explore[PointedCubeTask](
@@ -165,9 +174,11 @@ object Main extends App {
                   _ <- putStrLn(s"The output of the following jobs will be removed:")
                   _ <- ZIO.foreach_(jobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
-                  u <- if (yes) Executor.run(jobs) { j =>
-                    putStrLn(s"Removing job at ${j.absolutePath}") *> j.removeOutputs as true
-                  } else ZIO.succeed(())
+                  u <-
+                    if (yes) Executor.run(jobs) { j =>
+                      putStrLn(s"Removing job at ${j.absolutePath}") *> j.removeOutputs as true
+                    }
+                    else ZIO.succeed(())
                 } yield u
 
               case Subcommand.MarkAsDone =>
