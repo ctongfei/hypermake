@@ -7,15 +7,15 @@ class PointedCaseCube(override val underlying: Map[Name, PointedSet[String]]) ex
 
   def default: Case = Case(underlying.view.mapValues(_.default).toMap)
 
-  override def filterVars(p: Name => Boolean) = PointedCaseCube {
-    underlying.view.filterKeys(p).toMap
-  }
-
   override def assignments: Iterable[(Name, PointedSet[String])] = underlying
 
   override def apply(a: Name) = underlying(a)
 
   override def select(c: Case) = filterVars(a => !c.contains(a))
+
+  override def filterVars(p: Name => Boolean) = PointedCaseCube {
+    underlying.view.filterKeys(p).toMap
+  }
 
   def pointedSelectMany(cc: PointedCaseCube) = PointedCaseCube {
     self.underlying.map { case (a, ks) =>

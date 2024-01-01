@@ -2,9 +2,8 @@ package hypermake.collection
 
 import cats._
 
-/**
- * Represents a variable that serves as an axis to a parameterized value or task.
- */
+/** Represents a variable that serves as an axis to a parameterized value or task.
+  */
 case class Name(name: String) {
   override def toString = name
 

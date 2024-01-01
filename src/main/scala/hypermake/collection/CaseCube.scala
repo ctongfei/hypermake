@@ -5,17 +5,9 @@ import scala.collection._
 class CaseCube(val underlying: Map[Name, Set[String]]) {
   self =>
 
-  def filterVars(p: Name => Boolean) = CaseCube {
-    underlying.view.filterKeys(p).toMap
-  }
-
-  def vars = underlying.keySet
-
   def assignments: Iterable[(Name, Set[String])] = underlying
 
   def apply(a: Name) = underlying(a)
-
-  def containsAxis(a: Name) = underlying contains a
 
   def containsCase(c: Case) = c.assignments.forall { case (a, k) =>
     !(underlying contains a) || (underlying(a) contains k)
@@ -25,14 +17,18 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
     c.underlying.filter { case (a, _) => vars contains a }
   )
 
-  /**
-   * Selects the subcube of cases once variables are bound by the given case.
-   */
+  def vars = underlying.keySet
+
+  /** Selects the subcube of cases once variables are bound by the given case.
+    */
   def select(c: Case) = filterVars(a => !c.contains(a))
 
-  /**
-   * Selects the subcube of cases given variables take the given values in the specified case cube.
-   */
+  def filterVars(p: Name => Boolean) = CaseCube {
+    underlying.view.filterKeys(p).toMap
+  }
+
+  /** Selects the subcube of cases given variables take the given values in the specified case cube.
+    */
   def selectMany(cc: CaseCube) = CaseCube {
     self.underlying.map { case (a, ks) =>
       if (cc containsAxis a)
@@ -40,6 +36,8 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
       else a -> ks
     }
   }
+
+  def containsAxis(a: Name) = underlying contains a
 
   def outerJoin(that: CaseCube) = CaseCube {
     val newVars = self.vars union that.vars
@@ -77,8 +75,7 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
               indices(i) += 1
               finished = (0 until n).forall(i => indices(i) == values(i).length - 1)
               return Case((axes lazyZip values lazyZip indices).map { case (a, v, i) => a -> v(i) }.toMap)
-            }
-            else indices(i) = 0
+            } else indices(i) = 0
             i += 1
           }
           throw new IllegalStateException() // bad state, should never be here
@@ -88,9 +85,11 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
   }
 
   override def toString = {
-    underlying.map { case (a, ks) =>
-      s"{$a: ${ks.mkString(" ")}}"
-    }.mkString(" × ")
+    underlying
+      .map { case (a, ks) =>
+        s"{$a: ${ks.mkString(" ")}}"
+      }
+      .mkString(" × ")
   }
 
 }
