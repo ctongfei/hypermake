@@ -2,7 +2,7 @@ package hypermake.cli
 
 import fastparse._
 import hypermake.exception._
-import hypermake.syntax.Lexer.identifier
+import hypermake.syntax.Lexical.identifier
 import hypermake.syntax._
 
 /**
@@ -10,13 +10,12 @@ import hypermake.syntax._
  */
 object CmdLineParser {
 
-  import fastparse.ScriptWhitespace._
   import hypermake.cli.CmdLineAST._
-  import hypermake.syntax.SyntacticParser._
+  import hypermake.syntax.Expressions._
 
   def define[_: P] =
     P {
-      ("-D" | "--define") ~ Lexer.identifier ~ "=" ~ string
+      ("-D" | "--define") ~ Lexical.identifier ~ "=" ~ string
     }
       .map { case (name, value) => Opt.Define(name.name, value) }
 
@@ -40,7 +39,7 @@ object CmdLineParser {
 
   def numJobs[_: P] =
     P {
-      ("-j" | "--jobs") ~ Lexer.digit.rep.!
+      ("-j" | "--jobs") ~ Lexical.digit.rep.!
     } map { j => RunOpt.NumJobs(j.toInt) }
 
   def switch[_: P](short: String, long: String, out: RunOpt): P[RunOpt] =
@@ -60,10 +59,10 @@ object CmdLineParser {
       switch("-y", "--yes", RunOpt.Yes)
   }
 
-  def target[_: P] = SyntacticParser.taskRefN
+  def target[_: P] = Expressions.taskRef
 
   def fileNameString[_: P] = P {
-    Lexer.quotedString | Lexer.pathString
+    Lexical.quotedString | Lexical.pathString
   }
 
   def command[_: P]: P[Subcommand] = P {

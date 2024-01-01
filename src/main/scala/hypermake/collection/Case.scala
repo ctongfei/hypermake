@@ -1,6 +1,6 @@
 package hypermake.collection
 
-import hypermake.syntax.Identifier
+import hypermake.syntax.ast.Identifier
 import hypermake.util.MapWrapper
 
 import scala.collection._

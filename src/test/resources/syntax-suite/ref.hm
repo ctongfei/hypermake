@@ -1,0 +1,8 @@
+r0 = $a
+r1 = $r0
+r2 = $m.n.r
+r3 = $t.out
+r4 = $t[A: a].out
+r5 = $t[A: 1, B: 2].out
+r6 = $t[A: 1, B: *].out
+r7 = $m.n.t[A: 1, B: 2].out

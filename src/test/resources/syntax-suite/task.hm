@@ -1,0 +1,2 @@
+task t0 -> out:
+    yes

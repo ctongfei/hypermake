@@ -1,0 +1,11 @@
+ls0 = "abc"
+ls1 = ""
+ls2 = "abc"@env
+ld0 = {A: a b c}
+ld1 = {A: 0 1 2 3}
+ld2 = {A: a=0 b=1 c=2}
+ld3 = {A: a="0" b="1" c="2"}
+ld4 = {A:
+  a={B: x=0 y=1}
+  b={B: x=2 y=3}
+}

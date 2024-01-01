@@ -17,7 +17,7 @@ def $$name_delete(file):
   ssh $$host 'rm $file'
 
 def copy_from_local_to_$$name(src, dst):
-  scp $src $$host:$dst
+  scp -r $src $$host:$dst
 
 def copy_from_$$name_to_local(src, dst):
-  scp $$host:$src $dst
+  scp -r $$host:$src $dst

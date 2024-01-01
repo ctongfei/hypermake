@@ -1,3 +1,7 @@
+
+
+
+
 def $$name_read(file):
   az storage blob download \
     --container-name $$container \

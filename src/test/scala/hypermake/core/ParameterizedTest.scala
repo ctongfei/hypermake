@@ -1,7 +1,7 @@
 package hypermake.core
 
 import hypermake.collection._
-import hypermake.syntax.Identifier
+import hypermake.syntax.ast.Identifier
 
 object ParameterizedTest extends App {
 

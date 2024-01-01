@@ -1,4 +1,4 @@
-def Exec(interpreter="python") <- input="script.py":
+def Exec(interpreter="python") <- (input="script.py"):
   $interpreter $input
 
 @Exec(interpreter="python")

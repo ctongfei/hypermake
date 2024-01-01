@@ -7,6 +7,7 @@ import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
 import hypermake.syntax._
+import hypermake.syntax.ast._
 import hypermake.util._
 
 import scala.collection._
@@ -38,21 +39,25 @@ class SemanticParser(implicit val ctx: Context) {
     override def defaultContext = Env(Name("local"))
 
     def denotation(env: EnvModifier, parent: Env) =
-      env.optEnv.fold(parent)(e => Env(Name(e.name)))
+      env.optEnv.fold(parent)(e => Env(Name(e.str)))
   }
 
   implicit object ParseName extends Denotation[Identifier, Name] {
     def denotation(id: Identifier): Name = Name(id.name)
   }
 
-  implicit object ParseCase extends Denotation[Indices1, Case] {
-    def denotation(is: Indices1): Case = Case {
-      is.underlying.map { case (id, k) => id.! -> k.key }
-    }
+  implicit object ParseNamePath extends Denotation[IdentifierPath, Name] {
+    def denotation(idp: IdentifierPath): Name = Name(idp.str)
   }
 
-  implicit object ParseCaseCube extends Denotation[IndicesN, CaseCube] {
-    def denotation(is: IndicesN): CaseCube = CaseCube {
+//  implicit object ParseCase extends Denotation[AxisIndices, Case] {
+//    def denotation(is: AxisIndices): Case = Case {
+//      is.underlying.map { case (id, k) => id.! -> k.key }
+//    }
+//  }
+
+  implicit object ParseCaseCube extends Denotation[AxisIndices, CaseCube] {
+    def denotation(is: AxisIndices): CaseCube = CaseCube {
       is.map {
         case (a, Keys(ks)) => a.! -> ks
         case (a, Star()) => a.! -> getAxis(a.!) // *: all values in axis a
@@ -71,11 +76,13 @@ class SemanticParser(implicit val ctx: Context) {
       val name = r.name.!
       val indices = r.indices.!
       val (locals, env) = localsEnv
+
+      // TODO: resolve a.b[x].o vs a.b.o !!
       val referred = locals.get(name) // local variables override global variables
         .orElse(getPackageOpt(name).map(_.output.map(_.on(env)))) // get package output on contextual env
         .getOrElse(getValue(name)) // falls back to global values
-
-      referred.select(indices)
+      //referred.select(indices)
+      ???
     }
   }
 
@@ -96,27 +103,27 @@ class SemanticParser(implicit val ctx: Context) {
       )
     }
   }
+//
+//  implicit object ParseTaskOutputRef1 extends Denotation[TaskOutputRef1, PointedCube[Value.Output]] {
+//    def denotation(tor: TaskOutputRef1) = {
+//      val TaskOutputRef1(TaskRef1(task, indices), output) = tor
+//      getTask(task.!).select(indices.!).map(_.outputs(output.!))
+//    }
+//  }
 
-  implicit object ParseTaskOutputRef1 extends Denotation[TaskOutputRef1, PointedCube[Value.Output]] {
-    def denotation(tor: TaskOutputRef1) = {
-      val TaskOutputRef1(TaskRef1(task, indices), output) = tor
-      getTask(task.!).select(indices.!).map(_.outputs(output.!))
-    }
-  }
-
-  implicit object ParseTaskOutputRefN extends Denotation[TaskOutputRefN, PointedCube[Value.Multiple]] {
-    def denotation(tor: TaskOutputRefN) = {
-      val TaskOutputRefN(TaskRefN(taskName, indicesN), output) = tor
-      val task = getTask(taskName.!)
-      val indices = indicesN.!
-      task.curry(indices.vars) map { t =>
-        Value.Multiple(
-          cases = t.selectMany(indices).map(_.outputs(output.!)),
-          env = task.env
-        )
-      }
-    }
-  }
+//  implicit object ParseTaskOutputRefN extends Denotation[TaskOutputRef, PointedCube[Value.Multiple]] {
+//    def denotation(tor: TaskOutputRefN) = {
+//      val TaskOutputRefN(TaskRefN(taskName, indicesN), output) = tor
+//      val task = getTask(taskName.!)
+//      val indices = indicesN.!
+//      task.curry(indices.vars) map { t =>
+//        Value.Multiple(
+//          cases = t.selectMany(indices).map(_.outputs(output.!)),
+//          env = task.env
+//        )
+//      }
+//    }
+//  }
 
   implicit object ParseExpr extends ContextualDenotation[(Map[Name, PointedCube[Value]], Env), Expr, PointedCube[Value]] {
     def defaultContext = (Map(), Env.local)
@@ -125,8 +132,6 @@ class SemanticParser(implicit val ctx: Context) {
       case sl: StringLiteral => sl.!
       case dl: DictLiteral => dl.!
       case vr: ValRef => vr.!(localsEnv)
-      case tor: TaskOutputRef1 => tor.!
-      case tor: TaskOutputRefN => tor.!
     }
   }
 
@@ -213,12 +218,12 @@ class SemanticParser(implicit val ctx: Context) {
     }
   }
 
-  implicit object ParseTaskRef1 extends Denotation[TaskRef1, PointedCube[Task]] {
-    def denotation(tr: TaskRef1) = getTask(tr.name.!).select(tr.indices.!)
-  }
+//  implicit object ParseTaskRef1 extends Denotation[TaskRef1, PointedCube[Task]] {
+//    def denotation(tr: TaskRef1) = getTask(tr.name.!).select(tr.indices.!)
+//  }
 
-  implicit object ParseTaskRefN extends Denotation[TaskRefN, Cube[PointedCube[Task]]] {
-    def denotation(tr: TaskRefN) = getTask(tr.name.!).currySelectMany(tr.indices.!)
+  implicit object ParseTaskRefN extends Denotation[TaskRef, Cube[PointedCube[Task]]] {
+    def denotation(tr: TaskRef) = getTask(tr.name.!).currySelectMany(tr.indices.!)
   }
 
   implicit object ParsePlan extends Denotation[PlanDef, Plan] {
@@ -303,6 +308,7 @@ class SemanticParser(implicit val ctx: Context) {
    * Reads a stream of Hypermake script lines and parses them to statements.
    */
   def readLinesToStmts(lines: Iterable[String], macroParams: Map[String, String]): Seq[Statement] = {
+    // TODO: replace macro to modules
     val content = lines.map { line =>
       macroParams.foldLeft(line) { case (l, (k, v)) => l.replace("$$" + k, v) } // macro replacement
     }.mkString("\n")
@@ -312,10 +318,10 @@ class SemanticParser(implicit val ctx: Context) {
     if (unboundParams.nonEmpty)
       throw MacroParametersUnboundException(unboundParams.map(_.drop(2)))
 
-    val stmts = SyntacticParser.syntacticParse(content)
+    val stmts = Statements.syntacticParse(content)
     val expandedStmts = stmts.flatMap {
-      case ImportStatement(fn, params) =>
-        readFileToStmts(resolveFile(fn), params)
+      case ImportFile(fn, optNewName) =>
+        readFileToStmts(resolveFile(fn), Map())  // TODO: newname
       case stmt => Seq(stmt)
     }
     expandedStmts
@@ -325,9 +331,9 @@ class SemanticParser(implicit val ctx: Context) {
     semanticParse(readFileToStmts(file, Map()))
   }
 
-  def parseTask(tr: TaskRef1) = tr.!.default
+  def parseTask(tr: TaskRef) = tr.!.allElements.head.default  // TODO: make sure that there is only 1 in the cube
 
-  def parseTarget(tr: TaskRefN) =
+  def parseTarget(tr: TaskRef) =
     plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!.map(_.default)))
 
 }

@@ -3,7 +3,7 @@ url = "https://news.ycombinator.com"
 task download(url=$) -> (out="homepage.html"):
   wget $url -O $out
 
-task getTitles(html=$download.out) -> out:
+task getTitles(html=download.out) -> out:
   cat $html \
   | perl -ne 'if (/<a href="(.*?)" class="storylink">(.*?)<\/a>/) { print $1 . "\t" . $2 . "\n" }' \
   > $out

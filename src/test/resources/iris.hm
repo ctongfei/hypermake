@@ -14,7 +14,7 @@ task download_iris_data() -> (data="iris.csv"):
   mv bezdekIris.data iris.csv
 
 @python
-task train_iris_model(data=$download_iris_data.data) -> (model="model.pkl"):
+task train_iris_model(data=download_iris_data.data) -> (model="model.pkl"):
   import os
   import pandas as pd
   from sklearn import svm

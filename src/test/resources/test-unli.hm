@@ -34,13 +34,13 @@ task uSnliCsv(u_snli_url=$) -> out:
   unzip u-snli.zip
   mv *.csv $out
 
-task snliQRels(unli=$, snli=$snli.out) -> out:
+task snliQRels(unli=$, snli=snli.out) -> out:
   mkdir -p $out
   python $unli/scripts/snli_to_qrels.py \
     --snli $snli/snli_1.0 --out $out
 
-@venv(env=$unliEnv.env)
-task uSnliQRels(unli=$, snliQRels=$snliQRels.out, uSnliPath=$uSnliCsv.out) -> out:
+@venv(env=unliEnv.env)
+task uSnliQRels(unli=$, snliQRels=snliQRels.out, uSnliPath=uSnliCsv.out) -> out:
   mkdir -p $out
   python $unli/scripts/usnli_to_qrels_align.py \
     --snli $snliQRels \

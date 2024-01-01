@@ -6,10 +6,10 @@ import zio.console._
 import hypermake.cli.CmdLineAST._
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
-import hypermake.core.{Job, Plan, PointedCubeTask}
-import hypermake.execution.{Executor, RuntimeConfig, Status}
+import hypermake.core.{Job, PointedCubeTask}
+import hypermake.execution.{Executor, RuntimeConfig}
 import hypermake.semantics.{Context, SemanticParser}
-import hypermake.syntax.SyntacticParser
+import hypermake.syntax.{Expressions, Statements}
 import hypermake.util.StdSinks
 import hypermake.util.printing._
 
@@ -40,7 +40,7 @@ object Main extends App {
        |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
        |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
        |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
-       |  mark-as-done ${V("$targets")}      : Marks the given tasks as normally exited.
+       |  mark-as-done ${V("$targets")}      : Marks the given tasks as if they have exited normally.
        |
        | ${B("Running options:")}
        |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
@@ -137,7 +137,7 @@ object Main extends App {
               case Subcommand.Invalidate =>
                 val allRuns = File(s"${ctx.localEnv.root}/.runs").children.map(_ / "jobs")
                 val allRunJobs = allRuns.flatMap(_.lines).toSet[String].map { s =>
-                  parser.parseTask(fastparse.parse(s, SyntacticParser.taskRef1(_)).get.value)
+                  parser.parseTask(fastparse.parse(s, Expressions.taskRef(_)).get.value)
                 }
                 val jobGraph = Graph.explore[Job](allRunJobs, _.dependentJobs)
                 val jobsToBeInvalidated = Graph.explore[Job](jobs, jobGraph.outgoingNodes)

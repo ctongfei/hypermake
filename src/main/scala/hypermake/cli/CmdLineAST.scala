@@ -1,7 +1,7 @@
 package hypermake.cli
 
 import hypermake.collection.Name
-import hypermake.syntax._
+import hypermake.syntax.ast._
 
 object CmdLineAST {
 
@@ -15,7 +15,7 @@ object CmdLineAST {
                     script: String,
                     runOptions: Seq[RunOpt],
                     task: Subcommand,
-                    targets: Seq[TaskRefN]
+                    targets: Seq[TaskRef]
                   ) extends Cmd
   }
 
