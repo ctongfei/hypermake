@@ -17,6 +17,7 @@ object DAGVisualizationTest extends App {
   g.addArc(2, 5)
 
   val indents = g.computeIndentation
+
   println(indents)
 
 }

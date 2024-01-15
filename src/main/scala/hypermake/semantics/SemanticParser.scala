@@ -53,6 +53,10 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(idp: IdentifierPath): Path = Path(idp.path.map(_.name).toList)
   }
 
+  implicit object ParseOutputRef extends Denotation[OutputRef, String] {
+    def denotation(or: OutputRef) = or.str
+  }
+
 //  implicit object ParseCase extends Denotation[AxisIndices, Case] {
 //    def denotation(is: AxisIndices): Case = Case {
 //      is.underlying.map { case (id, k) => id.! -> k.key }
@@ -79,17 +83,25 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(r: ValRef, localsEnv: (Map[String, PointedCube[Value]], Env)): PointedCube[Value] = {
       val name = r.name.!
       val indices = r.indices.!
+      val output = r.output.map(_.!)
       val (locals, env) = localsEnv
-
-      // TODO: resolve a.b[x].o vs a.b.o !!
-      val referred = locals
-        .get(name.toString) // local variables override global variables
-        .orElse(root.packages.get(name).map(_.output.map(_.on(env)))) // get package output on contextual env
-        .getOrElse(root.values(name)) // falls back to global values
-      if (indices.all.size == 1) {
-        val index = indices.all.head
-        referred.curry(indices.vars).map(_.select(index).default)
-      } else referred.curry(indices.vars).map(c => Value.Multiple(c.selectMany(indices), env))
+      locals.getOrElse(
+        name.toString,
+        output match {
+          case Some(o) => // a.b[x].o; output of a task
+            root.tasks(name).reduceSelected(indices, c => Value.Multiple(c.map(_.outputs(o)), env))
+          case None => // a.b[x] or a.b.o
+            root.values
+              .get(name)
+              .map(_.reduceSelected(indices, c => Value.Multiple(c, env)))
+              .orElse(
+                root.tasks
+                  .get(name.init)
+                  .map(_.reduceSelected(indices, c => Value.Multiple(c.map(_.outputs(name.last)), env)))
+              )
+              .getOrElse(root.packages(name).output.map(_.on(env)))
+        }
+      )
     }
   }
 

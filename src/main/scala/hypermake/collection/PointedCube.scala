@@ -53,6 +53,9 @@ trait PointedCube[+A] extends Cube[A] {
   override def currySelectMany(cc: CaseCube): Cube[PointedCube[A]] =
     curry(vars diff cc.vars).selectMany(cc)
 
+  def reduceSelected[B](cc: CaseCube, r: Cube[A] => B): PointedCube[B] =
+    curry(cc.vars).map(r)
+
   override def curry(innerVars: Set[Axis]): PointedCube[PointedCube[A]] = new PointedCube[PointedCube[A]] {
     private[this] val outerVars = self.vars.filterNot(innerVars)
 

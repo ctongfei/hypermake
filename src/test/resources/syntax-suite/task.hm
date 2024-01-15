@@ -1,7 +1,7 @@
-task t0 -> out:
+task t0() -> out:
     yes
 
-task t1:
+task t1():
     yes
 
 task t2() -> out:
@@ -13,3 +13,11 @@ task t3(a = "a", b = "b") -> out:
 task t4(a = "a", b = "b") -> (c = "c", d = "d"):
     echo $a > $c
     echo $b > $d
+
+task t5(a = $t3.out) -> out:
+    echo $a > $out
+
+task t6(a = $t3.out, b = {B: c=$t4.c d=$t4.d}) -> out:
+    echo $a > $out
+    echo $c > $out
+
