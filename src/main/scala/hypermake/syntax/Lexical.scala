@@ -1,19 +1,23 @@
 package hypermake.syntax
 
-
 import hypermake.syntax.ast._
 
-/**
- * The lexical part of the grammar of Hypermake.
- * The following non-terminal definitions are sensitive to whitespace.
- */
+/** The lexical part of the grammar of Hypermake. The following non-terminal definitions are sensitive to whitespace.
+  */
 object Lexical {
 
   import fastparse._
   import fastparse.NoWhitespace._
 
   val keywords = Set(
-    "as", "def", "task", "plan", "service", "module", "package", "import", "global"
+    "as",
+    "import",
+    "def",
+    "task",
+    "plan",
+    "service",
+    "module",
+    "package"
   )
 
   def token[$: P](s: String) = s ~ !(letter | digit | "_")

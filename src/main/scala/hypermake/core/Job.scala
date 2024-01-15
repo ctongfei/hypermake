@@ -25,46 +25,43 @@ abstract class Job(implicit ctx: Context) {
 
   implicit val runtime: RuntimeConfig = ctx.runtime
 
-  def name: Name
+  def name: String
 
   def env: Env
 
   def `case`: Case
 
-  def inputs: Map[Name, Value]
+  def inputs: Map[String, Value]
 
-  def inputEnvs: Map[Name, Env]
+  def inputEnvs: Map[String, Env]
 
-  def outputFileNames: Map[Name, Value]
+  def outputFileNames: Map[String, Value]
 
-  def outputs: Map[Name, Value.Output] = outputFileNames.map { case (k, v) =>
+  def outputs: Map[String, Value.Output] = outputFileNames.map { case (k, v) =>
     k -> Value.Output(v.value, outputEnvs.getOrElse(k, env), this)
   }
 
-  def outputEnvs: Map[Name, Env]
+  def outputEnvs: Map[String, Env]
 
   def decorators: Seq[Call]
 
   def rawScript: Script
 
-  /** Global variables included for this job. */
-  lazy val globalArgs = ctx.globalValues.map { case (k, v) => k.name -> v.select(`case`).default.value }
-
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
-    "HYPERMAKE_JOB_NAME" -> name.name,
+    "HYPERMAKE_JOB_NAME" -> name,
     "HYPERMAKE_JOB_CASE" -> caseInJson
   )
 
   /** Path to store the output of this task, relative to the output root. This is the working directory of this task if
     * executed.
     */
-  lazy val path = s"${name.name.replace(".", "/")}/$potentiallyHashedPercentEncodedCaseString"
+  lazy val path = s"${name.replace(".", "/")}/$potentiallyHashedPercentEncodedCaseString"
 
   lazy val absolutePath = env.resolvePath(path)
 
   /** The canonical string identifier for this task, in the percent-encoded URL format. */
-  lazy val id = s"${name.name.replace(".", "/")}?$percentEncodedCaseString"
+  lazy val id = s"${name.replace(".", "/")}?$percentEncodedCaseString"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -83,7 +80,7 @@ abstract class Job(implicit ctx: Context) {
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
   def linkInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
-    for ((Name(name), (input, inputEnv)) <- inputs zipByKey inputEnvs)
+    for ((name, (input, inputEnv)) <- inputs zipByKey inputEnvs)
       yield inputEnv.linkValue(input, inputEnv.resolvePath(name, absolutePath)).as(name -> Some(name))
   } map { effs =>
     effs.collect({ case (k, Some(v)) => k -> v }).toMap
@@ -110,7 +107,7 @@ abstract class Job(implicit ctx: Context) {
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
 
       // Linked args are of the highest precedence since they are resolved from envs
-      mergedArgs = jobCaseArgs ++ globalArgs ++ finalScript.strArgs ++ linkedArgs
+      mergedArgs = jobCaseArgs ++ finalScript.strArgs ++ linkedArgs
       _ <- env.write(
         absolutePath / "args",
         mergedArgs
@@ -205,7 +202,7 @@ abstract class Job(implicit ctx: Context) {
 
   def colorfulString = {
     import fansi._
-    s"${Bold.On(Color.LightBlue(name.name)).render}[${colorfulCaseString(`case`)}]"
+    s"${Bold.On(Color.LightBlue(name)).render}[${colorfulCaseString(`case`)}]"
   }
 
   override def toString = id

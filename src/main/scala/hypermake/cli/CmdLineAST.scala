@@ -1,6 +1,6 @@
 package hypermake.cli
 
-import hypermake.collection.Name
+import hypermake.collection.Axis
 import hypermake.syntax.ast._
 
 object CmdLineAST {

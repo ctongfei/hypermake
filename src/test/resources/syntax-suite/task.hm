@@ -1,2 +1,15 @@
 task t0 -> out:
     yes
+
+task t1:
+    yes
+
+task t2() -> out:
+    yes
+
+task t3(a = "a", b = "b") -> out:
+    echo $a $b
+
+task t4(a = "a", b = "b") -> (c = "c", d = "d"):
+    echo $a > $c
+    echo $b > $d

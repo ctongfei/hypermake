@@ -10,26 +10,26 @@ import scala.collection._
 /** A task is a job that is declared by the `task` definition. It is a job that is specific to a running environment.
   */
 class Task(
-    val name: Name,
+    val name: String,
     val env: Env,
     val `case`: Case,
-    val inputs: Map[Name, Value],
-    val inputEnvs: Map[Name, Env],
-    val outputFileNames: Map[Name, Value],
-    val outputEnvs: Map[Name, Env],
+    val inputs: Map[String, Value],
+    val inputEnvs: Map[String, Env],
+    val outputFileNames: Map[String, Value],
+    val outputEnvs: Map[String, Env],
     val decorators: Seq[Call],
     val rawScript: Script
 )(implicit ctx: Context)
     extends Job()(ctx) {}
 
 class PointedCubeTask(
-    val name: Name,
+    val name: String,
     val env: Env,
     val cases: PointedCaseCube,
-    val inputs: Map[Name, PointedCube[Value]],
-    val inputEnvs: Map[Name, Env],
-    val outputNames: Map[Name, PointedCube[Value]],
-    val outputEnvs: Map[Name, Env],
+    val inputs: Map[String, PointedCube[Value]],
+    val inputEnvs: Map[String, Env],
+    val outputNames: Map[String, PointedCube[Value]],
+    val outputEnvs: Map[String, Env],
     val decorators: Seq[PointedCube[Call]],
     val script: PointedCube[Script]
 )(implicit ctx: Context)
@@ -55,10 +55,10 @@ class PointedCubeTask(
         j.name
       })
     }
-    allTaskNames.map(ctx.getTask)
+    allTaskNames.map(k => ctx.root.tasks(k))
   }
 
-  def withNewArgs(args: Map[Name, PointedCube[Value]]): PointedCubeTask = {
+  def withNewArgs(args: Map[String, PointedCube[Value]]): PointedCubeTask = {
     val outScript = script.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
     new PointedCubeTask(name, env, cases, inputs, inputEnvs, outputNames, outputEnvs, decorators, outScript)
   }

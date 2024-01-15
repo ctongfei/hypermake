@@ -73,15 +73,15 @@ object Main extends App {
         implicit val ctx: Context = new Context()
         val parser = new SemanticParser()
         // Imports files specified with the -I switch
-        runtime.includePaths foreach { f => parser.semanticParse(runtime.resolveFile(f)) }
-        // Defines variables specified with the -D switch
-        parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
-        parser.semanticParse(File(scriptFile))
+        runtime.includePaths foreach { f => parser.semanticParseFile(runtime.resolveFile(f)) }
+        // TODO: Defines variables specified with the -D switch
+        // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
+        parser.semanticParseFile(File(scriptFile))
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
 
         def showTaskCube(pct: PointedCubeTask) = {
-          val name = if (pct.name.name contains "@") BU(pct.name.name) else B(pct.name.name)
+          val name = if (pct.name contains "@") BU(pct.name) else B(pct.name)
           "• " + name + (if (pct.vars.isEmpty) "" else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
         }
 
@@ -105,7 +105,7 @@ object Main extends App {
                   _ <- putStrLn(B("\nTasks:"))
                   s <- {
                     val g = Graph.explore[PointedCubeTask](
-                      ctx.tasks.values,
+                      ctx.root.tasks.values,
                       _.dependentTaskCubes(ctx)
                     )
                     g.toStringIfAcyclic(t => ZIO.succeed(showTaskCube(t)), indent = 2)

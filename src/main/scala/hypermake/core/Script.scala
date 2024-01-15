@@ -11,30 +11,30 @@ import java.io.{File => JFile}
 import scala.collection._
 
 /** Encapsulates a script together with its external arguments.
- */
+  */
 case class Script(
-                   script: String,
-                   args: Map[Name, Value] = Map(),
-                   outputArgs: Map[Name, Value] = Map()
-                 )(implicit runtime: RuntimeConfig) {
+    script: String,
+    args: Map[String, Value] = Map(),
+    outputArgs: Map[String, Value] = Map()
+)(implicit runtime: RuntimeConfig) {
 
-  def withNewArgs(newArgs: Map[Name, Value]) = Script(script, args ++ newArgs, outputArgs)
+  def withNewArgs(newArgs: Map[String, Value]) = Script(script, args ++ newArgs, outputArgs)
 
   def withArgs(newArgs: (String, String)*) =
-    withNewArgs(newArgs.map { case (a, v) => Name(a) -> Value.Pure(v) }.toMap)
+    withNewArgs(newArgs.toMap.mapValuesE(Value.Pure))
 
-  def withNewOutputArgs(newArgs: Map[Name, Value]) = Script(script, args, outputArgs ++ newArgs)
+  def withNewOutputArgs(newArgs: Map[String, Value]) = Script(script, args, outputArgs ++ newArgs)
 
   def strArgs: Map[String, String] = {
-    (args).map { case (k, v) => k.name -> v.absValue } ++ outputArgs.map { case (k, v) => k.name -> v.value }
+    args.map { case (k, v) => k.name -> v.absValue } ++ outputArgs.map { case (k, v) => k.name -> v.value }
   }
 
   /** Writes this script as a local temporary file and executes it with its arguments.
-   *
-   * @param workDir
-   * The working directory to run this temporary script. By default this is the working directory of the outer
-   * Hypermake process.
-   */
+    *
+    * @param workDir
+    *   The working directory to run this temporary script. By default this is the working directory of the outer
+    *   Hypermake process.
+    */
   def executeLocally(workDir: String = runtime.workDir)(implicit std: StdSinks): HIO[Process] = {
     val tempScriptFile = runtime.tempFile(prefix = "hypermake_temp_script")
     // allows the case where the interpreter has arguments: python -v ...

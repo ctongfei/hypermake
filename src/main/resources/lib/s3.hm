@@ -1,5 +1,8 @@
-module aws.s3(bucket):
+class s3(bucket):
 
   def read(file):
     aws s3 cp s3://$bucket/$file -
+
+  def mkdir(dir):
+    true
 

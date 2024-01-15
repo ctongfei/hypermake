@@ -1,0 +1,9 @@
+class blob(container):
+  def read(file):
+    yes
+  def write(file):
+    yes
+
+
+object my_blob = blob(container = "my_container")
+object my_blob2 = blob(container = "my_container2")

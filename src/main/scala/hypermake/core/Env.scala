@@ -13,32 +13,32 @@ import java.nio.file.{Paths, Files => JFiles}
 import scala.collection._
 
 /** Encapsulates a running environment that could be local, or some remote grid. Such an environment must possess a
- * basic file system, as well as the capability to run arbitrary shell script.
- */
+  * basic file system, as well as the capability to run arbitrary shell script.
+  */
 trait Env {
 
   /** Identifier of this environment.
-   */
+    */
   def name: String
 
   /** Separator character used to separate path components. By default this is '/'.
-   */
+    */
   def separator: Char
 
   /** Separator character used to separate a list of paths. By default this is ':'.
-   */
+    */
   def pathSeparator: Char
 
   def / = separator
 
   /** Output root on this environment. Intermediate results will be stored in this directory.
-   */
+    */
   def root: String
 
   def refreshInterval: Duration
 
   /** Resolves a path relative to the given root directory.
-   */
+    */
   def resolvePath(s: String, r: String = root) = {
     val p = s.trim
     if (p startsWith separator.toString) p
@@ -46,7 +46,7 @@ trait Env {
   }
 
   /** Reads the content of a file as a string.
-   */
+    */
   def read(f: String)(implicit std: StdSinks): HIO[String]
 
   def write(f: String, content: String)(implicit std: StdSinks): HIO[Unit]
@@ -54,15 +54,15 @@ trait Env {
   def mkdir(f: String)(implicit std: StdSinks): HIO[Unit]
 
   /** Checks if a file exists on this file system.
-   */
+    */
   def exists(f: String)(implicit std: StdSinks): HIO[Boolean]
 
   /** Creates a symbolic link from [[src]] to [[dst]].
-   */
+    */
   def link(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
   /** Creates an empty file at the given path.
-   */
+    */
   def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
   def delete(f: String)(implicit std: StdSinks): HIO[Unit]
@@ -70,7 +70,7 @@ trait Env {
   def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks): HIO[Unit]
 
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
-                                                                                            std: StdSinks
+      std: StdSinks
   ): HIO[ExitCode]
 
   def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
@@ -117,26 +117,26 @@ trait Env {
 
   override def equals(o: Any) = o match {
     case o: Env => name == o.name
-    case _ => false
+    case _      => false
   }
 
 }
 
 object Env {
 
-  def getValueByName(name: String)(implicit ctx: Context) = ctx.getValue(Name(name)).default.value
+  def getValueByName(name: String)(implicit ctx: Context) = ctx.root.values(name).default.value
 
-  def getValueByNameOpt(name: String)(implicit ctx: Context) = ctx.getValueOpt(Name(name)).map(_.default.value)
+  def getValueByNameOpt(name: String)(implicit ctx: Context) = ctx.root.values.get(name).map(_.default.value)
 
-  def getScriptByName(name: String)(implicit ctx: Context) = ctx.getFunc(Name(name)).impl.default
+  def getScriptByName(name: String)(implicit ctx: Context) = ctx.root.functions(name).impl.default
 
-  def apply(name: Name)(implicit ctx: Context) = {
-    if (name.name == "local")
+  def apply(name: String)(implicit ctx: Context) = {
+    if (name == "local")
       ctx.localEnv
     else if (ctx.envTable contains name)
       ctx.getEnv(name)
     else {
-      val env = new Env.Custom(name.name)
+      val env = new Env.Custom(name)
       ctx.envTable += name -> env
       env
     }
@@ -149,7 +149,7 @@ object Env {
     final val name = "local"
     val separator = java.io.File.separatorChar
     val pathSeparator = java.io.File.pathSeparatorChar
-    lazy val root = ctx.envOutputRoot(Name("local"))
+    lazy val root = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
 
     def refreshInterval = 100.milliseconds
 
@@ -193,7 +193,7 @@ object Env {
     } yield u
 
     override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
-                                                                                                       std: StdSinks
+        std: StdSinks
     ) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
       val pb = zio.process
@@ -217,18 +217,18 @@ object Env {
     import ctx._
 
     def separator =
-      getValueByNameOpt(s"${name}_separator").map(_.head).getOrElse(java.io.File.separatorChar)
+      getValueByNameOpt(s"${name}.separator").map(_.head).getOrElse(java.io.File.separatorChar)
 
     def pathSeparator =
-      getValueByNameOpt(s"${name}_path_separator").map(_.head).getOrElse(java.io.File.pathSeparatorChar)
+      getValueByNameOpt(s"${name}.path_separator").map(_.head).getOrElse(java.io.File.pathSeparatorChar)
 
-    def root = getValueByName(s"${name}_root")
+    def root = getValueByName(s"${name}.root")
 
     def refreshInterval =
-      getValueByNameOpt(s"${name}_refresh_interval").map(_.toInt).getOrElse(5).seconds // by default, 5s
+      getValueByNameOpt(s"${name}.refresh_interval").map(_.toInt).getOrElse(5).seconds // by default, 5s
 
     def read(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_read").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"${name}.read").withArgs("file" -> f).executeLocally()
       stdout <- process.stdout.string
     } yield stdout
 
@@ -243,27 +243,27 @@ object Env {
     }
 
     def mkdir(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_mkdir").withArgs("dir" -> f).executeLocally()
+      process <- getScriptByName(s"${name}.mkdir").withArgs("dir" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def exists(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_exists").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"${name}.exists").withArgs("file" -> f).executeLocally()
       exitCode <- process.exitCode
     } yield exitCode.code == 0
 
     def link(src: String, dst: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_link").withArgs("src" -> src, "dst" -> dst).executeLocally()
+      process <- getScriptByName(s"${name}.link").withArgs("src" -> src, "dst" -> dst).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def touch(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_touch").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"${name}.touch").withArgs("file" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 
     def delete(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_delete").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"${name}.delete").withArgs("file" -> f).executeLocally()
       u <- process.successfulExitCode.unit
     } yield u
 

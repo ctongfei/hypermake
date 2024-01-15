@@ -1,4 +1,7 @@
-# Defines an Azure Storage Blob environment.
+# Defines a Azure Storage Blob module that can be used as an environment in Hypermake.
+# Use as follows:
+# import az.storage
+# object my_blob = az.storage.blob(container="my_container", extra_args="")
 class blob(container, extra_args):
 
   def read(file):
@@ -15,12 +18,6 @@ class blob(container, extra_args):
       --container-name $container \
       --name $file \
       $extra_args
-  ...
-
-object my_blob = blob(container="my_blob", extra_args="")
-
-
-
 
   def link(src, dst):
     az storage blob copy start \
@@ -31,26 +28,19 @@ object my_blob = blob(container="my_blob", extra_args="")
       --requires-sync \
       $extra_args
 
-  def $name_touch(file):
+  def touch(file):
     az storage blob upload \
       --data "" \
       --container-name $container \
       --name $file \
       $extra_args
-  
-  def $name_delete(file):
+
+  def delete(file):
     az storage blob delete \
       --container-name $container \
       --name $file \
       $extra_args
-  
-  def download(src, dst):
-    az storage blob download \
-      --container-name $container \
-      --name $src \
-      --file $dst \
-      $extra_args
-  
+
   def upload(src, dst):
     az storage blob upload \
       --file $src \
@@ -58,16 +48,9 @@ object my_blob = blob(container="my_blob", extra_args="")
       --name $dst \
       $extra_args
 
-
-# Creates a job that runs on Azure ML.
-def azure.ml(resource_group, workspace_name) <- input="run.azureml.sh"
-  ## Create yaml configuration file
-  ## .. > job.yaml
-  ## Generate name
-  az ml job create \
-    --file job.yaml \
-    --resource-group $resource_group \
-    --workspace-name $workspace_name \
-    --name $name \
-    --save-as job-status.yaml \
-    --stream True
+  def download(src, dst):
+    az storage blob download \
+      --container-name $container \
+      --name $src \
+      --file $dst \
+      $extra_args

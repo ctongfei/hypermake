@@ -30,26 +30,26 @@ object Style {
     def render0 = ">"
     def render(j: Job) = s"${j.colorfulString}> "
     def render(j: Job, s: Status) = s"${j.colorfulString}: ${s.text}"
-    def renderInGraph(j: Job, s: Status) = s"${s.symbol} ${j.name.name}"
+    def renderInGraph(j: Job, s: Status) = s"${s.symbol} ${j.name}"
   }
 
   object Powerline extends Style {
     def bg(s: Status) = s match {
-      case Status.Pending => Back.DarkGray
-      case Status.Waiting => Back.Yellow
-      case Status.Running => Back.Blue
+      case Status.Pending   => Back.DarkGray
+      case Status.Waiting   => Back.Yellow
+      case Status.Running   => Back.Blue
       case Status.Succeeded => Back.Green
-      case Status.Failed => Back.Red
-      case Status.Complete => Back.Cyan
+      case Status.Failed    => Back.Red
+      case Status.Complete  => Back.Cyan
     }
 
     def bgAsFg(s: Status) = s match {
-      case Status.Pending => Color.DarkGray
-      case Status.Waiting => Color.Yellow
-      case Status.Running => Color.Blue
+      case Status.Pending   => Color.DarkGray
+      case Status.Waiting   => Color.Yellow
+      case Status.Running   => Color.Blue
       case Status.Succeeded => Color.Green
-      case Status.Failed => Color.Red
-      case Status.Complete => Color.Cyan
+      case Status.Failed    => Color.Red
+      case Status.Complete  => Color.Cyan
     }
 
     def nameFg(s: Status) = Bold.On ++ Color.White
@@ -63,10 +63,14 @@ object Style {
       val f = Color.Black
       val a = Back.Black ++ Color.DarkGray
       val n = Back.Black ++ Bold.On ++ Color.DarkGray
-      val jobName = n(j.name.name)
-      val jobArgs = j.canonicalCase.map {
-        case (k, v) => a(s"$k:") ++ (a ++ Bold.On) (v)
-      }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(n("default "))
+      val jobName = n(j.name)
+      val jobArgs = j.canonicalCase
+        .map { case (k, v) =>
+          a(s"$k:") ++ (a ++ Bold.On)(v)
+        }
+        .reduceOption(_ ++ a(" ") ++ _)
+        .map(_ ++ a(" "))
+        .getOrElse(n("default "))
       (b(" ") ++ jobName ++ a("  ") ++ jobArgs ++ f(" ")).render
     }
 
@@ -74,20 +78,28 @@ object Style {
       val b = bg(s)
       val f = bgAsFg(s)
       val a = args(s)
-      val jobName = name(s)(j.name.name)
-      val jobArgs = j.canonicalCase.map {
-        case (k, v) => a(s"$k:") ++ (a ++ Bold.On) (v)
-      }.reduceOption(_ ++ a(" ") ++ _).map(_ ++ a(" ")).getOrElse(args(s)("default "))
-      val statusStr = (bgAsFg(s) ++ Bold.On) (s.text)
+      val jobName = name(s)(j.name)
+      val jobArgs = j.canonicalCase
+        .map { case (k, v) =>
+          a(s"$k:") ++ (a ++ Bold.On)(v)
+        }
+        .reduceOption(_ ++ a(" ") ++ _)
+        .map(_ ++ a(" "))
+        .getOrElse(args(s)("default "))
+      val statusStr = (bgAsFg(s) ++ Bold.On)(s.text)
       (b(" ") ++ jobName ++ b("  ") ++ jobArgs ++ f(" ") ++ statusStr).render
     }
 
     def renderInGraph(j: Job, s: Status): String = {
       val c = s.color
-      val statusName = (c ++ Bold.On) (s"${s.symbol} ${j.name.name}")
-      val jobArgs = j.canonicalCase.map {
-        case (k, v) => c(s"$k:") ++ (c ++ Bold.On) (v)
-      }.reduceOption(_ ++ c(", ") ++ _).map(c("[") ++ _ ++ c("]")).getOrElse(c(""))
+      val statusName = (c ++ Bold.On)(s"${s.symbol} ${j.name}")
+      val jobArgs = j.canonicalCase
+        .map { case (k, v) =>
+          c(s"$k:") ++ (c ++ Bold.On)(v)
+        }
+        .reduceOption(_ ++ c(", ") ++ _)
+        .map(c("[") ++ _ ++ c("]"))
+        .getOrElse(c(""))
       (statusName ++ jobArgs ++ c(": " + s.text)).render
     }
   }

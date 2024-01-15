@@ -1,31 +1,27 @@
 package hypermake.syntax
 
-import hypermake.collection.Name
 import hypermake.util._
 
 import scala.collection._
 
 object ast {
-  /**
-   * Supertype of all node types in the Forge AST.
-   */
+
+  /** Supertype of all node types in the Forge AST.
+    */
   sealed trait Node {
     self =>
 
-    /**
-     * A canonical string representation of this AST node, without any syntactic sugar.
-     * This string should be parsed back to an identical AST object, and serves as the `toString()` implementation.
-     */
+    /** A canonical string representation of this AST node, without any syntactic sugar. This string should be parsed
+      * back to an identical AST object, and serves as the `toString()` implementation.
+      */
     def str: String
 
-    /**
-     * Iterates over all of its immediate child nodes.
-     */
+    /** Iterates over all of its immediate child nodes.
+      */
     def children: Iterable[Node]
 
-    /**
-     * Iterates over all of its recursive child nodes.
-     */
+    /** Iterates over all of its recursive child nodes.
+      */
     def recursiveChildren: Iterable[Node] = new Iterable[Node] {
       def iterator: Iterator[Node] = new Iterator[Node] { // DFS
         private[this] val stack = mutable.Stack(self)
@@ -43,10 +39,9 @@ object ast {
     override def toString = str
   }
 
-  /**
-   * Represents any (potentially parameterized) String value.
-   * An [[Expr]] can be either a [[Literal]] or a [[ValRef]], or a [[TaskOutputRef1]] or a [[TaskOutputRefN]].
-   */
+  /** Represents any (potentially parameterized) String value. An [[Expr]] can be either a [[Literal]] or a [[ValRef]],
+    * or a [[TaskOutputRef1]] or a [[TaskOutputRefN]].
+    */
   sealed trait Expr extends Node
 
   case class Identifier(name: String) extends Node {
@@ -55,9 +50,15 @@ object ast {
     def children = Nil
   }
 
-  object Identifier {
-    implicit object ordering extends Ordering[Identifier] {
-      def compare(x: Identifier, y: Identifier) = x.name compare y.name
+  case class AxisName(name: String) extends Node {
+    def str = name
+
+    override def children = Nil
+  }
+
+  object AxisName {
+    implicit object ordering extends Ordering[AxisName] {
+      def compare(x: AxisName, y: AxisName) = x.name compare y.name
     }
   }
 
@@ -88,9 +89,8 @@ object ast {
 
     def children = Nil
 
-    /**
-     * Executes this inline command while being parsed.
-     */
+    /** Executes this inline command while being parsed.
+      */
     def result() = {
       import scala.sys.process._
       command.!!.split(" ") // TODO: conform to IFS?
@@ -103,10 +103,9 @@ object ast {
     def children = Nil
   }
 
-  /**
-   * Represents a literal. A literal can be either a String singleton ([[StringLiteral]])
-   * or a nested dict literal ([[DictLiteral]]).
-   */
+  /** Represents a literal. A literal can be either a String singleton ([[StringLiteral]]) or a nested dict literal
+    * ([[DictLiteral]]).
+    */
   sealed trait Literal extends Expr
 
   case class StringLiteral(value: String, envModifier: EnvModifier = EnvModifier(None)) extends Literal {
@@ -115,19 +114,19 @@ object ast {
     def children = envModifier :: Nil
   }
 
-  case class DictLiteral(axis: Identifier, assignments: Map[String, Expr]) extends Literal {
+  case class DictLiteral(axis: AxisName, assignments: Map[String, Expr]) extends Literal {
     def str = s"{$axis: ${assignments.map { case (k, v) => s"$k=$v" }.mkString(" ")}}"
 
     def children = Iterable(axis) ++ assignments.values
   }
 
-  //sealed trait KeySelector extends Node
+  // sealed trait KeySelector extends Node
   //
-  //case class Key1(key: String) extends KeySelector {
+  // case class Key1(key: String) extends KeySelector {
   //  def str = key
   //
   //  def children = Nil
-  //}
+  // }
 
   sealed trait KeyN extends Node
 
@@ -143,11 +142,11 @@ object ast {
     def children = Nil
   }
 
-  //case class Index1(axis: Identifier, key: Key1) extends Node {
+  // case class Index1(axis: Identifier, key: Key1) extends Node {
   //  def str = s"$axis: $key"
   //
   //  def children = axis :: key :: Nil
-  //}
+  // }
 
   case class AxisIndex(axis: Identifier, keys: KeyN) extends Node {
     def str = s"$axis: $keys"
@@ -155,13 +154,13 @@ object ast {
     def children = axis :: keys :: Nil
   }
   //
-  //case class Indices1(indices: Seq[Index1]) extends MapWrapper[Identifier, Key1] with Node {
+  // case class Indices1(indices: Seq[Index1]) extends MapWrapper[Identifier, Key1] with Node {
   //  def str = if (indices.isEmpty) "" else s"[${indices.mkString(", ")}]"
   //
   //  def children = indices
   //
   //  def underlying = orderedMap(indices.map { case Index1(axis, key) => (axis, key) })
-  //}
+  // }
 
   case class AxisIndices(indices: Seq[AxisIndex]) extends MapWrapper[Identifier, KeyN] with Node {
     def str = if (indices.isEmpty) "" else s"[${indices.mkString(", ")}]"
@@ -171,11 +170,11 @@ object ast {
     def underlying = orderedMap(indices.map { case AxisIndex(axis, keys) => (axis, keys) })
   }
 
-  //case class TaskRef1(name: Identifier, indices: Indices1) extends Node {
+  // case class TaskRef1(name: Identifier, indices: Indices1) extends Node {
   //  def str = s"$name$indices"
   //
   //  def children = Iterable(name) ++ indices.flatMap { case (k, v) => Iterable(k, v) }
-  //}
+  // }
 
   case class TaskRef(name: IdentifierPath, indices: AxisIndices) extends Node {
     def str = s"$name$indices"
@@ -205,7 +204,6 @@ object ast {
 //
 //    def children = tasks :: name :: Nil
 //  }
-
 
   case class Parameter(name: Identifier, env: EnvModifier) extends Node {
     def str = s"$name$env"
@@ -240,18 +238,19 @@ object ast {
 
     val underlying = orderedMap(assignments.map {
       case ExplicitAssignment(param, v) => (param.name, (param.env, v))
-      case RefAssignment(param) => (param.name, (param.env, ValRef(IdentifierPath(Seq(param.name)), AxisIndices(Nil), None)))
+      case RefAssignment(param) =>
+        (param.name, (param.env, ValRef(IdentifierPath(Seq(param.name)), AxisIndices(Nil), None)))
       case SameNameAssignment(param) => (param.name, (param.env, StringLiteral(param.name.name, param.env)))
     })
   }
 
-  case class FuncCall(funcName: Identifier, inputs: Assignments) extends Node {
-    def str = s"$funcName($inputs)"
+  case class Call(name: IdentifierPath, args: Assignments) extends Node {
+    def str = s"$name($args)"
 
-    def children = Iterable(funcName, inputs)
+    def children = Iterable(name, args)
   }
 
-  case class DecoratorCall(call: FuncCall) extends Node {
+  case class DecoratorCall(call: Call) extends Node {
     def str = s"@$call\n"
 
     def children = Iterable(call)
@@ -263,78 +262,119 @@ object ast {
     def children = calls
   }
 
-  sealed trait Impl extends Node
+  sealed trait TaskImpl extends Node
 
-  case class ScriptImpl(script: Verbatim) extends Impl {
+  case class ScriptImpl(script: Verbatim) extends TaskImpl {
     def str = s":\n$script"
 
     def children = Iterable(script)
   }
 
-  case class FuncCallImpl(call: FuncCall) extends Impl {
+  case class FuncCallImpl(call: Call) extends TaskImpl {
     def str = s" = $call"
 
     def children = Iterable(call)
   }
 
+  sealed trait ObjectImpl extends Node
+
+  case class MembersImpl(defs: Seq[Def]) extends ObjectImpl {
+    def str = ":\n" + defs.map(d => s"  $d").mkString("\n")
+
+    def children = defs
+  }
+
+  case class InstantiationImpl(instantiation: Call) extends ObjectImpl {
+    def str = s" = $instantiation"
+
+    def children = Iterable(instantiation)
+  }
+
   sealed trait Statement extends Node
 
-  case class ValDef(name: Identifier, value: Expr) extends Statement {
+  sealed trait Def extends Statement
+
+  case class ValDef(name: Identifier, value: Expr) extends Def {
     def str = s"$name = $value"
 
     def children = Iterable(name, value)
   }
 
-  case class GlobalValDef(name: Identifier, value: Expr) extends Statement {
-    def str = s"global $name = $value"
-
-    def children = Iterable(name, value)
-  }
-
-  case class TaskDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, outputs: Assignments, impl: Impl) extends Statement {
+  case class TaskDef(
+      decorators: DecoratorCalls,
+      name: Identifier,
+      env: EnvModifier,
+      inputs: Assignments,
+      outputs: Assignments,
+      impl: TaskImpl
+  ) extends Def {
     def str = s"${decorators}task $name$env($inputs) -> ($outputs)$impl"
 
     def children = decorators.calls ++ Iterable(env, name, inputs, outputs, impl)
   }
 
-  case class ServiceDef(decorators: DecoratorCalls, name: Identifier, env: EnvModifier, inputs: Assignments, impl: Impl) extends Statement {
+  case class ServiceDef(
+      decorators: DecoratorCalls,
+      name: Identifier,
+      env: EnvModifier,
+      inputs: Assignments,
+      impl: TaskImpl
+  ) extends Def {
     def str = s"${decorators}service $name($inputs)$impl"
 
     def children = decorators.calls ++ Iterable(name, inputs, impl)
   }
 
-  case class PackageDef(decorators: DecoratorCalls, name: Identifier, inputs: Assignments, output: ExplicitAssignment, impl: ScriptImpl) extends Statement {
+  case class PackageDef(
+      decorators: DecoratorCalls,
+      name: Identifier,
+      inputs: Assignments,
+      output: ExplicitAssignment,
+      impl: ScriptImpl
+  ) extends Def {
     def str = s"${decorators}package $name($inputs) -> $output$impl"
 
     def children = decorators.calls ++ Iterable(name, inputs, output, impl)
   }
 
-  case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: Impl) extends Statement {
+  case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: TaskImpl)
+      extends Def {
     def str = s"""def $name($params) <- ($input = "$inputName")$impl"""
 
     def children = Iterable(name, params, input, impl)
   }
 
-  case class PlanDef(name: Identifier, taskRefs: Seq[TaskRef]) extends Statement {
+  case class PlanDef(name: Identifier, taskRefs: Seq[TaskRef]) extends Def {
     def str = s"plan $name = {${taskRefs.mkString(" ")}}"
 
     def children = Iterable(name) ++ taskRefs
   }
 
+  case class ClassDef(name: Identifier, params: Assignments, impl: ObjectImpl) extends Def {
+    def str = s"class $name($params)$impl"
+
+    def children = Iterable(name, params, impl)
+  }
+
+  case class ObjectDef(name: Identifier, impl: ObjectImpl) extends Def {
+    def str = s"object $name$impl"
+
+    def children = Iterable(name, impl)
+  }
 
   case class ImportFile(fileName: String, moduleName: Option[Identifier]) extends Statement {
     def str = moduleName match {
       case Some(m) => s"import ${Escaper.Shell.escape(fileName)} as $m"
-      case None => s"import ${Escaper.Shell.escape(fileName)}"
+      case None    => s"import ${Escaper.Shell.escape(fileName)}"
     }
 
     def children = moduleName.toList
   }
 
-  case class ImportModule(modulePath: IdentifierPath, moduleName: Option[Identifier]) extends Statement {
+  case class ImportObject(modulePath: IdentifierPath, moduleName: Option[Identifier]) extends Statement {
     def str = moduleName match {
       case Some(m) => s"import $modulePath as $m"
-      case None => s"import $modulePath as $modulePath"
+      case None    => s"import $modulePath as $modulePath"
     }
 
     def children = modulePath.children ++ moduleName.toList

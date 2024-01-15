@@ -2,18 +2,18 @@ package hypermake.collection
 
 import scala.collection._
 
-class PointedCaseCube(override val underlying: Map[Name, PointedSet[String]]) extends CaseCube(underlying) {
+class PointedCaseCube(override val underlying: Map[Axis, PointedSet[String]]) extends CaseCube(underlying) {
   self =>
 
   def default: Case = Case(underlying.view.mapValues(_.default).toMap)
 
-  override def assignments: Iterable[(Name, PointedSet[String])] = underlying
+  override def assignments: Iterable[(Axis, PointedSet[String])] = underlying
 
-  override def apply(a: Name) = underlying(a)
+  override def apply(a: Axis) = underlying(a)
 
   override def select(c: Case) = filterVars(a => !c.contains(a))
 
-  override def filterVars(p: Name => Boolean) = PointedCaseCube {
+  override def filterVars(p: Axis => Boolean) = PointedCaseCube {
     underlying.view.filterKeys(p).toMap
   }
 
@@ -42,6 +42,6 @@ object PointedCaseCube {
 
   def singleton = new PointedCaseCube(Map())
 
-  def apply(underlying: Map[Name, PointedSet[String]]) = new PointedCaseCube(underlying)
+  def apply(underlying: Map[Axis, PointedSet[String]]) = new PointedCaseCube(underlying)
 
 }

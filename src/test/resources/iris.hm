@@ -1,6 +1,6 @@
 import python
 
-local_root = "./out/iris"
+local.root = "./out/iris"
 
 iris_classes = {Iris:
   setosa,

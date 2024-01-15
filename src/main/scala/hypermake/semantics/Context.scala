@@ -6,74 +6,23 @@ import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
 import hypermake.execution.RuntimeConfig
-import hypermake.syntax.Def
 import hypermake.util.Escaper._
 
 /** Contexts kept for each parsing run.
   */
 class Context(implicit val runtime: RuntimeConfig) {
 
+  private[hypermake] var root: Obj = new Obj
   private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
   private[hypermake] val localEnv: Env = new Env.Local()(this)
+  private[hypermake] val envTable = mutable.HashMap[String, Env]("local" -> localEnv)
 
-  private[hypermake] val valueTable = mutable.HashMap[Name, PointedCube[Value]]()
-  private[hypermake] val globalValueTable = mutable.HashMap[Name, PointedCube[Value]]()
-  private[hypermake] val funcTable = mutable.HashMap[Name, Func]()
-  private[hypermake] val taskTable = mutable.HashMap[Name, PointedCubeTask]()
-  private[hypermake] val packageTable = mutable.HashMap[Name, PointedCubePackage]()
-  private[hypermake] val planTable = mutable.HashMap[Name, Plan]()
-  private[hypermake] val envTable = mutable.HashMap[Name, Env](Name("local") -> localEnv)
-  private[hypermake] val moduleTable = mutable.HashMap[Name, Module]()
+  def getAxis(name: Axis) = allCases.underlying.getOrElse(name, throw UndefinedException("Axis", name.name))
 
-  def values: Map[Name, PointedCube[Value]] = valueTable
-
-  def globalValues: Map[Name, PointedCube[Value]] = globalValueTable
-
-  def functions: Map[Name, Func] = funcTable
-
-  def tasks: Map[Name, PointedCubeTask] = taskTable
-
-  def plans: Map[Name, Plan] = planTable
-
-  def packages: Map[Name, PointedCubePackage] = packageTable
-
-  def modules: Map[Name, Module] = moduleTable
-
-  def envs: Map[Name, Env] = envTable
-
-  def getAxis(name: Name) = allCases.underlying.getOrElse(name, throw UndefinedException("Axis", name))
-
-  def getValue(name: Name) = {
-    valueTable.getOrElse(name, throw UndefinedException("Value", name))
+  // TODO: env are now objects!
+  def getEnv(name: String): Env = {
+    envTable.getOrElse(name, throw UndefinedException("Environment", name))
   }
-
-  def getGlobalValue(name: Name) = {
-    globalValueTable.getOrElse(name, throw UndefinedException("Global value", name))
-  }
-
-  def getValueOpt(name: Name) = valueTable.get(name)
-
-  def getGlobalValueOpt(name: Name) = globalValueTable.get(name)
-
-  def getPackage(name: Name) =
-    packageTable.getOrElse(name, throw UndefinedException("Package", name))
-
-  def getPackageOpt(name: Name) = packageTable.get(name)
-
-  def getFunc(name: Name) = funcTable.getOrElse(name, throw UndefinedException("Function", name))
-
-  def getTask(name: Name) = taskTable.getOrElse(
-    name, {
-      try { // somePackage@someEnv
-        val Array(packageName, packageEnv) = name.name.split("@")
-        getPackage(Name(packageName)).on(Env(Name(packageEnv))(this))(this)
-      } catch { _ => throw UndefinedException("Task", name) }
-    }
-  )
-
-  def getPlan(name: Name) = planTable.getOrElse(name, throw UndefinedException("Plan", name))
-
-  def getEnv(name: Name) = envTable.getOrElse(name, throw UndefinedException("Environment", name))
 
   def normalizeCase(c: Case): Case = {
     val assignments = c.assignments.collect {
@@ -113,9 +62,9 @@ class Context(implicit val runtime: RuntimeConfig) {
     else clauses.map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }.mkString(", ")
   }
 
-  def envOutputRoot(envName: Name): String = {
-    val path = getValueOpt(Name(s"${envName}_root")).map(_.default.value).getOrElse("out")
-    path
-  }
+//  def envOutputRoot(envName: Name): String = {
+//    val path = table.getValueOpt(Name(s"${envName}_root")).map(_.default.value).getOrElse("out")
+//    path
+//  }
 
 }

@@ -1,24 +1,26 @@
 package hypermake.syntax
 
 import fastparse._
+import hypermake.collection.Axis
 import hypermake.syntax.ast._
 import hypermake.util.Escaper.Percent
 import hypermake.util.orderedMap
 
 import scala.collection._
 
-/**
- * The expression grammar of Hypermake.
- * These definitions ignore whitespaces and do not care about indentation.
- */
+/** The expression grammar of Hypermake. These definitions ignore whitespaces and do not care about indentation.
+  */
 object Expressions {
-
 
   implicit object whitespace extends Whitespace {
     def apply(ctx: P[_]): P[Unit] = Lexical.wsComment(ctx)
   }
 
   def identifier[$: P] = Lexical.identifier
+
+  def axisName[$: P] = identifier map { id =>
+    AxisName(id.name)
+  }
 
   def string[$: P] = P {
     Lexical.quotedString | Lexical.unquotedString
@@ -37,12 +39,12 @@ object Expressions {
   } map { case (s, fsm) => StringLiteral(s, fsm) }
 
   def dictLiteral[$: P]: P[DictLiteral] = P {
-    "{" ~ identifier ~ ":" ~
+    "{" ~ axisName ~ ":" ~
       (
         keyValuePair.rep(1).map(orderedMap)
           | Lexical.inlineCommand.map(cmd => orderedMap(cmd.result().map(k => (Percent.escape(k), StringLiteral(k)))))
-        ) ~ "}"
-  } map { case (id, ps) => DictLiteral(id, ps) }
+      ) ~ "}"
+  } map { case (a, ps) => DictLiteral(a, ps) }
 
   def literal[$: P]: P[Literal] = stringLiteral | dictLiteral
 
@@ -70,8 +72,8 @@ object Expressions {
 
   def index[$: P]: P[AxisIndex] = P {
     identifier ~ ":" ~ (keys | star) // | star
-  } map {
-    case (id, ks: KeyN) => AxisIndex(id, ks)
+  } map { case (id, ks: KeyN) =>
+    AxisIndex(id, ks)
   }
 
   //  def indices1[$: P]: P[Indices1] = P {
@@ -98,7 +100,7 @@ object Expressions {
     "$" ~ identifierPath ~ (indices ~ outputRef).?
   } map {
     case (id, Some((indices, oor))) => ValRef(id, indices, Some(oor))
-    case (id, None) => ValRef(id, AxisIndices(Seq()), None)
+    case (id, None)                 => ValRef(id, AxisIndices(Seq()), None)
   }
 
   //  def taskValRef1[$: P] = P {
@@ -130,25 +132,25 @@ object Expressions {
   } map Identifiers
 
   def assignments[$: P] = P {
-    ("(" ~ assignment.rep(sep = ",") ~ ")").?.map(_.getOrElse(Seq()))
+    "(" ~ assignment.rep(sep = ",") ~ ")"
   } map Assignments
 
-  def funcCall[$: P] = P {
-    identifier ~ assignments
-  } map { case (funcName, inputs) => FuncCall(funcName, inputs) }
+  def call[$: P] = P {
+    identifierPath ~ assignments
+  } map { case (funcName, inputs) => Call(funcName, inputs) }
 
   def decoratorCall[$: P] = P {
-    "@" ~ funcCall
+    "@" ~ call
   } map DecoratorCall
 
   def decoratorCalls[$: P] =
     decoratorCall.rep map (cs => DecoratorCalls(cs.reverse)) // reverse so that the first decorator is the outermost
 
   def funcCallImpl[$: P] = P {
-    "=" ~ funcCall
+    "=" ~ call
   } map FuncCallImpl
 
-  //def impl[$: P]: P[Impl] = scriptImpl | funcCallImpl
+  // def impl[$: P]: P[Impl] = scriptImpl | funcCallImpl
 
   def outputParamList[$: P] = identifier.map(x => Identifiers(Seq(x))) | ("(" ~ inputParamList ~ ")")
 

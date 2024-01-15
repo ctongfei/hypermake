@@ -2,12 +2,12 @@ package hypermake.collection
 
 import scala.collection._
 
-class CaseCube(val underlying: Map[Name, Set[String]]) {
+class CaseCube(val underlying: Map[Axis, Set[String]]) {
   self =>
 
-  def assignments: Iterable[(Name, Set[String])] = underlying
+  def assignments: Iterable[(Axis, Set[String])] = underlying
 
-  def apply(a: Name) = underlying(a)
+  def apply(a: Axis) = underlying(a)
 
   def containsCase(c: Case) = c.assignments.forall { case (a, k) =>
     !(underlying contains a) || (underlying(a) contains k)
@@ -23,7 +23,7 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
     */
   def select(c: Case) = filterVars(a => !c.contains(a))
 
-  def filterVars(p: Name => Boolean) = CaseCube {
+  def filterVars(p: Axis => Boolean) = CaseCube {
     underlying.view.filterKeys(p).toMap
   }
 
@@ -37,7 +37,7 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
     }
   }
 
-  def containsAxis(a: Name) = underlying contains a
+  def containsAxis(a: Axis) = underlying contains a
 
   def outerJoin(that: CaseCube) = CaseCube {
     val newVars = self.vars union that.vars
@@ -96,6 +96,6 @@ class CaseCube(val underlying: Map[Name, Set[String]]) {
 
 object CaseCube {
 
-  def apply(underlying: Map[Name, Set[String]]) = new CaseCube(underlying)
+  def apply(underlying: Map[Axis, Set[String]]) = new CaseCube(underlying)
 
 }

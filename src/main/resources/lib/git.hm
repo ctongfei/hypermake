@@ -3,3 +3,8 @@ def git(repo, args="") <- _git_build_script="git-build.sh":
    ln -s $_git_build_script package/git-build.sh
    cd package
    . git-build.sh
+
+
+task f(path):
+  ls $path | xargs do something
+

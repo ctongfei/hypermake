@@ -1,6 +1,7 @@
 package hypermake.collection
 
 import cats._
+import cats.kernel.CommutativeMonoid
 
 import scala.collection._
 
@@ -22,7 +23,7 @@ trait Cube[+A] {
 
   def get(indices: Case): Option[A]
 
-  def apply(indices: (Name, String)*): A = get(Case.from(indices: _*)).get
+  def apply(indices: (Axis, String)*): A = get(Case.from(indices: _*)).get
 
   /** Selects a sub-cube based on the given indices. All indexed axes disappear in the returning cube.
     */
@@ -35,7 +36,7 @@ trait Cube[+A] {
 
   /** ([S..., T...] => A) => ([S...] => [T...] => A)
     */
-  def curry(innerAxes: Set[Name]): Cube[Cube[A]] = new Curried(self, innerAxes)
+  def curry(innerAxes: Set[Axis]): Cube[Cube[A]] = new Curried(self, innerAxes)
 
   /** Selects a sub-cube based on the given indices set. Indexed axes are retained in the returning cube.
     */
@@ -80,6 +81,7 @@ object Cube {
     override def map[A, B](fa: Cube[A])(f: A => B) = fa map f
 
     override def product[A, B](fa: Cube[A], fb: Cube[B]) = fa product fb
+
   }
 
   class Mapped[A, B](self: Cube[A], f: A => B) extends Cube[B] {
@@ -97,7 +99,7 @@ object Cube {
     } yield f(a, b)
   }
 
-  class Curried[A](self: Cube[A], innerVars: Set[Name]) extends Cube[Cube[A]] {
+  class Curried[A](self: Cube[A], innerVars: Set[Axis]) extends Cube[Cube[A]] {
     val cases = self.cases.filterVars(outerVars)
     private[this] val outerVars = self.vars.filterNot(innerVars)
 

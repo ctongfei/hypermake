@@ -53,7 +53,7 @@ trait PointedCube[+A] extends Cube[A] {
   override def currySelectMany(cc: CaseCube): Cube[PointedCube[A]] =
     curry(vars diff cc.vars).selectMany(cc)
 
-  override def curry(innerVars: Set[Name]): PointedCube[PointedCube[A]] = new PointedCube[PointedCube[A]] {
+  override def curry(innerVars: Set[Axis]): PointedCube[PointedCube[A]] = new PointedCube[PointedCube[A]] {
     private[this] val outerVars = self.vars.filterNot(innerVars)
 
     def cases = self.cases.filterVars(outerVars)
@@ -82,7 +82,7 @@ trait PointedCube[+A] extends Cube[A] {
 object PointedCube {
 
   def of[A](a: String, outerCase: (String, PointedCube[A])*) =
-    OfNestedMap(Name(a), outerCase.toMap.pointed(outerCase.head._1))
+    OfNestedMap(Axis(a), outerCase.toMap.pointed(outerCase.head._1))
 
   /** The `pure` operation of the PointedCube monad: construct a single value without parameterization.
     */
@@ -94,7 +94,7 @@ object PointedCube {
     override def default = x
   }
 
-  case class OfMap[A](a: Name, m: PointedMap[String, A]) extends PointedCube[A] {
+  case class OfMap[A](a: Axis, m: PointedMap[String, A]) extends PointedCube[A] {
     def cases = PointedCaseCube(Map(a -> m.keySet))
 
     def get(c: Case) = for {
@@ -103,7 +103,7 @@ object PointedCube {
     } yield a
   }
 
-  case class OfNestedMap[A](a: Name, outerCase: PointedMap[String, PointedCube[A]]) extends PointedCube[A] {
+  case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedCube[A]]) extends PointedCube[A] {
     val innerCases = outerCase.head._2.cases
     val innerAxes = innerCases.vars
     assert(outerCase.forall { case (_, c) => c.vars == innerAxes }) // make sure inner axes are identical
