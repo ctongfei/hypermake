@@ -1,5 +1,6 @@
-def python() <- internalPythonScript="script.py":
-  python $internalPythonScript
+object python:
+  def wrap(script):
+    python $internalPythonScript
 
 def conda(env) <- internalCondaScript="conda-internal.sh":
   eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"

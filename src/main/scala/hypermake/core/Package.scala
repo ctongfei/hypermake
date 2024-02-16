@@ -8,12 +8,12 @@ import hypermake.util._
 import scala.collection._
 
 class Package(
-    val name: String,
-    val `case`: Case,
-    val inputs: Map[String, Value],
-    val outputs: (String, Value),
-    val decorators: Seq[Call],
-    val rawScript: Script
+               val name: String,
+               val `case`: Case,
+               val inputs: Map[String, Value],
+               val outputs: (String, Value),
+               val decorators: Seq[Decorator],
+               val rawScript: Script
 )(implicit ctx: Context) {
   def on(env: Env): Task = new Task(
     name = s"$name@$env",
@@ -35,15 +35,15 @@ class Package(
 
 /** A package can be realized on multiple environments, and cannot be dependent on any other task.
   */
-case class PointedCubePackage(
-    name: String,
-    cases: PointedCaseCube,
-    inputs: Map[String, PointedCube[Value]],
-    outputs: (String, PointedCube[Value]),
-    decorators: Seq[PointedCubeCall],
-    rawScript: PointedCube[Script]
+case class PointedPackageTensor(
+                                 name: String,
+                                 cases: PointedCaseTensor,
+                                 inputs: Map[String, PointedTensor[Value]],
+                                 outputs: (String, PointedTensor[Value]),
+                                 decorators: Seq[PointedTensorDecorator],
+                                 rawScript: PointedTensor[Script]
 )(implicit ctx: Context)
-    extends PointedCube[Package] {
+    extends PointedTensor[Package] {
 
   def get(c: Case): Option[Package] = {
     if (cases containsCase c) {
@@ -62,7 +62,7 @@ case class PointedCubePackage(
 
   /** Returns a task that builds this package on a specific environment.
     */
-  def on(env: Env)(implicit ctx: Context) = new PointedCubeTask(
+  def on(env: Env)(implicit ctx: Context) = new PointedTaskTensor(
     s"$name@${env.name}", // package@ec2
     env,
     cases,
@@ -74,11 +74,11 @@ case class PointedCubePackage(
     rawScript
   )
 
-  def withNewArgs(args: Map[String, PointedCube[Value]]): PointedCubePackage = {
+  def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedPackageTensor = {
     val outScript = rawScript.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedCubePackage(name, cases, inputs, outputs, decorators, outScript)
+    new PointedPackageTensor(name, cases, inputs, outputs, decorators, outScript)
   }
 
-  def output: PointedCube[Value.PackageOutput] = this map Value.PackageOutput
+  def output: PointedTensor[Value.PackageOutput] = this map Value.PackageOutput
 
 }

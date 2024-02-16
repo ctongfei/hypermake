@@ -31,43 +31,39 @@ abstract class Job(implicit ctx: Context) {
 
   def `case`: Case
 
-  def inputs: Map[String, Value]
+  def inputs: Map[String, Value] // may contain both arguments and input files
 
+  // `inputEnvs` specify the envs that the inputs should be on before starting the job.
+  // these input files may be on different envs as specified in `inputs`.
   def inputEnvs: Map[String, Env]
 
-  def outputFileNames: Map[String, Value]
+  def outputs: Map[String, Value.Output]
 
-  def outputs: Map[String, Value.Output] = outputFileNames.map { case (k, v) =>
-    k -> Value.Output(v.value, outputEnvs.getOrElse(k, env), this)
-  }
-
-  def outputEnvs: Map[String, Env]
-
-  def decorators: Seq[Call]
+  def decorators: Seq[Obj]
 
   def rawScript: Script
 
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name,
-    "HYPERMAKE_JOB_CASE" -> caseInJson
+    "HYPERMAKE_JOB_CASE_JSON" -> caseInJson
   )
 
-  /** Path to store the output of this task, relative to the output root. This is the working directory of this task if
-    * executed.
-    */
-  lazy val path = s"${name.replace(".", "/")}/$potentiallyHashedPercentEncodedCaseString"
+  // Path relative to the output root of the job env.
+  lazy val path = s"${name.replace('.', env.separator)}${env.separator}$potentiallyHashedPercentEncodedCaseString"
 
   lazy val absolutePath = env.resolvePath(path)
 
-  /** The canonical string identifier for this task, in the percent-encoded URL format. */
-  lazy val id = s"${name.replace(".", "/")}?$percentEncodedCaseString"
+  /** The canonical string identifier for this task, in the percent-encoded URL format. Potentially this serves as the
+    * entry point in a web server.
+    */
+  lazy val id = s"${name.replace('.', '/')}?$percentEncodedCaseString"
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
-    (inputs ++ decorators.map(_.args).fold(Iterable())(_ ++ _)).values.flatMap(_.dependencies).toSet
+    inputs.values.flatMap(_.dependencies).toSet
 
-  lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs, rawScript.outputArgs ++ outputs)(runtime)
+  lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs ++ outputs)(runtime)
 
   lazy val outputAbsolutePaths =
     outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, absolutePath) }
@@ -99,10 +95,11 @@ abstract class Job(implicit ctx: Context) {
 
   /** Writes the script and decorating calls to the working directory. */
   def writeScript(linkedArgs: Map[String, String])(implicit std: StdSinks): HIO[Map[String, String]] = {
-    val scriptNames = decorators.map(_.inputScriptFilename)
+    // TODO: new behavior with obj decorators
+    val scriptNames = decorators.map(_.functions("apply").params.head._1)
     for {
       finalScript <- ZIO.foldLeft(decorators zip scriptNames)(script) { case (scr, (c, name)) =>
-        env.write(absolutePath / name, scr.script) as c(scr)
+        env.write(absolutePath / name, scr.script) as c.functions("apply")(scr)
       } // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
 

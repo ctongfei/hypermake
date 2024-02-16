@@ -2,7 +2,7 @@ package hypermake.collection
 
 import scala.collection._
 
-class CaseCube(val underlying: Map[Axis, Set[String]]) {
+class CaseTensor(val underlying: Map[Axis, Set[String]]) {
   self =>
 
   def assignments: Iterable[(Axis, Set[String])] = underlying
@@ -23,13 +23,13 @@ class CaseCube(val underlying: Map[Axis, Set[String]]) {
     */
   def select(c: Case) = filterVars(a => !c.contains(a))
 
-  def filterVars(p: Axis => Boolean) = CaseCube {
+  def filterVars(p: Axis => Boolean) = CaseTensor {
     underlying.view.filterKeys(p).toMap
   }
 
   /** Selects the subcube of cases given variables take the given values in the specified case cube.
     */
-  def selectMany(cc: CaseCube) = CaseCube {
+  def selectMany(cc: CaseTensor) = CaseTensor {
     self.underlying.map { case (a, ks) =>
       if (cc containsAxis a)
         a -> (ks intersect cc(a))
@@ -39,7 +39,7 @@ class CaseCube(val underlying: Map[Axis, Set[String]]) {
 
   def containsAxis(a: Axis) = underlying contains a
 
-  def outerJoin(that: CaseCube) = CaseCube {
+  def outerJoin(that: CaseTensor) = CaseTensor {
     val newVars = self.vars union that.vars
     newVars.view.map {
       case a if self.containsAxis(a) && that.containsAxis(a) =>
@@ -94,8 +94,8 @@ class CaseCube(val underlying: Map[Axis, Set[String]]) {
 
 }
 
-object CaseCube {
+object CaseTensor {
 
-  def apply(underlying: Map[Axis, Set[String]]) = new CaseCube(underlying)
+  def apply(underlying: Map[Axis, Set[String]]) = new CaseTensor(underlying)
 
 }

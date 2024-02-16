@@ -14,16 +14,16 @@ import hypermake.syntax.ast._
   * @param inheritedArgs
   */
 case class Cls(
-    name: String,
-    params: Map[String, PointedCube[Value]],
-    obj: Obj,
-    inheritedArgs: Map[String, PointedCube[Value]] = Map()
+                name: String,
+                params: Map[String, PointedTensor[Value]],
+                obj: Obj,
+                inheritedArgs: Map[String, PointedTensor[Value]] = Map()
 ) {
-  def withNewArgs(args: Map[String, PointedCube[Value]]): Cls = {
+  def withNewArgs(args: Map[String, PointedTensor[Value]]): Cls = {
     val newObj = Obj.fromDefs(obj.defs.map {
-      case Definition(name, pct: PointedCubeTask) =>
+      case Definition(name, pct: PointedTaskTensor) =>
         Definition(name, pct.withNewArgs(args))
-      case Definition(name, pcp: PointedCubePackage) =>
+      case Definition(name, pcp: PointedPackageTensor) =>
         Definition(name, pcp.withNewArgs(args))
       case Definition(name, f: Func) =>
         Definition(name, f.withNewArgs(args))
@@ -34,7 +34,7 @@ case class Cls(
     Cls(name, params, newObj, inheritedArgs ++ args)
   }
 
-  def instantiate(args: Map[String, PointedCube[Value]]): Obj = {
+  def instantiate(args: Map[String, PointedTensor[Value]]): Obj = {
     val unboundParams = params.filterKeysE(a => !args.contains(a)).keySet
     if (unboundParams.nonEmpty)
       throw new ParametersUnboundException(unboundParams, name)

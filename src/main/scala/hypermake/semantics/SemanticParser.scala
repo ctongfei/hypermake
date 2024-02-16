@@ -63,8 +63,8 @@ class SemanticParser(implicit val ctx: Context) {
 //    }
 //  }
 
-  implicit object ParseCaseCube extends Denotation[AxisIndices, CaseCube] {
-    def denotation(is: AxisIndices): CaseCube = CaseCube {
+  implicit object ParseCaseCube extends Denotation[AxisIndices, CaseTensor] {
+    def denotation(is: AxisIndices): CaseTensor = CaseTensor {
       is.map {
         case (a, Keys(ks)) => Axis(a.!) -> ks
         case (a, Star())   => Axis(a.!) -> getAxis(Axis(a.!)) // *: all values in axis a
@@ -77,10 +77,10 @@ class SemanticParser(implicit val ctx: Context) {
   }
 
   implicit object ParseValRef
-      extends ContextualDenotation[(Map[String, PointedCube[Value]], Env), ValRef, PointedCube[Value]] {
+      extends ContextualDenotation[(Map[String, PointedTensor[Value]], Env), ValRef, PointedTensor[Value]] {
     def defaultContext = (Map(), Env.local)
 
-    def denotation(r: ValRef, localsEnv: (Map[String, PointedCube[Value]], Env)): PointedCube[Value] = {
+    def denotation(r: ValRef, localsEnv: (Map[String, PointedTensor[Value]], Env)): PointedTensor[Value] = {
       val name = r.name.!
       val indices = r.indices.!
       val output = r.output.map(_.!)
@@ -105,18 +105,18 @@ class SemanticParser(implicit val ctx: Context) {
     }
   }
 
-  implicit object ParseStringLiteral extends Denotation[StringLiteral, PointedCube[Value]] {
+  implicit object ParseStringLiteral extends Denotation[StringLiteral, PointedTensor[Value]] {
     def denotation(sl: StringLiteral) = {
       val env = sl.envModifier.!(null) // no env modifier means pure input
       val v = if (env eq null) Value.Pure(sl.value) else Value.Input(sl.value, env)
-      PointedCube.Singleton(v)
+      PointedTensor.Singleton(v)
     }
   }
 
-  implicit object ParseDictLiteral extends Denotation[DictLiteral, PointedCube[Value]] {
+  implicit object ParseDictLiteral extends Denotation[DictLiteral, PointedTensor[Value]] {
     def denotation(dl: DictLiteral) = {
       val DictLiteral(axis, assignments) = dl
-      PointedCube.OfNestedMap(
+      PointedTensor.OfNestedMap(
         axis.!,
         assignments.mapValuesE(ParseExpr.denotation(_, (Map(), Env("")))).pointed(getAxis(axis.!).default)
       )
@@ -145,10 +145,10 @@ class SemanticParser(implicit val ctx: Context) {
 //  }
 
   implicit object ParseExpr
-      extends ContextualDenotation[(Map[String, PointedCube[Value]], Env), Expr, PointedCube[Value]] {
+      extends ContextualDenotation[(Map[String, PointedTensor[Value]], Env), Expr, PointedTensor[Value]] {
     def defaultContext = (Map(), Env.local)
 
-    def denotation(e: Expr, localsEnv: (Map[String, PointedCube[Value]], Env)) = e match {
+    def denotation(e: Expr, localsEnv: (Map[String, PointedTensor[Value]], Env)) = e match {
       case sl: StringLiteral => sl.!
       case dl: DictLiteral   => dl.!
       case vr: ValRef        => vr.!(localsEnv)
@@ -156,32 +156,32 @@ class SemanticParser(implicit val ctx: Context) {
   }
 
   implicit object ParseFuncCallImpl
-      extends ContextualDenotation[(Map[String, PointedCube[Value]], Env), FuncCallImpl, PointedCube[Script]] {
+      extends ContextualDenotation[(Map[String, PointedTensor[Value]], Env), FuncCallImpl, PointedTensor[Script]] {
     def defaultContext = (Map(), Env.local)
 
-    def denotation(impl: FuncCallImpl, localParamsEnv: (Map[String, PointedCube[Value]], Env)) = {
+    def denotation(impl: FuncCallImpl, localParamsEnv: (Map[String, PointedTensor[Value]], Env)) = {
       val func = root.functions(impl.call.name.!)
       val funcArgs = impl.call.args
         .map { case (p, (_, a)) => p.! -> a.!(localParamsEnv) }
-      func.reify(funcArgs + (func.inputScript -> PointedCube.Singleton(Value.Pure(runtime.nullFile)))).output
+      func.reify(funcArgs)
     }
   }
 
-  implicit object ParseScriptImpl extends Denotation[ScriptImpl, PointedCube[Script]] {
-    def denotation(impl: ScriptImpl) = PointedCube.Singleton(impl.script.!)
+  implicit object ParseScriptImpl extends Denotation[ScriptImpl, PointedTensor[Script]] {
+    def denotation(impl: ScriptImpl) = PointedTensor.Singleton(impl.script.!)
   }
 
   implicit object ParseImpl
-      extends ContextualDenotation[(Map[String, PointedCube[Value]], Env), TaskImpl, PointedCube[Script]] {
+      extends ContextualDenotation[(Map[String, PointedTensor[Value]], Env), TaskImpl, PointedTensor[Script]] {
     def defaultContext = (Map(), Env("local"))
 
-    def denotation(impl: TaskImpl, localParamsEnv: (Map[String, PointedCube[Value]], Env)) = impl match {
+    def denotation(impl: TaskImpl, localParamsEnv: (Map[String, PointedTensor[Value]], Env)) = impl match {
       case impl: FuncCallImpl => impl.!(localParamsEnv)
       case impl: ScriptImpl   => impl.!
     }
   }
 
-  implicit object ParseFuncCall extends Denotation[ast.Call, PointedCubeCall] {
+  implicit object ParseFuncCall extends Denotation[ast.Call, PointedTensor[Script]] {
     def denotation(fc: ast.Call) = {
       val f = root.functions(fc.name.!)
       val args = fc.args.map { case (k, (_, v)) => k.! -> v.!! }
@@ -189,22 +189,26 @@ class SemanticParser(implicit val ctx: Context) {
     }
   }
 
-  implicit object ParseDecoratorCall extends Denotation[DecoratorCall, PointedCubeCall] {
-    def denotation(dc: DecoratorCall) = dc.call.!
+  implicit object ParseDecoratorCall extends Denotation[ast.Decoration, PointedTensorDecorator] {
+    def denotation(dc: ast.Decoration) = {
+      val obj = root.objects(dc.obj.!)
+      PointedTensorDecorator.fromObj(obj)
+    }
   }
 
-  implicit object ParseFuncDef extends Denotation[FuncDef, Definition[Func]] {
+  implicit object ParseFuncDef extends Denotation[FuncDef, Definition[PointedFuncTensor]] {
     def denotation(fd: FuncDef) = {
-      val FuncDef(name, params, input, inputName, impl) = fd
+      val FuncDef(name, params, impl) = fd
       val ps = params.map { case (k, (_, v)) => k.! -> v.!! }
+      val implTensor = impl.!()
       Definition(
         name.!,
-        Func(name.!, ps, input.!, inputName.value, impl.!())
+        new PointedFuncTensor(name.!, implTensor.cases, ps.keySet, implTensor)
       )
     }
   }
 
-  implicit object ParsePackageDef extends Denotation[PackageDef, Definition[PointedCubePackage]] {
+  implicit object ParsePackageDef extends Denotation[PackageDef, Definition[PointedPackageTensor]] {
     def denotation(pd: PackageDef) = {
       val PackageDef(decorators, name, inputs, output, impl) = pd
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
@@ -212,7 +216,7 @@ class SemanticParser(implicit val ctx: Context) {
       val axes = (inputParams ++ outputParams).values.map(_.cases.vars).fold(Set())(_ union _)
       Definition(
         name.!,
-        PointedCubePackage(
+        PointedPackageTensor(
           name = name.!,
           cases = allCases.filterVars(axes),
           inputs = inputParams,
@@ -224,7 +228,7 @@ class SemanticParser(implicit val ctx: Context) {
     }
   }
 
-  implicit object ParseTaskDef extends Denotation[TaskDef, Definition[PointedCubeTask]] {
+  implicit object ParseTaskDef extends Denotation[TaskDef, Definition[PointedTaskTensor]] {
     def denotation(td: TaskDef) = {
       val TaskDef(decorators, name, env, inputs, outputs, impl) = td
       val taskEnv = env.!!
@@ -240,7 +244,7 @@ class SemanticParser(implicit val ctx: Context) {
       val axes = (callParamAxes ++ inputParamAxes).fold(Set())(_ union _)
       Definition(
         name.!,
-        new PointedCubeTask(
+        new PointedTaskTensor(
           name.!,
           taskEnv,
           allCases.filterVars(axes),
@@ -259,11 +263,11 @@ class SemanticParser(implicit val ctx: Context) {
 //    def denotation(tr: TaskRef1) = getTask(tr.name.!).select(tr.indices.!)
 //  }
 
-  implicit object ParseTaskRefN extends Denotation[TaskRef, Cube[PointedCube[Task]]] {
+  implicit object ParseTaskRefN extends Denotation[TaskRef, Tensor[PointedTensor[Task]]] {
     def denotation(tr: TaskRef) = root.tasks(tr.name.!).currySelectMany(tr.indices.!)
   }
 
-  implicit object ParseValDef extends Denotation[ValDef, Definition[PointedCube[Value]]] {
+  implicit object ParseValDef extends Denotation[ValDef, Definition[PointedTensor[Value]]] {
     def denotation(vd: ValDef) = {
       val ValDef(id, value) = vd
       Definition(id.!, value.!!)
@@ -294,7 +298,7 @@ class SemanticParser(implicit val ctx: Context) {
     * @return
     *   All declared axes; fail if there is any axis mis-alignments.
     */
-  def getAllCases(stmts: Iterable[Statement]): PointedCaseCube = {
+  def getAllCases(stmts: Iterable[Statement]): PointedCaseTensor = {
     val axesOccurrences: Iterable[(Axis, Iterable[String])] =
       stmts.view.flatMap(_.recursiveChildren).collect { case DictLiteral(axisName, assignments) =>
         (axisName.!, assignments.keys)
@@ -310,7 +314,7 @@ class SemanticParser(implicit val ctx: Context) {
         else throw AxesAlignmentException(axis, keys0, keys.find(_ != keys0).get)
       }
       .toMap
-    PointedCaseCube(axes)
+    PointedCaseTensor(axes)
   }
 
   def semanticParse(stmts: Iterable[Statement], topLevel: Boolean = false): Obj = {

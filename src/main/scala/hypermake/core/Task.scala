@@ -17,23 +17,23 @@ class Task(
     val inputEnvs: Map[String, Env],
     val outputFileNames: Map[String, Value],
     val outputEnvs: Map[String, Env],
-    val decorators: Seq[Call],
+    val decorators: Seq[Obj],
     val rawScript: Script
 )(implicit ctx: Context)
     extends Job()(ctx) {}
 
-class PointedCubeTask(
+class PointedTaskTensor(
     val name: String,
     val env: Env,
-    val cases: PointedCaseCube,
-    val inputs: Map[String, PointedCube[Value]],
+    val cases: PointedCaseTensor,
+    val inputs: Map[String, PointedTensor[Value]],
     val inputEnvs: Map[String, Env],
-    val outputNames: Map[String, PointedCube[Value]],
+    val outputNames: Map[String, PointedTensor[Value]],
     val outputEnvs: Map[String, Env],
-    val decorators: Seq[PointedCube[Call]],
-    val script: PointedCube[Script]
+    val decorators: Seq[Obj],
+    val script: PointedTensor[Script]
 )(implicit ctx: Context)
-    extends PointedCube[Task] {
+    extends PointedTensor[Task] {
   self =>
 
   def get(c: Case): Option[Task] = {
@@ -41,31 +41,31 @@ class PointedCubeTask(
       val cc = cases.normalizeCase(c)
       val is = inputs.mapValuesE(_.select(c).default)
       val os = outputNames.mapValuesE(_.select(c).default)
-      val calls = decorators.map(_.select(c).default)
       val scr = script.select(c).default
-      Some(new Task(name, env, cc, is, inputEnvs, os, outputEnvs, calls, scr))
+      Some(new Task(name, env, cc, is, inputEnvs, os, outputEnvs, decorators, scr))
     } else None
   }
 
   def dependentTaskCubes(implicit ctx: Context) = {
     val allTaskNames = inputs.values.flatMap { pcv =>
       pcv.allElements.flatMap(_.dependencies.map(_.name).toSet)
-    } ++ decorators.flatMap { pcc =>
+    }
+    val decoratorTaskNames = decorators.flatMap { pcc =>
       pcc.allElements.flatMap(_.args.values.collect { case Value.Output(_, _, j) =>
         j.name
       })
     }
-    allTaskNames.map(k => ctx.root.tasks(k))
+    (allTaskNames ++ decoratorTaskNames).map(k => ctx.root.tasks(k))
   }
 
-  def withNewArgs(args: Map[String, PointedCube[Value]]): PointedCubeTask = {
+  def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedTaskTensor = {
     val outScript = script.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedCubeTask(name, env, cases, inputs, inputEnvs, outputNames, outputEnvs, decorators, outScript)
+    new PointedTaskTensor(name, env, cases, inputs, inputEnvs, outputNames, outputEnvs, decorators, outScript)
   }
 
   override def equals(obj: Any) = obj match {
-    case obj: PointedCubeTask => this.name == obj.name
-    case _                    => false
+    case obj: PointedTaskTensor => this.name == obj.name
+    case _                      => false
   }
 
   override def hashCode() = name.hashCode()

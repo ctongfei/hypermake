@@ -5,7 +5,7 @@ import hypermake.syntax.ast.Identifier
 
 object ParameterizedTest extends App {
 
-  import PointedCube._
+  import PointedTensor._
 
   val c = of(
     "lang",

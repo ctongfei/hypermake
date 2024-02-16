@@ -6,7 +6,7 @@ import zio.console._
 import hypermake.cli.CmdLineAST._
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
-import hypermake.core.{Job, PointedCubeTask}
+import hypermake.core.{Job, PointedTaskTensor}
 import hypermake.execution.{Executor, RuntimeConfig}
 import hypermake.semantics.{Context, SemanticParser}
 import hypermake.syntax.{Expressions, Statements}
@@ -80,7 +80,7 @@ object Main extends App {
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
 
-        def showTaskCube(pct: PointedCubeTask) = {
+        def showTaskCube(pct: PointedTaskTensor) = {
           val name = if (pct.name contains "@") BU(pct.name) else B(pct.name)
           "• " + name + (if (pct.vars.isEmpty) "" else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
         }
@@ -104,7 +104,7 @@ object Main extends App {
                   )
                   _ <- putStrLn(B("\nTasks:"))
                   s <- {
-                    val g = Graph.explore[PointedCubeTask](
+                    val g = Graph.explore[PointedTaskTensor](
                       ctx.root.tasks.values,
                       _.dependentTaskCubes(ctx)
                     )

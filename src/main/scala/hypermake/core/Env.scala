@@ -187,7 +187,7 @@ object Env {
     override def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
       proc <- getScriptByName(s"copy_from_${srcEnv}_to_local")
         .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally()
+        .executeLocally()(ctx.runtime, std)
       exitCode <- proc.exitCode
       u <- if (exitCode.code == 0) ZIO.succeed(()) else ZIO.fail(DataTransferFailedException(srcEnv.name, src))
     } yield u
@@ -275,7 +275,7 @@ object Env {
     } yield u
 
     def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}_execute")
+      process <- getScriptByName(s"${name}.execute")
         .withArgs(
           "command" ->
             s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args.mkString(" ")}"

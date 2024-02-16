@@ -140,8 +140,8 @@ object Expressions {
   } map { case (funcName, inputs) => Call(funcName, inputs) }
 
   def decoratorCall[$: P] = P {
-    "@" ~ call
-  } map DecoratorCall
+    "@" ~ identifierPath
+  } map Decoration
 
   def decoratorCalls[$: P] =
     decoratorCall.rep map (cs => DecoratorCalls(cs.reverse)) // reverse so that the first decorator is the outermost

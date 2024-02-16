@@ -63,7 +63,7 @@ object Value {
     def dependencies = Set(job)
   }
 
-  case class Multiple(cases: Cube[Value], env: Env)(implicit runtime: RuntimeConfig) extends EnvDependent {
+  case class Multiple(cases: Tensor[Value], env: Env)(implicit runtime: RuntimeConfig) extends EnvDependent {
     override def value = cases.map(_.value).allElements.mkString(runtime.IFS_CHAR)
 
     def absValue(implicit runtime: RuntimeConfig) = cases.map(_.absValue).allElements.mkString(runtime.IFS_CHAR)

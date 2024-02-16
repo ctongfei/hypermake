@@ -30,7 +30,7 @@ case class UndefinedException(kind: String, name: String) extends Exception(s"$k
 case class OutputNotDefinedException(name: String, task: Task)
     extends Exception(s"Output “$name” not defined in task “$task”.")
 
-case class AmbiguousOutputException(task: PointedCubeTask)
+case class AmbiguousOutputException(task: PointedTaskTensor)
     extends Exception(s"There are more than one output of task “$task”: it is unclear which one is specified.")
 
 case class NonStringForOutputException(output: String)
@@ -42,3 +42,8 @@ case class JobFailedException(j: Job) extends Exception(s"Job ${j.colorfulString
 
 case class DataTransferFailedException(src: String, name: String)
     extends Exception(s"Failed to transfer file $name from “$src”.")
+
+case class ObjectIsNotDecoratorException(obj: Obj)
+    extends Exception(
+      s"Object “$obj” cannot be used as a decorator since it does not have a member unary function “apply”."
+    )

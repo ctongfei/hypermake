@@ -6,7 +6,7 @@ import scala.collection._
 
 /** Represents a collection of slices of tasks whose execution can be invoked from the command line.
   */
-class Plan(val targets: Seq[Cube[Job]]) {
+class Plan(val targets: Seq[Tensor[Job]]) {
 
   /** Performs a traversal to resolve all dependent tasks of a given plan.
     *

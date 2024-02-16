@@ -19,10 +19,9 @@ class Statements(indent: Int) {
   } map { case (id, v) => ValDef(id, v) }
 
   def funcDef[$: P] = P {
-    Lexical.token("def") ~/ identifier ~ assignments ~ ("<-" ~ identifier ~ "=" ~ stringLiteral).? ~ scriptImpl
-  } map { case (name, params, inputScript, impl) =>
-    val (inputName, inputFilename) = inputScript.getOrElse(Identifier("NULL") -> StringLiteral("/dev/null"))
-    FuncDef(name, params, inputName, inputFilename, impl)
+    Lexical.token("def") ~/ identifier ~ assignments ~ scriptImpl
+  } map { case (name, params, impl) =>
+    FuncDef(name, params, impl)
   }
 
   def taskDef[$: P] = P {

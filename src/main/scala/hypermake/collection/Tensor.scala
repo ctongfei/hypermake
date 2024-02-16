@@ -6,20 +6,20 @@ import cats.kernel.CommutativeMonoid
 import scala.collection._
 
 /** A value of type `A` parameterized by arbitrary string-keyed string values (i.e., a string-to-string map). This is a
-  * ''non-pointed'' version of [[PointedCube]].
+  * ''non-pointed'' version of [[PointedTensor]].
   *
   * @tparam A
   *   Element type of the cube
   */
-trait Cube[+A] {
+trait Tensor[+A] {
   self =>
 
-  import Cube._
+  import Tensor._
 
   /** The map of all cases of this cube: with the key being the axis identifier and the value being the set of values it
     * can take.
     */
-  def cases: CaseCube
+  def cases: CaseTensor
 
   def get(indices: Case): Option[A]
 
@@ -27,26 +27,26 @@ trait Cube[+A] {
 
   /** Selects a sub-cube based on the given indices. All indexed axes disappear in the returning cube.
     */
-  def select(c: Case): Cube[A] = new Selected(self, c)
+  def select(c: Case): Tensor[A] = new Selected(self, c)
 
-  def currySelectMany(cc: CaseCube): Cube[Cube[A]] =
+  def currySelectMany(cc: CaseTensor): Tensor[Tensor[A]] =
     curry(vars diff cc.vars).selectMany(cc)
 
   def vars = cases.vars
 
   /** ([S..., T...] => A) => ([S...] => [T...] => A)
     */
-  def curry(innerAxes: Set[Axis]): Cube[Cube[A]] = new Curried(self, innerAxes)
+  def curry(innerAxes: Set[Axis]): Tensor[Tensor[A]] = new Curried(self, innerAxes)
 
   /** Selects a sub-cube based on the given indices set. Indexed axes are retained in the returning cube.
     */
-  def selectMany(cc: CaseCube): Cube[A] = new SelectedMany(self, cc)
+  def selectMany(cc: CaseTensor): Tensor[A] = new SelectedMany(self, cc)
 
-  def product[B](that: Cube[B]): Cube[(A, B)] = productWith(that)((_, _))
+  def product[B](that: Tensor[B]): Tensor[(A, B)] = productWith(that)((_, _))
 
-  def productWith[B, C](that: Cube[B])(f: (A, B) => C): Cube[C] = new ProductWith(self, that, f)
+  def productWith[B, C](that: Tensor[B])(f: (A, B) => C): Tensor[C] = new ProductWith(self, that, f)
 
-  def map[B](f: A => B): Cube[B] = new Mapped(self, f)
+  def map[B](f: A => B): Tensor[B] = new Mapped(self, f)
 
   def allPairs: Iterable[(Case, A)] = allCases.view.map(i => i -> get(i).get)
 
@@ -69,28 +69,28 @@ trait Cube[+A] {
 
 }
 
-object Cube {
+object Tensor {
 
   /** `Cube` forms a commutative applicative functor.
     */
-  implicit object Applicative extends CommutativeApplicative[Cube] {
-    def pure[A](x: A) = PointedCube.Singleton(x)
+  implicit object Applicative extends CommutativeApplicative[Tensor] {
+    def pure[A](x: A) = PointedTensor.Singleton(x)
 
-    def ap[A, B](ff: Cube[A => B])(fa: Cube[A]) = ff.productWith(fa)(_(_))
+    def ap[A, B](ff: Tensor[A => B])(fa: Tensor[A]) = ff.productWith(fa)(_(_))
 
-    override def map[A, B](fa: Cube[A])(f: A => B) = fa map f
+    override def map[A, B](fa: Tensor[A])(f: A => B) = fa map f
 
-    override def product[A, B](fa: Cube[A], fb: Cube[B]) = fa product fb
+    override def product[A, B](fa: Tensor[A], fb: Tensor[B]) = fa product fb
 
   }
 
-  class Mapped[A, B](self: Cube[A], f: A => B) extends Cube[B] {
+  class Mapped[A, B](self: Tensor[A], f: A => B) extends Tensor[B] {
     def cases = self.cases
 
     def get(c: Case) = (self get c) map f
   }
 
-  class ProductWith[A, B, C](self: Cube[A], that: Cube[B], f: (A, B) => C) extends Cube[C] {
+  class ProductWith[A, B, C](self: Tensor[A], that: Tensor[B], f: (A, B) => C) extends Tensor[C] {
     val cases = self.cases outerJoin that.cases
 
     def get(c: Case) = for {
@@ -99,7 +99,7 @@ object Cube {
     } yield f(a, b)
   }
 
-  class Curried[A](self: Cube[A], innerVars: Set[Axis]) extends Cube[Cube[A]] {
+  class Curried[A](self: Tensor[A], innerVars: Set[Axis]) extends Tensor[Tensor[A]] {
     val cases = self.cases.filterVars(outerVars)
     private[this] val outerVars = self.vars.filterNot(innerVars)
 
@@ -110,13 +110,13 @@ object Cube {
     }
   }
 
-  class Selected[A](self: Cube[A], c: Case) extends Cube[A] {
+  class Selected[A](self: Tensor[A], c: Case) extends Tensor[A] {
     def cases = self.cases.select(c)
 
     def get(d: Case) = self.get(c ++ d)
   }
 
-  class SelectedMany[A](self: Cube[A], cc: CaseCube) extends Cube[A] {
+  class SelectedMany[A](self: Tensor[A], cc: CaseTensor) extends Tensor[A] {
     val cases = self.cases.selectMany(cc)
 
     def get(c: Case) = {

@@ -13,7 +13,7 @@ import hypermake.util.Escaper._
 class Context(implicit val runtime: RuntimeConfig) {
 
   private[hypermake] var root: Obj = new Obj
-  private[hypermake] var allCases: PointedCaseCube = PointedCaseCube.singleton
+  private[hypermake] var allCases: PointedCaseTensor = PointedCaseTensor.singleton
   private[hypermake] val localEnv: Env = new Env.Local()(this)
   private[hypermake] val envTable = mutable.HashMap[String, Env]("local" -> localEnv)
 

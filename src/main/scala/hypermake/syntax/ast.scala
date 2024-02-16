@@ -250,13 +250,13 @@ object ast {
     def children = Iterable(name, args)
   }
 
-  case class DecoratorCall(call: Call) extends Node {
-    def str = s"@$call\n"
+  case class Decoration(obj: IdentifierPath) extends Node {
+    def str = s"@$obj\n"
 
-    def children = Iterable(call)
+    def children = Iterable(obj)
   }
 
-  case class DecoratorCalls(calls: Seq[DecoratorCall]) extends Node {
+  case class DecoratorCalls(calls: Seq[Decoration]) extends Node {
     def str = calls.reverse.mkString("")
 
     def children = calls
@@ -337,11 +337,10 @@ object ast {
     def children = decorators.calls ++ Iterable(name, inputs, output, impl)
   }
 
-  case class FuncDef(name: Identifier, params: Assignments, input: Identifier, inputName: StringLiteral, impl: TaskImpl)
-      extends Def {
-    def str = s"""def $name($params) <- ($input = "$inputName")$impl"""
+  case class FuncDef(name: Identifier, params: Assignments, impl: TaskImpl) extends Def {
+    def str = s"""def $name($params)$impl"""
 
-    def children = Iterable(name, params, input, impl)
+    def children = Iterable(name, params, impl)
   }
 
   case class PlanDef(name: Identifier, taskRefs: Seq[TaskRef]) extends Def {

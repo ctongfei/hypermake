@@ -1,45 +1,54 @@
 package hypermake.core
 
+import scala.collection._
+
 import cats.instances.map._
 import cats.syntax.unorderedTraverse._
 import hypermake.collection._
-import hypermake.semantics.Context
-import hypermake.util._
+import hypermake.exception.ParametersUnboundException
 
-import scala.collection._
-
-/** Defines a Hypermake function. A function takes in a script, optionally a set of parameters, and outputs a script. A
-  * function can be directly used as an implementation or a task, or can be used as a decorator to wrap around a task.
-  */
 case class Func(
     name: String,
-    params: Map[String, PointedCube[Value]],
-    inputScript: String,
-    inputScriptFilename: String,
-    impl: PointedCube[Script]
+    params: Set[String],
+    impl: Script
 ) {
 
   /** Constructs the complete script with the unbound variables assigned.
     */
-  def reify(args: Map[String, PointedCube[Value]])(implicit ctx: Context) = {
+  def reify(args: Map[String, Value]): Script = {
     val reified = withNewArgs(args)
-    val unboundedParams = reified.params
-    val axes = args.values.map(_.cases.vars).fold(Set())(_ union _)
-    new PointedCubeCall(
-      ctx.allCases.filterVars(axes),
-      args ++ unboundedParams,
-      inputScript,
-      inputScriptFilename,
-      reified.impl
-    )
+    if (reified.params.nonEmpty)
+      throw new ParametersUnboundException(reified.params, reified.name)
+    reified.impl
   }
 
-  /** Fills in some of the parameters of this function (currying).
+  /** Fills in some of the parameters of this function (partial application).
     */
-  def withNewArgs(args: Map[String, PointedCube[Value]]): Func = {
-    val unboundParams = params.filterKeysE(a => !args.contains(a))
+  def withNewArgs(args: Map[String, Value]): Func = {
+    val unboundParams = params.filter(a => !args.contains(a))
+    Func(name, unboundParams, impl.withNewArgs(args))
+  }
+
+}
+
+class PointedFuncTensor(
+    val name: String,
+    val cases: PointedCaseTensor,
+    val params: Set[String],
+    val impl: PointedTensor[Script]
+) extends PointedTensor[Func] { self =>
+
+  def get(c: Case): Option[Func] = {
+    if (cases containsCase c) {
+      val scr = impl.select(c).default
+      Some(Func(name, params, scr))
+    } else None
+  }
+
+  def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedFuncTensor = {
+    val unboundParams = params.filter(a => !args.contains(a))
     val outScript = impl.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    Func(name, unboundParams, inputScript, inputScriptFilename, outScript)
+    new PointedFuncTensor(name, cases, unboundParams, outScript)
   }
 
 }
