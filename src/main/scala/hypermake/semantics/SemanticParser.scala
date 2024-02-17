@@ -163,7 +163,7 @@ class SemanticParser(implicit val ctx: Context) {
       val func = root.functions(impl.call.name.!)
       val funcArgs = impl.call.args
         .map { case (p, (_, a)) => p.! -> a.!(localParamsEnv) }
-      func.reify(funcArgs)
+      func.withNewArgs(funcArgs).impl
     }
   }
 
@@ -185,14 +185,14 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(fc: ast.Call) = {
       val f = root.functions(fc.name.!)
       val args = fc.args.map { case (k, (_, v)) => k.! -> v.!! }
-      f.reify(args)
+      f.withNewArgs(args).impl
     }
   }
 
-  implicit object ParseDecoratorCall extends Denotation[ast.Decoration, PointedTensorDecorator] {
+  implicit object ParseDecoratorCall extends Denotation[ast.Decoration, Decorator] {
     def denotation(dc: ast.Decoration) = {
       val obj = root.objects(dc.obj.!)
-      PointedTensorDecorator.fromObj(obj)
+      Decorator.fromObj(obj)
     }
   }
 
@@ -214,13 +214,14 @@ class SemanticParser(implicit val ctx: Context) {
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
       val outputParams = Assignments(Seq(output)).map { case (k, (_, v)) => k.! -> v.!! }
       val axes = (inputParams ++ outputParams).values.map(_.cases.vars).fold(Set())(_ union _)
+      val outputFileName = outputParams.head._1 -> outputParams.head._2.map(_.asIfPure)
       Definition(
         name.!,
         PointedPackageTensor(
           name = name.!,
           cases = allCases.filterVars(axes),
           inputs = inputParams,
-          outputs = outputParams.head,
+          outputFileName = outputFileName,
           decorators = decorators.calls.map(_.!),
           rawScript = impl.!
         )
@@ -235,12 +236,12 @@ class SemanticParser(implicit val ctx: Context) {
       val inputEnvs = inputs.map { case (k, (em, _)) => k.! -> em.!! }
       val outputEnvs = outputs.map { case (k, (em, _)) => k.! -> em.!! }
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!((Map(), taskEnv)) }
-      val outputParams = outputs.map { case (k, (_, v)) => k.! -> v.!! }
+      val outputParams = outputs.map { case (k, (_, v)) => k.! -> v.!!.map(_.asIfPure) }
       val localParams = inputParams ++ outputParams
       val script = impl.!((localParams, taskEnv))
       val calls = decorators.calls.map(_.!)
       val inputParamAxes = inputParams.values.map(_.cases.vars)
-      val callParamAxes = calls.map(_.cases.vars)
+      val callParamAxes = calls.map(_.script.cases.vars)
       val axes = (callParamAxes ++ inputParamAxes).fold(Set())(_ union _)
       Definition(
         name.!,

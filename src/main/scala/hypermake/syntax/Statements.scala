@@ -3,7 +3,7 @@ package hypermake.syntax
 import scala.collection._
 import fastparse._
 import ast._
-import hypermake.exception.ParsingException
+
 
 /** The statement grammar of Hypermake. These are sensitive to newlines and indentations, following the Python format.
   */

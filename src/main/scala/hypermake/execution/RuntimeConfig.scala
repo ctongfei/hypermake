@@ -56,7 +56,7 @@ class RuntimeConfig private (
     else "/dev/null"
   }
 
-  def tempFile(prefix: String = "", suffix: String = "") =
+  def newTempFile(prefix: String = "", suffix: String = "") =
     JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
   /** Resolves a script file from `HYPERMAKE_PATH`.

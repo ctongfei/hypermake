@@ -20,17 +20,19 @@ case class Cls(
                 inheritedArgs: Map[String, PointedTensor[Value]] = Map()
 ) {
   def withNewArgs(args: Map[String, PointedTensor[Value]]): Cls = {
-    val newObj = Obj.fromDefs(obj.defs.map {
-      case Definition(name, pct: PointedTaskTensor) =>
-        Definition(name, pct.withNewArgs(args))
-      case Definition(name, pcp: PointedPackageTensor) =>
-        Definition(name, pcp.withNewArgs(args))
-      case Definition(name, f: Func) =>
-        Definition(name, f.withNewArgs(args))
-      case Definition(name, value: Cls) =>
-        Definition(name, value.withNewArgs(args))
-      case d: Definition[_] => d
-    })
+    val newObj = Obj.fromDefs(
+      obj.defs.map {
+        case Definition(name, pct: PointedTaskTensor) =>
+          Definition(name, pct.withNewArgs(args))
+        case Definition(name, pcp: PointedPackageTensor) =>
+          Definition(name, pcp.withNewArgs(args))
+        case Definition(name, pft: PointedFuncTensor) =>
+          Definition(name, pft.withNewArgs(args))
+        case Definition(name, value: Cls) =>
+          Definition(name, value.withNewArgs(args))
+        case d: Definition[_] => d  // values and objects
+      }
+    )
     Cls(name, params, newObj, inheritedArgs ++ args)
   }
 

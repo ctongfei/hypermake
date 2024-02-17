@@ -11,7 +11,7 @@ class Package(
                val name: String,
                val `case`: Case,
                val inputs: Map[String, Value],
-               val outputs: (String, Value),
+               val outputFileName: (String, Value.Pure),
                val decorators: Seq[Decorator],
                val rawScript: Script
 )(implicit ctx: Context) {
@@ -24,8 +24,8 @@ class Package(
       case _: Value.Pure          => Env("")
       case _: Value.PackageOutput => env
     },
-    outputFileNames = Map(outputs),
-    outputEnvs = Map(outputs._1 -> env),
+    outputFileNames = Map(outputFileName),
+    outputEnvs = Map(outputFileName._1 -> env),
     decorators = decorators, // TODO: what if decorators refer to env-dependent values?
     rawScript = rawScript
   )
@@ -39,8 +39,8 @@ case class PointedPackageTensor(
                                  name: String,
                                  cases: PointedCaseTensor,
                                  inputs: Map[String, PointedTensor[Value]],
-                                 outputs: (String, PointedTensor[Value]),
-                                 decorators: Seq[PointedTensorDecorator],
+                                 outputFileName: (String, PointedTensor[Value.Pure]),
+                                 decorators: Seq[Decorator],
                                  rawScript: PointedTensor[Script]
 )(implicit ctx: Context)
     extends PointedTensor[Package] {
@@ -52,8 +52,8 @@ case class PointedPackageTensor(
           name = name,
           `case` = cases.normalizeCase(c),
           inputs = inputs.mapValuesE(_.select(c).default),
-          outputs = (outputs._1, outputs._2.select(c).default),
-          decorators = decorators.map(_.select(c).default),
+          outputFileName = outputFileName._1 -> outputFileName._2.select(c).default,
+          decorators = decorators,
           rawScript = rawScript.select(c).default
         )
       )
@@ -68,15 +68,15 @@ case class PointedPackageTensor(
     cases,
     inputs,
     Map(),
-    Map(outputs),
-    Map(outputs._1 -> env),
+    Map(outputFileName),
+    Map(outputFileName._1 -> env),
     decorators,
     rawScript
   )
 
   def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedPackageTensor = {
     val outScript = rawScript.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedPackageTensor(name, cases, inputs, outputs, decorators, outScript)
+    PointedPackageTensor(name, cases, inputs, outputFileName, decorators, outScript)
   }
 
   def output: PointedTensor[Value.PackageOutput] = this map Value.PackageOutput

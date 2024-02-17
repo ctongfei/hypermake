@@ -39,18 +39,19 @@ abstract class Job(implicit ctx: Context) {
 
   def outputs: Map[String, Value.Output]
 
-  def decorators: Seq[Obj]
+  def decorators: Seq[Decorator]
 
   def rawScript: Script
 
+  /** Hypermake environment variables provided to each job. */
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson
   )
 
-  // Path relative to the output root of the job env.
-  lazy val path = s"${name.replace('.', env.separator)}${env.separator}$potentiallyHashedPercentEncodedCaseString"
+  /** Path relative to the output root of the job env. */
+  lazy val path = s"${name.replace('.', env./)}${env./}$potentiallyHashedPercentEncodedCaseString"
 
   lazy val absolutePath = env.resolvePath(path)
 
@@ -63,7 +64,7 @@ abstract class Job(implicit ctx: Context) {
   lazy val dependentJobs: Set[Job] =
     inputs.values.flatMap(_.dependencies).toSet
 
-  lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs ++ outputs)(runtime)
+  lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs ++ outputs)
 
   lazy val outputAbsolutePaths =
     outputs.keySet.makeMap { x => env.resolvePath(outputs(x).value, absolutePath) }
@@ -86,7 +87,7 @@ abstract class Job(implicit ctx: Context) {
   def checkOutputs(implicit std: StdSinks): HIO[Boolean] = {
     ZIO
       .collectAll {
-        for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputEnvs)
+        for ((_, (outputPath, outputEnv)) <- outputAbsolutePaths zipByKey outputs.mapValuesE(_.env))
           yield outputEnv.exists(outputPath)
       }
       .map(_.forall(identity))
@@ -96,15 +97,15 @@ abstract class Job(implicit ctx: Context) {
   /** Writes the script and decorating calls to the working directory. */
   def writeScript(linkedArgs: Map[String, String])(implicit std: StdSinks): HIO[Map[String, String]] = {
     // TODO: new behavior with obj decorators
-    val scriptNames = decorators.map(_.functions("apply").params.head._1)
     for {
-      finalScript <- ZIO.foldLeft(decorators zip scriptNames)(script) { case (scr, (c, name)) =>
-        env.write(absolutePath / name, scr.script) as c.functions("apply")(scr)
+      finalScript <- ZIO.foldLeft(decorators)(script) { case (scr, dec) =>
+        env.write(f"$absolutePath${env./}script.${scr.nestingLevel}", scr.script)
+          .as(dec(PointedTensor.Singleton(scr), env).get(`case`).get)
       } // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
 
       // Linked args are of the highest precedence since they are resolved from envs
-      mergedArgs = jobCaseArgs ++ finalScript.strArgs ++ linkedArgs
+      mergedArgs = jobCaseArgs ++ finalScript.strArgs(runtime) ++ linkedArgs
       _ <- env.write(
         absolutePath / "args",
         mergedArgs
@@ -146,7 +147,7 @@ abstract class Job(implicit ctx: Context) {
       _ <- cli.update(this, Status.Waiting)
       _ <- env.lock(absolutePath)
       _ <- cli.update(this, Status.Running)
-      _ <- ZIO.foreach_(outputAbsolutePaths zipByKey outputEnvs) { case (_, (p, e)) => e.touch(p) }
+      _ <- ZIO.foreach_(outputs) { case (_, o) => o.env.touch(o.value) }
       _ <- env.write(absolutePath / "exitcode", "0")
       hasOutputs <- checkOutputs
     } yield hasOutputs

@@ -3,11 +3,8 @@ package hypermake.collection
 import scala.collection._
 import hypermake.util.DefaultMapBase
 
-/** An identifier path in the format of "a.b.c".
-  *
-  * @param components
-  */
-case class Path(val components: List[String]) {
+/** An identifier path in the format of "a.b.c". */
+case class Path(components: List[String]) {
   override def toString = components.mkString(".")
 
   def head = components.head
@@ -17,6 +14,7 @@ case class Path(val components: List[String]) {
 
 }
 
+/** A prefix trie-based map whose keys are paths. */
 class PathMap[R, +A](root: R, children: R => Map[String, R], base: R => Map[String, A])
     extends DefaultMapBase[Path, A] {
 
@@ -38,9 +36,9 @@ class PathMap[R, +A](root: R, children: R => Map[String, R], base: R => Map[Stri
   def childrenIterator: Iterator[(Path, R)] = new Iterator[(Path, R)] {
     private[this] val stack = mutable.Stack[(List[String], R)](Nil -> root)
 
-    def hasNext = stack.nonEmpty
+    def hasNext: Boolean = stack.nonEmpty
 
-    def next() = {
+    def next(): (Path, R) = {
       val (path, obj) = stack.pop()
       val descendents = children(obj)
       stack.pushAll(descendents.map { case (k, v) => (k :: path) -> v })

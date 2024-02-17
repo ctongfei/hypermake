@@ -12,12 +12,10 @@ case class Axis(name: String) {
 
 object Axis {
 
-  implicit object Ordering extends Ordering[Axis] {
+  implicit object order extends Order[Axis] {
     def compare(x: Axis, y: Axis) = x.name compare y.name
   }
 
-  implicit object Order extends Order[Axis] {
-    def compare(x: Axis, y: Axis) = x.name compare y.name
-  }
+  implicit val ordering: Ordering[Axis] = order.toOrdering
 
 }

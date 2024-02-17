@@ -8,6 +8,8 @@ import scala.collection._
 
 case class ParsingException(failure: Parsed.Failure) extends Exception(s"Parsing error: \n${failure.trace().longMsg}")
 
+case class ValueNotPureException(value: String) extends Exception(s"Value “$value” is not pure.")
+
 case class AxesAlignmentException(name: Axis, v1: Seq[String], v2: Seq[String])
     extends Exception(
       s"Axis “$name” does not align in two occurrences: {${v1.mkString(", ")}} != {${v2.mkString(", ")}}"
@@ -34,7 +36,7 @@ case class AmbiguousOutputException(task: PointedTaskTensor)
     extends Exception(s"There are more than one output of task “$task”: it is unclear which one is specified.")
 
 case class NonStringForOutputException(output: String)
-    extends Exception(s"Only string literals are allowed for an output “$output”.")
+    extends Exception(s"Only string literals are allowed for the value of an output “$output”.")
 
 case class CyclicWorkflowException() extends Exception(s"Cyclic workflow detected.")
 
@@ -45,5 +47,6 @@ case class DataTransferFailedException(src: String, name: String)
 
 case class ObjectIsNotDecoratorException(obj: Obj)
     extends Exception(
-      s"Object “$obj” cannot be used as a decorator since it does not have a member unary function “apply”."
+      s"Object “$obj” cannot be used as a decorator since it does not have a unary member function “apply”."
     )
+    // TODO: should be obj.name

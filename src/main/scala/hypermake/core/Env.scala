@@ -180,14 +180,14 @@ object Env {
     def link(src: String, dst: String)(implicit std: StdSinks) = IO {
       val dstPath = Paths.get(dst)
       val relativePath = dstPath.getParent.relativize(Paths.get(src))
-      JFiles.deleteIfExists(dstPath);
+      JFiles.deleteIfExists(dstPath)
       JFiles.createSymbolicLink(dstPath, relativePath)
     }
 
     override def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
       proc <- getScriptByName(s"copy_from_${srcEnv}_to_local")
         .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally()(ctx.runtime, std)
+        .executeLocally(ctx.runtime.workDir)(ctx.runtime, std)
       exitCode <- proc.exitCode
       u <- if (exitCode.code == 0) ZIO.succeed(()) else ZIO.fail(DataTransferFailedException(srcEnv.name, src))
     } yield u
@@ -228,12 +228,12 @@ object Env {
       getValueByNameOpt(s"${name}.refresh_interval").map(_.toInt).getOrElse(5).seconds // by default, 5s
 
     def read(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.read").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"${name}.read").withArgs("file" -> f).executeLocally(ctx.runtime.workDir)
       stdout <- process.stdout.string
     } yield stdout
 
     def write(f: String, content: String)(implicit std: StdSinks) = {
-      val tempScriptFile = runtime.tempFile()
+      val tempScriptFile = runtime.newTempFile()
       for {
         _ <- IO {
           File(tempScriptFile).write(content)
@@ -243,34 +243,44 @@ object Env {
     }
 
     def mkdir(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.mkdir").withArgs("dir" -> f).executeLocally()
+      process <- getScriptByName(s"$name.mkdir")
+        .withArgs("dir" -> f)
+        .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit
     } yield u
 
     def exists(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.exists").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"$name.exists")
+        .withArgs("file" -> f)
+        .executeLocally(ctx.runtime.workDir)
       exitCode <- process.exitCode
     } yield exitCode.code == 0
 
     def link(src: String, dst: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.link").withArgs("src" -> src, "dst" -> dst).executeLocally()
+      process <- getScriptByName(s"${name}.link")
+        .withArgs("src" -> src, "dst" -> dst)
+        .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit
     } yield u
 
     def touch(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.touch").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"$name.touch")
+        .withArgs("file" -> f)
+        .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit
     } yield u
 
     def delete(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.delete").withArgs("file" -> f).executeLocally()
+      process <- getScriptByName(s"$name.delete")
+        .withArgs("file" -> f)
+        .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit
     } yield u
 
     def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"copy_from_${srcEnv}_to_$name")
         .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally()
+        .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit
     } yield u
 

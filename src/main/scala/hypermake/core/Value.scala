@@ -1,6 +1,7 @@
 package hypermake.core
 
 import hypermake.collection._
+import hypermake.exception.ValueNotPureException
 import hypermake.execution._
 
 import scala.collection._
@@ -19,6 +20,11 @@ sealed trait Value {
   def dependencies: Set[Job]
 
   override def toString = value
+
+  def asIfPure: Value.Pure = this match {
+    case x: Value.Pure => x
+    case _ => throw ValueNotPureException(value)
+  }
 }
 
 object Value {
@@ -34,7 +40,7 @@ object Value {
   }
 
   case class PackageOutput(pack: Package) extends EnvAgnostic {
-    def value = pack.outputs._2.value
+    def value = pack.outputFileName._2.value
 
     def absValue(implicit runtime: RuntimeConfig) = ???
 

@@ -5,7 +5,7 @@ import hypermake.util._
 
 import scala.collection._
 
-/** A [[Tensor]] but with default value for each axis. As a result, each `PointedCube[A]` value has a single default value
+/** A [[Tensor]] but with default value for each axis. As a result, each `PointedTensor[A]` value has a single default value
   * `A`, similar to a pointed set.
   *
   * @tparam A

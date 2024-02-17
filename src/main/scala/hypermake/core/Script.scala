@@ -36,7 +36,7 @@ case class Script(
     *   The working directory to run this temporary script.
     */
   def executeLocally(workDir: String)(implicit runtime: RuntimeConfig, std: StdSinks): HIO[Process] = {
-    val tempScriptFile = runtime.tempFile(prefix = "hypermake_temp_script")
+    val tempScriptFile = runtime.newTempFile(prefix = "hypermake_temp_script")
     // allows the case where the interpreter has arguments: python -v ...
     // TODO: proper handling of bash quotes
     val command = s"${runtime.shell} $tempScriptFile".split(' ')
@@ -56,15 +56,15 @@ case class Script(
   }
 
 }
-
-class PointedCubeScript(
-    val cases: PointedCaseTensor,
-    val script: String,
-    val args: Map[String, PointedTensor[Value]] = Map(),
-    val nestingLevel: Int = 0
-)(implicit runtime: RuntimeConfig)
-    extends PointedTensor[Script] {
-
-  def get(c: Case) = args.toMap.unorderedSequence.get(c).map(as => Script(script, as, nestingLevel))
-
-}
+//
+//class PointedCubeScript(
+//    val cases: PointedCaseTensor,
+//    val script: String,
+//    val args: Map[String, PointedTensor[Value]] = Map(),
+//    val nestingLevel: Int = 0
+//)(implicit runtime: RuntimeConfig)
+//    extends PointedTensor[Script] {
+//
+//  def get(c: Case) = args.toMap.unorderedSequence.get(c).map(as => Script(script, as, nestingLevel))
+//
+//}

@@ -15,12 +15,17 @@ class Task(
     val `case`: Case,
     val inputs: Map[String, Value],
     val inputEnvs: Map[String, Env],
-    val outputFileNames: Map[String, Value],
+    val outputFileNames: Map[String, Value.Pure],
     val outputEnvs: Map[String, Env],
-    val decorators: Seq[Obj],
+    val decorators: Seq[Decorator],
     val rawScript: Script
 )(implicit ctx: Context)
-    extends Job()(ctx) {}
+    extends Job()(ctx) {
+
+  def outputs: Map[String, Value.Output] = outputFileNames.keys.map { k =>
+    k -> Value.Output(outputFileNames(k).value, outputEnvs.getOrElse(k, env), this)
+  }.toMap
+}
 
 class PointedTaskTensor(
     val name: String,
@@ -28,9 +33,9 @@ class PointedTaskTensor(
     val cases: PointedCaseTensor,
     val inputs: Map[String, PointedTensor[Value]],
     val inputEnvs: Map[String, Env],
-    val outputNames: Map[String, PointedTensor[Value]],
+    val outputFileNames: Map[String, PointedTensor[Value.Pure]],
     val outputEnvs: Map[String, Env],
-    val decorators: Seq[Obj],
+    val decorators: Seq[Decorator],
     val script: PointedTensor[Script]
 )(implicit ctx: Context)
     extends PointedTensor[Task] {
@@ -40,7 +45,7 @@ class PointedTaskTensor(
     if (cases containsCase c) {
       val cc = cases.normalizeCase(c)
       val is = inputs.mapValuesE(_.select(c).default)
-      val os = outputNames.mapValuesE(_.select(c).default)
+      val os = outputFileNames.mapValuesE(_.select(c).default)
       val scr = script.select(c).default
       Some(new Task(name, env, cc, is, inputEnvs, os, outputEnvs, decorators, scr))
     } else None
@@ -50,8 +55,8 @@ class PointedTaskTensor(
     val allTaskNames = inputs.values.flatMap { pcv =>
       pcv.allElements.flatMap(_.dependencies.map(_.name).toSet)
     }
-    val decoratorTaskNames = decorators.flatMap { pcc =>
-      pcc.allElements.flatMap(_.args.values.collect { case Value.Output(_, _, j) =>
+    val decoratorTaskNames = decorators.flatMap { dec =>
+      dec.script.allElements.flatMap(_.args.values.collect { case Value.Output(_, _, j) =>
         j.name
       })
     }
@@ -60,7 +65,7 @@ class PointedTaskTensor(
 
   def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedTaskTensor = {
     val outScript = script.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedTaskTensor(name, env, cases, inputs, inputEnvs, outputNames, outputEnvs, decorators, outScript)
+    new PointedTaskTensor(name, env, cases, inputs, inputEnvs, outputFileNames, outputEnvs, decorators, outScript)
   }
 
   override def equals(obj: Any) = obj match {
