@@ -1,7 +1,7 @@
-site_name: 'Hypermake'
+site_name: 'HyperMake'
 site_description: 'Parameterized workflow manager'
 site_author: 'Tongfei Chen'
-copyright: 'Copyright &copy; 2020-2021 Tongfei Chen'
+copyright: 'Copyright &copy; 2020-2024 Tongfei Chen'
 
 
 theme:

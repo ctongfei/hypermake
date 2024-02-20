@@ -21,10 +21,11 @@ object Executor {
     implicit val std: StdSinks = cli.globalSinks
     val nowStr = dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
     val env = ctx.localEnv
-    val logPath = s"${env.root}/.runs/$nowStr"
+    import env._
+    val logPath = s"$root$/.runs$/$nowStr"
     for {
-      _ <- env.mkdir(logPath)
-      u <- env.write(s"$logPath/jobs", jobs.map(_.toString).mkString("\n"))
+      _ <- mkdir(logPath)
+      u <- write(s"$logPath$/jobs", jobs.map(_.toString).mkString("\n"))
     } yield u
   }
 
@@ -39,7 +40,7 @@ object Executor {
    * Runs an action over all jobs specified in the given acyclic directed graph.
    */
   def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeConfig): HIO[Unit] = {
-    val sortedJobs = jobs.topologicalSort.toIndexedSeq // may throw CyclicWorkflowException
+    val sortedJobs = jobs.topologicalSort.toIndexedSeq  // may throw CyclicWorkflowException
     val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)

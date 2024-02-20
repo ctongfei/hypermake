@@ -4,7 +4,9 @@ Enables Azure Blob Storage support.
 
 Usage:
 ```py
-import az.storage.blob (name, container, extra_args)
+import az.storage
+# or
+import az.storage.blob(container='xxx') as asb
 ```
 It creates an environment with name `name`.
 
@@ -17,4 +19,11 @@ import az.storage.blob (
 )
 
 data_path = "/path/to/data" @az_storage
+```
+
+## Module `az.ml`
+
+Usage:
+```py
+
 ```

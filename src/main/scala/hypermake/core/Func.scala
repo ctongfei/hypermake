@@ -18,7 +18,7 @@ case class Func(
   def reify(args: Map[String, Value]): Script = {
     val reified = withNewArgs(args)
     if (reified.params.nonEmpty)
-      throw new ParametersUnboundException(reified.params, reified.name)
+      throw ParametersUnboundException(reified.params, reified.name)
     reified.impl
   }
 

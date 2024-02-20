@@ -7,6 +7,7 @@ import hypermake.util.DefaultMapBase
 
 import scala.collection._
 
+/** An object (a.k.a. module) that organizes definitions. */
 class Obj {
 
   private[hypermake] val valueTable = mutable.HashMap[String, PointedTensor[Value]]()
