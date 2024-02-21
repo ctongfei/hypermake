@@ -1,3 +1,12 @@
 package hypermake.semantics
 
-case class Definition[+T](name: String, value: T)
+import hypermake.collection.Path
+
+
+case class Definition[+T](name: Path, value: T)
+
+object Definition {
+
+  def apply[T](name: String, value: T): Definition[T] = Definition(Path(List(name)), value)
+
+}

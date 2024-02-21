@@ -294,7 +294,7 @@ object ast {
 
   sealed trait Def extends Statement
 
-  case class ValDef(name: Identifier, value: Expr) extends Def {
+  case class ValDef(name: IdentifierPath, value: Expr) extends Def {
     def str = s"$name = $value"
 
     def children = Iterable(name, value)

@@ -2,7 +2,7 @@ package hypermake.collection
 
 import scala.collection._
 
-class PointedCaseTensor(override val underlying: Map[Axis, PointedSet[String]]) extends CaseTensor(underlying) {
+class PointedShape(override val underlying: Map[Axis, PointedSet[String]]) extends Shape(underlying) {
   self =>
 
   def default: Case = Case(underlying.view.mapValues(_.default).toMap)
@@ -13,11 +13,11 @@ class PointedCaseTensor(override val underlying: Map[Axis, PointedSet[String]]) 
 
   override def select(c: Case) = filterVars(a => !c.contains(a))
 
-  override def filterVars(p: Axis => Boolean) = PointedCaseTensor {
+  override def filterVars(p: Axis => Boolean) = PointedShape {
     underlying.view.filterKeys(p).toMap
   }
 
-  def pointedSelectMany(cc: PointedCaseTensor) = PointedCaseTensor {
+  def pointedSelectMany(cc: PointedShape) = PointedShape {
     self.underlying.map { case (a, ks) =>
       if (cc containsAxis a)
         a -> (ks intersect cc(a))
@@ -25,7 +25,7 @@ class PointedCaseTensor(override val underlying: Map[Axis, PointedSet[String]]) 
     }
   }
 
-  def outerJoin(that: PointedCaseTensor) = PointedCaseTensor {
+  def outerJoin(that: PointedShape) = PointedShape {
     val newVars = self.vars union that.vars
     newVars.view.map {
       case a if self.containsAxis(a) && that.containsAxis(a) =>
@@ -38,10 +38,10 @@ class PointedCaseTensor(override val underlying: Map[Axis, PointedSet[String]]) 
   }
 }
 
-object PointedCaseTensor {
+object PointedShape {
 
-  def singleton = new PointedCaseTensor(Map())
+  def singleton = new PointedShape(Map())
 
-  def apply(underlying: Map[Axis, PointedSet[String]]) = new PointedCaseTensor(underlying)
+  def apply(underlying: Map[Axis, PointedSet[String]]) = new PointedShape(underlying)
 
 }

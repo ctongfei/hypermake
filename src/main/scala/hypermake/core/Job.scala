@@ -55,8 +55,8 @@ abstract class Job(implicit ctx: Context) {
 
   lazy val absolutePath = env.resolvePath(path)
 
-  /** The canonical string identifier for this task, in the percent-encoded URL format. Potentially this serves as the
-    * entry point in a web server.
+  /** The canonical string identifier for this task, in the percent-encoded URL format.
+    * Potentially this serves as the entry point in a web server.
     */
   lazy val id = s"${name.replace('.', '/')}?$percentEncodedCaseString"
 

@@ -35,9 +35,6 @@ case class OutputNotDefinedException(name: String, task: Task)
 case class AmbiguousOutputException(task: PointedTaskTensor)
     extends Exception(s"There are more than one output of task “$task”: it is unclear which one is specified.")
 
-case class NonStringForOutputException(output: String)
-    extends Exception(s"Only string literals are allowed for the value of an output “$output”.")
-
 case class CyclicWorkflowException() extends Exception(s"Cyclic workflow detected.")
 
 case class JobFailedException(j: Job) extends Exception(s"Job ${j.colorfulString} failed.")

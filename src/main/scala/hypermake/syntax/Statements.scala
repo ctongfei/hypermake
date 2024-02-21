@@ -15,7 +15,7 @@ class Statements(indent: Int) {
   }
 
   def valDef[$: P] = P {
-    identifier ~ "=" ~ expr
+    identifierPath ~ "=" ~ expr
   } map { case (id, v) => ValDef(id, v) }
 
   def funcDef[$: P] = P {

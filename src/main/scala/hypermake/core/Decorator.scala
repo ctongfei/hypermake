@@ -40,7 +40,7 @@ object Decorator {
     if (applyFunc.params.size != 1) throw ObjectIsNotDecoratorException(obj)
 
     val aliveFunc = obj.funcTable.get("alive")
-    if (aliveFunc.nonEmpty && aliveFunc.get.params.size != 0) throw ObjectIsNotDecoratorException(obj)
+    if (aliveFunc.nonEmpty && aliveFunc.get.params.nonEmpty) throw ObjectIsNotDecoratorException(obj)
 
     Decorator(
       applyFunc.params.head,

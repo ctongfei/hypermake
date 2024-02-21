@@ -16,10 +16,10 @@ trait PointedTensor[+A] extends Tensor[A] {
 
   import PointedTensor._
 
-  def cases: PointedCaseTensor
+  def shape: PointedShape
 
-  def pointedSelectMany(cc: PointedCaseTensor): PointedTensor[A] = new PointedTensor[A] {
-    def cases = self.cases.pointedSelectMany(cc)
+  def pointedSelectMany(cc: PointedShape): PointedTensor[A] = new PointedTensor[A] {
+    def shape = self.shape.pointedSelectMany(cc)
 
     def get(d: Case) = {
       if (d.assignments.forall { case (a, k) => cc(a) contains k })
@@ -31,7 +31,7 @@ trait PointedTensor[+A] extends Tensor[A] {
   def product[B](that: PointedTensor[B]): PointedTensor[(A, B)] = productWith(that)((_, _))
 
   def productWith[B, C](that: PointedTensor[B])(f: (A, B) => C): PointedTensor[C] = new PointedTensor[C] {
-    def cases = self.cases outerJoin that.cases
+    def shape = self.shape outerJoin that.shape
 
     def get(c: Case) = for {
       a <- self.get(c)
@@ -42,7 +42,7 @@ trait PointedTensor[+A] extends Tensor[A] {
   override def map[B](f: A => B): PointedTensor[B] = new Mapped(self, f)
 
   def flatMap[B](f: A => PointedTensor[B]): PointedTensor[B] = new PointedTensor[B] {
-    def cases = self.cases outerJoin f(self.default).cases
+    def shape = self.shape outerJoin f(self.default).shape
 
     def get(c: Case) = for {
       a <- self.get(c)
@@ -50,21 +50,21 @@ trait PointedTensor[+A] extends Tensor[A] {
     } yield b
   }
 
-  override def currySelectMany(cc: CaseTensor): Tensor[PointedTensor[A]] =
+  override def currySelectMany(cc: Shape): Tensor[PointedTensor[A]] =
     curry(vars diff cc.vars).selectMany(cc)
 
-  def reduceSelected[B](cc: CaseTensor, r: Tensor[A] => B): PointedTensor[B] =
+  def reduceSelected[B](cc: Shape, r: Tensor[A] => B): PointedTensor[B] =
     curry(cc.vars).map(r)
 
   override def curry(innerVars: Set[Axis]): PointedTensor[PointedTensor[A]] = new PointedTensor[PointedTensor[A]] {
     private[this] val outerVars = self.vars.filterNot(innerVars)
 
-    def cases = self.cases.filterVars(outerVars)
+    def shape = self.shape.filterVars(outerVars)
 
     def get(c: Case) = {
       if (
         c.assignments.forall { case (a, k) =>
-          (!(outerVars contains a) || ((outerVars contains a) && (cases(a) contains k)))
+          (!(outerVars contains a) || ((outerVars contains a) && (shape(a) contains k)))
         }
       )
         Some(self.select(c))
@@ -74,11 +74,11 @@ trait PointedTensor[+A] extends Tensor[A] {
 
   override def select(c: Case): PointedTensor[A] = new Selected(self, c)
 
-  override def toString = s"[${cases.vars.mkString(", ")}] default = $default"
+  override def toString = s"[${shape.vars.mkString(", ")}] default = $default"
 
   /** Gets the default element of a cube.
     */
-  def default: A = get(cases.default).get
+  def default: A = get(shape.default).get
 
 }
 
@@ -90,7 +90,7 @@ object PointedTensor {
   /** The `pure` operation of the PointedCube monad: construct a single value without parameterization.
     */
   case class Singleton[A](x: A) extends PointedTensor[A] {
-    def cases = PointedCaseTensor(Map()) // single case
+    def shape = PointedShape(Map()) // single case
 
     def get(c: Case) = Some(x)
 
@@ -98,7 +98,7 @@ object PointedTensor {
   }
 
   case class OfMap[A](a: Axis, m: PointedMap[String, A]) extends PointedTensor[A] {
-    def cases = PointedCaseTensor(Map(a -> m.keySet))
+    def shape = PointedShape(Map(a -> m.keySet))
 
     def get(c: Case) = for {
       key <- c.get(a)
@@ -107,11 +107,11 @@ object PointedTensor {
   }
 
   case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedTensor[A]]) extends PointedTensor[A] {
-    val innerCases = outerCase.head._2.cases
+    val innerCases = outerCase.head._2.shape
     val innerAxes = innerCases.vars
     assert(outerCase.forall { case (_, c) => c.vars == innerAxes }) // make sure inner axes are identical
 
-    def cases = PointedCaseTensor(Map(a -> outerCase.keySet) ++ innerCases.assignments)
+    def shape = PointedShape(Map(a -> outerCase.keySet) ++ innerCases.assignments)
 
     def get(c: Case) = for {
       innerCube <- outerCase.get(c(a))
@@ -132,11 +132,11 @@ object PointedTensor {
   }
 
   class Mapped[A, B](self: PointedTensor[A], f: A => B) extends Tensor.Mapped[A, B](self, f) with PointedTensor[B] {
-    override def cases = self.cases
+    override def shape = self.shape
   }
 
   class Selected[A](self: PointedTensor[A], c: Case) extends PointedTensor[A] {
-    def cases = self.cases.select(c)
+    def shape = self.shape.select(c)
 
     def get(d: Case) = self.get(c ++ d)
   }

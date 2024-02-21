@@ -76,17 +76,5 @@ object Lexical {
   def pathString[$: P] = P {
     (letter | digit | CharPred(c => !(" *?<>\"".contains(c)))).rep(1).!
   }
-//
-//  def scriptLine[$: P]: P[String] = P {
-//    CharsWhile(_ != '\n').! | &("\n").!
-//  }
-//
-//  def script[$: P]: P[Verbatim] = P {
-//    scriptLine.rep(min = 1, sep = "\n")
-//  } map { lines => Verbatim(lines.mkString("\n")) }
-//
-//  def scriptImpl[$: P]: P[ScriptImpl] = P {
-//    ":\n" ~ script
-//  } map ScriptImpl
 
 }

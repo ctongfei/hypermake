@@ -1,4 +1,4 @@
-class sftp(host):
+class SFTP(host):
   def read(file):
     ssh $host 'cat $file'
 

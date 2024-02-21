@@ -32,14 +32,14 @@ case class Func(
 }
 
 class PointedFuncTensor(
-    val name: String,
-    val cases: PointedCaseTensor,
-    val params: Set[String],
-    val impl: PointedTensor[Script]
+                         val name: String,
+                         val shape: PointedShape,
+                         val params: Set[String],
+                         val impl: PointedTensor[Script]
 ) extends PointedTensor[Func] { self =>
 
   def get(c: Case): Option[Func] = {
-    if (cases containsCase c) {
+    if (shape containsCase c) {
       val scr = impl.select(c).default
       Some(Func(name, params, scr))
     } else None
@@ -48,7 +48,7 @@ class PointedFuncTensor(
   def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedFuncTensor = {
     val unboundParams = params.filter(a => !args.contains(a))
     val outScript = impl.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedFuncTensor(name, cases, unboundParams, outScript)
+    new PointedFuncTensor(name, shape, unboundParams, outScript)
   }
 
 }

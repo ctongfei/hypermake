@@ -37,28 +37,40 @@ class Obj {
       def iterator = taskTable.iterator
     }
 
-  def addDef(defn: Definition[_]): Unit = defn match {
-    case Definition(name, value: PointedTaskTensor) =>
-      if (taskTable.contains(name)) throw DuplicateDefinitionException("Task", name)
-      else taskTable += name -> value
-    case Definition(name, value: PointedFuncTensor) =>
-      if (funcTable.contains(name)) throw DuplicateDefinitionException("Function", name)
-      else funcTable += name -> value
-    case Definition(name, value: PointedPackageTensor) =>
-      if (packageTable.contains(name)) throw DuplicateDefinitionException("Package", name)
-      else packageTable += name -> value
-    case Definition(name, value: PointedTensor[Value]) =>
-      if (valueTable.contains(name)) throw DuplicateDefinitionException("Value", name)
-      else valueTable += name -> value
-    case Definition(name, value: Plan) =>
-      if (planTable.contains(name)) throw DuplicateDefinitionException("Plan", name)
-      else planTable += name -> value
-    case Definition(name, value: Cls) =>
-      if (classTable.contains(name)) throw DuplicateDefinitionException("Class", name)
-      else classTable += name -> value
-    case Definition(name, value: Obj) =>
-      if (objTable.contains(name)) throw DuplicateDefinitionException("Object", name)
-      else objTable += name -> value
+  def addDef(defn: Definition[_]): Unit = {
+    val Definition(path, value) = defn
+    val name = path.last
+    val target = path.init.components.foldLeft(this) { (o, p) =>
+      if (o.objTable contains p) o.objects(p)
+      else {
+        val newObj = new Obj
+        o.objTable += p -> newObj
+        newObj
+      }
+    }
+    value match {
+      case value: PointedTaskTensor =>
+        if (target.taskTable.contains(name)) throw DuplicateDefinitionException("Task", name)
+        else target.taskTable += name -> value
+      case value: PointedFuncTensor =>
+        if (target.funcTable.contains(name)) throw DuplicateDefinitionException("Function", name)
+        else target.funcTable += name -> value
+      case value: PointedPackageTensor =>
+        if (target.packageTable.contains(name)) throw DuplicateDefinitionException("Package", name)
+        else target.packageTable += name -> value
+      case value: PointedTensor[Value] =>
+        if (target.valueTable.contains(name)) throw DuplicateDefinitionException("Value", name)
+        else target.valueTable += name -> value
+      case value: Plan =>
+        if (target.planTable.contains(name)) throw DuplicateDefinitionException("Plan", name)
+        else target.planTable += name -> value
+      case value: Cls =>
+        if (target.classTable.contains(name)) throw DuplicateDefinitionException("Class", name)
+        else target.classTable += name -> value
+      case value: Obj =>
+        if (target.objTable.contains(name)) throw DuplicateDefinitionException("Object", name)
+        else target.objTable += name -> value
+    }
   }
 
   def merge(other: Obj): Unit = {
@@ -72,18 +84,19 @@ class Obj {
   }
 
   def defs: Seq[Definition[_]] = {
-    valueTable.map { case (k, v) => Definition(k, v) }.toSeq ++
-      funcTable.map { case (k, v) => Definition(k, v) }.toSeq ++
-      taskTable.map { case (k, v) => Definition(k, v) }.toSeq ++
-      packageTable.map { case (k, v) => Definition(k, v) }.toSeq ++
-      planTable.map { case (k, v) => Definition(k, v) }.toSeq ++
-      classTable.map { case (k, v) => Definition(k, v) }.toSeq ++
-      objTable.map { case (k, v) => Definition(k, v) }.toSeq
+    valueTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
+      funcTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
+      taskTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
+      packageTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
+      planTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
+      classTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
+      objTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq
   }
 
 }
 
 object Obj {
+
   def fromDefs(defs: Iterable[Definition[_]]): Obj = {
     val obj = new Obj
     defs.foreach(obj.addDef)

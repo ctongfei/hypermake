@@ -19,7 +19,7 @@ trait Tensor[+A] {
   /** The map of all cases of this cube: with the key being the axis identifier and the value being the set of values it
     * can take.
     */
-  def cases: CaseTensor
+  def shape: Shape
 
   def get(indices: Case): Option[A]
 
@@ -29,10 +29,10 @@ trait Tensor[+A] {
     */
   def select(c: Case): Tensor[A] = new Selected(self, c)
 
-  def currySelectMany(cc: CaseTensor): Tensor[Tensor[A]] =
+  def currySelectMany(cc: Shape): Tensor[Tensor[A]] =
     curry(vars diff cc.vars).selectMany(cc)
 
-  def vars = cases.vars
+  def vars = shape.vars
 
   /** ([S..., T...] => A) => ([S...] => [T...] => A)
     */
@@ -40,7 +40,7 @@ trait Tensor[+A] {
 
   /** Selects a sub-cube based on the given indices set. Indexed axes are retained in the returning cube.
     */
-  def selectMany(cc: CaseTensor): Tensor[A] = new SelectedMany(self, cc)
+  def selectMany(cc: Shape): Tensor[A] = new SelectedMany(self, cc)
 
   def product[B](that: Tensor[B]): Tensor[(A, B)] = productWith(that)((_, _))
 
@@ -52,7 +52,7 @@ trait Tensor[+A] {
 
   /** Returns a stream of all indices of this cube.
     */
-  def allCases: Iterable[Case] = cases.all
+  def allCases: Iterable[Case] = shape.all
 
   /** Applies a side effect to all elements in this cube.
     *
@@ -65,7 +65,7 @@ trait Tensor[+A] {
     */
   def allElements: Iterable[A] = allCases.view.map(i => get(i).get)
 
-  override def toString = s"[${cases.vars.mkString(", ")}]"
+  override def toString = s"[${shape.vars.mkString(", ")}]"
 
 }
 
@@ -85,13 +85,13 @@ object Tensor {
   }
 
   class Mapped[A, B](self: Tensor[A], f: A => B) extends Tensor[B] {
-    def cases = self.cases
+    def shape = self.shape
 
     def get(c: Case) = (self get c) map f
   }
 
   class ProductWith[A, B, C](self: Tensor[A], that: Tensor[B], f: (A, B) => C) extends Tensor[C] {
-    val cases = self.cases outerJoin that.cases
+    val shape = self.shape outerJoin that.shape
 
     def get(c: Case) = for {
       a <- self get c
@@ -100,28 +100,28 @@ object Tensor {
   }
 
   class Curried[A](self: Tensor[A], innerVars: Set[Axis]) extends Tensor[Tensor[A]] {
-    val cases = self.cases.filterVars(outerVars)
+    val shape = self.shape.filterVars(outerVars)
     private[this] val outerVars = self.vars.filterNot(innerVars)
 
     def get(c: Case) = {
-      if (c.assignments.forall { case (a, k) => (outerVars contains a) && (cases(a) contains k) })
+      if (c.assignments.forall { case (a, k) => (outerVars contains a) && (shape(a) contains k) })
         Some(self.select(c))
       else None
     }
   }
 
   class Selected[A](self: Tensor[A], c: Case) extends Tensor[A] {
-    def cases = self.cases.select(c)
+    def shape = self.shape.select(c)
 
     def get(d: Case) = self.get(c ++ d)
   }
 
-  class SelectedMany[A](self: Tensor[A], cc: CaseTensor) extends Tensor[A] {
-    val cases = self.cases.selectMany(cc)
+  class SelectedMany[A](self: Tensor[A], cc: Shape) extends Tensor[A] {
+    val shape = self.shape.selectMany(cc)
 
     def get(c: Case) = {
       if (
-        (c.vars intersect cases.vars).forall { a => !cc.containsAxis(a) || cc(a).contains(c(a)) }
+        (c.vars intersect shape.vars).forall { a => !cc.containsAxis(a) || cc(a).contains(c(a)) }
       ) // all indices are in the sliced indices
         self.get(c)
       else None

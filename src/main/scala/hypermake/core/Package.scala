@@ -37,7 +37,7 @@ class Package(
   */
 case class PointedPackageTensor(
                                  name: String,
-                                 cases: PointedCaseTensor,
+                                 shape: PointedShape,
                                  inputs: Map[String, PointedTensor[Value]],
                                  outputFileName: (String, PointedTensor[Value.Pure]),
                                  decorators: Seq[Decorator],
@@ -46,11 +46,11 @@ case class PointedPackageTensor(
     extends PointedTensor[Package] {
 
   def get(c: Case): Option[Package] = {
-    if (cases containsCase c) {
+    if (shape containsCase c) {
       Some(
         new Package(
           name = name,
-          `case` = cases.normalizeCase(c),
+          `case` = shape.normalizeCase(c),
           inputs = inputs.mapValuesE(_.select(c).default),
           outputFileName = outputFileName._1 -> outputFileName._2.select(c).default,
           decorators = decorators,
@@ -65,7 +65,7 @@ case class PointedPackageTensor(
   def on(env: Env)(implicit ctx: Context) = new PointedTaskTensor(
     s"$name@${env.name}", // package@ec2
     env,
-    cases,
+    shape,
     inputs,
     Map(),
     Map(outputFileName),
@@ -76,7 +76,7 @@ case class PointedPackageTensor(
 
   def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedPackageTensor = {
     val outScript = rawScript.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    PointedPackageTensor(name, cases, inputs, outputFileName, decorators, outScript)
+    PointedPackageTensor(name, shape, inputs, outputFileName, decorators, outScript)
   }
 
   def output: PointedTensor[Value.PackageOutput] = this map Value.PackageOutput

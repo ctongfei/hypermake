@@ -63,8 +63,8 @@ class SemanticParser(implicit val ctx: Context) {
 //    }
 //  }
 
-  implicit object ParseCaseCube extends Denotation[AxisIndices, CaseTensor] {
-    def denotation(is: AxisIndices): CaseTensor = CaseTensor {
+  implicit object ParseCaseCube extends Denotation[AxisIndices, Shape] {
+    def denotation(is: AxisIndices): Shape = Shape {
       is.map {
         case (a, Keys(ks)) => Axis(a.!) -> ks
         case (a, Star())   => Axis(a.!) -> getAxis(Axis(a.!)) // *: all values in axis a
@@ -203,7 +203,7 @@ class SemanticParser(implicit val ctx: Context) {
       val implTensor = impl.!()
       Definition(
         name.!,
-        new PointedFuncTensor(name.!, implTensor.cases, ps.keySet, implTensor)
+        new PointedFuncTensor(name.!, implTensor.shape, ps.keySet, implTensor)
       )
     }
   }
@@ -213,13 +213,13 @@ class SemanticParser(implicit val ctx: Context) {
       val PackageDef(decorators, name, inputs, output, impl) = pd
       val inputParams = inputs.map { case (k, (_, v)) => k.! -> v.!! }
       val outputParams = Assignments(Seq(output)).map { case (k, (_, v)) => k.! -> v.!! }
-      val axes = (inputParams ++ outputParams).values.map(_.cases.vars).fold(Set())(_ union _)
+      val axes = (inputParams ++ outputParams).values.map(_.shape.vars).fold(Set())(_ union _)
       val outputFileName = outputParams.head._1 -> outputParams.head._2.map(_.asIfPure)
       Definition(
         name.!,
         PointedPackageTensor(
           name = name.!,
-          cases = allCases.filterVars(axes),
+          shape = allCases.filterVars(axes),
           inputs = inputParams,
           outputFileName = outputFileName,
           decorators = decorators.calls.map(_.!),
@@ -240,8 +240,8 @@ class SemanticParser(implicit val ctx: Context) {
       val localParams = inputParams ++ outputParams
       val script = impl.!((localParams, taskEnv))
       val calls = decorators.calls.map(_.!)
-      val inputParamAxes = inputParams.values.map(_.cases.vars)
-      val callParamAxes = calls.map(_.script.cases.vars)
+      val inputParamAxes = inputParams.values.map(_.shape.vars)
+      val callParamAxes = calls.map(_.script.shape.vars)
       val axes = (callParamAxes ++ inputParamAxes).fold(Set())(_ union _)
       Definition(
         name.!,
@@ -271,7 +271,7 @@ class SemanticParser(implicit val ctx: Context) {
   implicit object ParseValDef extends Denotation[ValDef, Definition[PointedTensor[Value]]] {
     def denotation(vd: ValDef) = {
       val ValDef(id, value) = vd
-      Definition(id.!, value.!!)
+      Definition(id.!.toString, value.!!)
     }
   }
 
@@ -299,7 +299,7 @@ class SemanticParser(implicit val ctx: Context) {
     * @return
     *   All declared axes; fail if there is any axis mis-alignments.
     */
-  def getAllCases(stmts: Iterable[Statement]): PointedCaseTensor = {
+  def getAllCases(stmts: Iterable[Statement]): PointedShape = {
     val axesOccurrences: Iterable[(Axis, Iterable[String])] =
       stmts.view.flatMap(_.recursiveChildren).collect { case DictLiteral(axisName, assignments) =>
         (axisName.!, assignments.keys)
@@ -315,7 +315,7 @@ class SemanticParser(implicit val ctx: Context) {
         else throw AxesAlignmentException(axis, keys0, keys.find(_ != keys0).get)
       }
       .toMap
-    PointedCaseTensor(axes)
+    PointedShape(axes)
   }
 
   def semanticParse(stmts: Iterable[Statement], topLevel: Boolean = false): Obj = {
