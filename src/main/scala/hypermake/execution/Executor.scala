@@ -12,7 +12,6 @@ import java.time._
 import java.time.format._
 import scala.collection._
 
-
 object Executor {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
@@ -22,10 +21,10 @@ object Executor {
     val nowStr = dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
     val env = ctx.localEnv
     import env._
-    val logPath = s"$root$/.runs$/$nowStr"
+    val logPath = s"$root${/}.runs${/}$nowStr"
     for {
       _ <- mkdir(logPath)
-      u <- write(s"$logPath$/jobs", jobs.map(_.toString).mkString("\n"))
+      u <- write(s"$logPath${/}jobs", jobs.map(_.toString).mkString("\n"))
     } yield u
   }
 
@@ -36,11 +35,10 @@ object Executor {
     } yield u
   }
 
-  /**
-   * Runs an action over all jobs specified in the given acyclic directed graph.
-   */
+  /** Runs an action over all jobs specified in the given acyclic directed graph.
+    */
   def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeConfig): HIO[Unit] = {
-    val sortedJobs = jobs.topologicalSort.toIndexedSeq  // may throw CyclicWorkflowException
+    val sortedJobs = jobs.topologicalSort.toIndexedSeq // may throw CyclicWorkflowException
     val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
@@ -60,7 +58,7 @@ object Executor {
               cli.update(j, Status.Failed) *> (
                 if (runtime.keepGoing) promises(j).succeed(()) // if keep-going, ignore failure and carry on
                 else promises(j).fail(JobFailedException(j))
-                )
+              )
         } yield u
       }
       allFibers <- ZIO.forkAll(effects)
