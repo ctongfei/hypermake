@@ -76,7 +76,7 @@ object Main extends App {
         runtime.includePaths foreach { f => parser.semanticParseFile(runtime.resolveFile(f)) }
         // TODO: Defines variables specified with the -D switch
         // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
-        parser.semanticParseFile(File(scriptFile))
+        parser.semanticParseFile(File(scriptFile), topLevel = true)
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
 

@@ -83,21 +83,32 @@ class SemanticParser(implicit val ctx: Context) {
     def denotation(r: ValRef, localsEnv: (Map[String, PointedTensor[Value]], Env)): PointedTensor[Value] = {
       val name = r.name.!
       val indices = r.indices.!
+      val isSingleton = indices.underlying.values.forall(_.size == 1)
+      val defaultCase = Case(indices.underlying.map { case (a, ks) => a -> ks.head })
       val output = r.output.map(_.!)
       val (locals, env) = localsEnv
+
+      def selectPotentiallyMultipleValues[A](a: PointedTensor[A], c: Shape, f: A => Value): PointedTensor[Value] = {
+        val isSingleton = c.underlying.values.forall(_.size == 1)
+        if (isSingleton) {
+          val defaultCase = Case(c.underlying.map { case (a, ks) => a -> ks.head })
+          a.select(defaultCase).map(f)
+        } else a.reduceSelected(c, x => Value.Multiple(x.map(f), env))
+      }
+
       locals.getOrElse(
         name.toString,
         output match {
           case Some(o) => // a.b[x].o; output of a task
-            root.tasks(name).reduceSelected(indices, c => Value.Multiple(c.map(_.outputs(o)), env))
+            selectPotentiallyMultipleValues[Task](root.tasks(name), indices, _.outputs(o))
           case None => // a.b[x] or a.b.o
             root.values
               .get(name)
-              .map(_.reduceSelected(indices, c => Value.Multiple(c, env)))
+              .map(selectPotentiallyMultipleValues[Value](_, indices, x => x))
               .orElse(
                 root.tasks
                   .get(name.init)
-                  .map(_.reduceSelected(indices, c => Value.Multiple(c.map(_.outputs(name.last)), env)))
+                  .map(selectPotentiallyMultipleValues[Task](_, indices, _.outputs(name.last)))
               )
               .getOrElse(root.packages(name).output.map(_.on(env)))
         }

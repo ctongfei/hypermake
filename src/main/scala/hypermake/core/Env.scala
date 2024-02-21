@@ -106,7 +106,7 @@ trait Env {
         for {
           _ <- mkdir(dst)
           r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
-            val argsString = ctx.percentEncodedCaseString(c)
+            val argsString = ctx.percentEncodedCaseStringPath(c)
             linkValue(v, s"$dst${/}$argsString") as s"$dst${/}$argsString"
           }
         } yield Some(r.mkString(ctx.runtime.IFS_CHAR))

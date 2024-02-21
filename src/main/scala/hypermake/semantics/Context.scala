@@ -45,13 +45,23 @@ class Context(implicit val runtime: RuntimeConfig) {
   def caseString(args: Case) =
     canonicalizeCase(args).map { case (a, k) => s"$a: $k" }.mkString(", ")
 
-  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in the file system.
-    */
-  def percentEncodedCaseString(args: Case) = {
+  def percentEncodedClauses(args: Case) = {
     val clauses = canonicalizeCase(args).map { case (a, k) =>
       s"$a=${Percent.escape(k)}"
     }
+    clauses
+  }
+
+  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in the file system.
+    */
+  def percentEncodedCaseStringPath(args: Case) = {
+    val clauses = percentEncodedClauses(args)
     if (clauses.isEmpty) "default" else clauses.mkString("&") // URL style ID
+  }
+
+  def percentEncodedCaseStringUrl(args: Case) = {
+    val clauses = percentEncodedClauses(args)
+    if (clauses.isEmpty) "" else clauses.mkString("&") // URL style ID
   }
 
   def colorfulCaseString(args: Case) = {

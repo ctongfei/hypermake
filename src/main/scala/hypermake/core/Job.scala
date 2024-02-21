@@ -55,10 +55,14 @@ abstract class Job(implicit ctx: Context) {
 
   lazy val absolutePath = env.resolvePath(path)
 
-  /** The canonical string identifier for this task, in the percent-encoded URL format.
-    * Potentially this serves as the entry point in a web server.
+  /** The canonical string identifier for this task, in the percent-encoded URL format. Potentially this serves as the
+    * entry point in a web server.
     */
-  lazy val id = s"${name.replace('.', '/')}?$percentEncodedCaseString"
+  lazy val id = {
+    val taskStr = s"${name.replace('.', '/')}"
+    val argsStr = percentEncodedCaseStringUrl
+    if (argsStr.isEmpty) taskStr else s"$taskStr?$argsStr"
+  }
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
@@ -99,7 +103,8 @@ abstract class Job(implicit ctx: Context) {
     // TODO: new behavior with obj decorators
     for {
       finalScript <- ZIO.foldLeft(decorators)(script) { case (scr, dec) =>
-        env.write(f"$absolutePath${env./}script.${scr.nestingLevel}", scr.script)
+        env
+          .write(f"$absolutePath${env./}script.${scr.nestingLevel}", scr.script)
           .as(dec(PointedTensor.Singleton(scr), env).get(`case`).get)
       } // wraps the script with decorator calls sequentially
       _ <- env.write(absolutePath / "script.sh", finalScript.script)
@@ -184,10 +189,11 @@ abstract class Job(implicit ctx: Context) {
 
   def canonicalCase = ctx.canonicalizeCase(`case`)
 
-  def percentEncodedCaseString = ctx.percentEncodedCaseString(`case`)
+  def percentEncodedCaseStringPath = ctx.percentEncodedCaseStringPath(`case`)
+  def percentEncodedCaseStringUrl = ctx.percentEncodedCaseStringUrl(`case`)
 
   def potentiallyHashedPercentEncodedCaseString = {
-    val s = percentEncodedCaseString
+    val s = percentEncodedCaseStringPath
     val bytes = s.getBytes(StandardCharsets.UTF_8)
     if (bytes.length > 255)
       MessageDigest.getInstance("MD5").digest(bytes).map("%02x".format(_)).mkString

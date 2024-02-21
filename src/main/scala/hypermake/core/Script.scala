@@ -27,7 +27,7 @@ case class Script(
     withNewArgs(newArgs.toMap.mapValuesE(Value.Pure))
 
   def strArgs(implicit runtime: RuntimeConfig): Map[String, String] = {
-    args.map { case (k, v) => k.name -> v.absValue }
+    args.map { case (k, v) => k -> v.value }
   }
 
   /** Writes this script as a local temporary file and executes it with its arguments.

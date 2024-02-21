@@ -12,15 +12,12 @@ object ParserTest extends App {
 
   import fastparse._
 
-  val src = "task a:\n  r"
-  val ast = parse(src, Statements.taskDef(_)).get.get
-
   implicit val rt = RuntimeConfig.create()
   implicit val ctx = new Context()
-  val workflow = new SemanticParser()
-  workflow.semanticParseFile(File("src/test/resources/tutorial/decorators.hm"))
+  val parser = new SemanticParser()
+  val obj = parser.semanticParseFile(File("src/test/resources/test-sequential.hm"), topLevel = true)
 
-  val g = workflow.ctx.root.plans("Run").dependencyGraph
+  val g = obj.plans("Run").dependencyGraph
   val x = 0
 
 }
