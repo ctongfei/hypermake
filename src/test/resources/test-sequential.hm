@@ -1,4 +1,4 @@
-local.root = "/home/tongfei/proj/forge/target"
+local.root = "/home/tongfei/proj/hypermake/target"
 
 task t0(x = "1") -> out:
   sleep 2

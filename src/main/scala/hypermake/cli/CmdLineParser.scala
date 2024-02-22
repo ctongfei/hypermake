@@ -14,9 +14,9 @@ object CmdLineParser {
 
   def define[$: P] =
     P {
-      ("-D" | "--define") ~ Lexical.identifier ~ "=" ~ string
+      ("-D" | "--define") ~ Expressions.identifierPath ~ "=" ~ string
     }
-      .map { case (name, value) => Opt.Define(name.name, value) }
+      .map { case (name, value) => Opt.Define(name.str, value) }
 
   def include[$: P] =
     P {

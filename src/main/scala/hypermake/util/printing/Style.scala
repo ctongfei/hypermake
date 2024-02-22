@@ -30,7 +30,7 @@ object Style {
     def render0 = ">"
     def render(j: Job) = s"${j.colorfulString}> "
     def render(j: Job, s: Status) = s"${j.colorfulString}: ${s.text}"
-    def renderInGraph(j: Job, s: Status) = s"${s.symbol} ${j.name}"
+    def renderInGraph(j: Job, s: Status) = s"${s.symbol} ${j.colorfulString}"
   }
 
   object Powerline extends Style {

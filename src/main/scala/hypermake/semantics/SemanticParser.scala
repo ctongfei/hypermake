@@ -282,7 +282,40 @@ class SemanticParser(implicit val ctx: Context) {
   implicit object ParseValDef extends Denotation[ValDef, Definition[PointedTensor[Value]]] {
     def denotation(vd: ValDef) = {
       val ValDef(id, value) = vd
-      Definition(id.!.toString, value.!!)
+      Definition(id.!, value.!!)
+    }
+  }
+
+  implicit object ParseMembersImpl extends Denotation[MembersImpl, Obj] {
+    def denotation(impl: MembersImpl): Obj = Obj.fromDefs(impl.defs.map(_.!))
+  }
+
+  implicit object ParseInstantiationImpl extends Denotation[InstantiationImpl, Obj] {
+    def denotation(impl: InstantiationImpl): Obj = {
+      val cls = root.classes(impl.instantiation.name.!)
+      cls.instantiate(impl.instantiation.args.map { case (k, (_, v)) => k.! -> v.!! })
+    }
+  }
+
+  implicit object ParseObjectDef extends Denotation[ObjectDef, Definition[Obj]] {
+    def denotation(od: ObjectDef): Definition[Obj] = {
+      val ObjectDef(name, impl) = od
+      val obj = impl match {
+        case impl: MembersImpl       => impl.!
+        case impl: InstantiationImpl => impl.!
+      }
+      Definition(name.!, obj)
+    }
+  }
+
+  implicit object ParseClassDef extends Denotation[ClassDef, Definition[Cls]] {
+    def denotation(cd: ClassDef): Definition[Cls] = {
+      val ClassDef(name, inputs, impl) = cd
+      val cls = impl match {
+        case impl: MembersImpl       => impl.!
+        case impl: InstantiationImpl => impl.!
+      }
+      Definition(name.!, Cls(name.!, inputs.map { case (k, (_, v)) => k.! -> v.!! }, cls))
     }
   }
 
@@ -293,14 +326,14 @@ class SemanticParser(implicit val ctx: Context) {
     )
   }
 
-  implicit object ParseDef extends Denotation[Def, Definition[_]] {
-    def denotation(d: Def) = d match {
-      case vd: ValDef     => vd.!
-      case fd: FuncDef    => fd.!
-      case td: TaskDef    => td.!
-      case pd: PackageDef => pd.!
-      case pd: PlanDef    => pd.!
-    }
+  implicit def ParseDef: Denotation[Def, Definition[_]] = {
+    case vd: ValDef => vd.!
+    case fd: FuncDef => fd.!
+    case td: TaskDef => td.!
+    case pd: PackageDef => pd.!
+    case pd: PlanDef => pd.!
+    case cd: ClassDef => cd.!
+    case od: ObjectDef => od.!
   }
 
   /** From definitions, deduces all declared axes.
@@ -345,7 +378,7 @@ class SemanticParser(implicit val ctx: Context) {
         val obj = semanticParseFile(resolveModule(modulePath.!.toString))
         moduleName match {
           case Some(name) => root.addDef(Definition(name.!, obj))
-          case None       => root.merge(obj)
+          case None       => root.addDef(Definition(modulePath.!, obj))
         }
       case d: Def =>
         root.addDef(d.!)

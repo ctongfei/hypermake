@@ -17,7 +17,7 @@ object Main extends App {
 
   val version = "0.1.0"
 
-  lazy val headerMessage = s"${B("hypermake")} $version -- A parameterized workflow manager"
+  lazy val headerMessage = s"${B("HyperMake")} $version -- A parameterized workflow manager"
 
   lazy val helpMessage = {
     s"""
@@ -69,13 +69,13 @@ object Main extends App {
         implicit val runtime: RuntimeConfig = RuntimeConfig.createFromCLIOptions(options, runOptions)
         val cli = PlainCLI.create()
 
-        // Constructs semantic parser and its accompanying parsing context
+        // Constructs a semantic parser and its accompanying parsing context
         implicit val ctx: Context = new Context()
         val parser = new SemanticParser()
-        // Imports files specified with the -I switch
-        runtime.includePaths foreach { f => parser.semanticParseFile(runtime.resolveFile(f)) }
         // TODO: Defines variables specified with the -D switch
         // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
+        // Imports files specified with the -I switch
+        runtime.includePaths foreach { f => parser.semanticParseFile(runtime.resolveFile(f), topLevel = true) }
         parser.semanticParseFile(File(scriptFile), topLevel = true)
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }

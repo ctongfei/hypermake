@@ -100,8 +100,8 @@ object Tensor {
   }
 
   class Curried[A](self: Tensor[A], innerVars: Set[Axis]) extends Tensor[Tensor[A]] {
-    val shape = self.shape.filterVars(outerVars)
     private[this] val outerVars = self.vars.filterNot(innerVars)
+    val shape = self.shape.filterVars(outerVars)
 
     def get(c: Case) = {
       if (c.assignments.forall { case (a, k) => (outerVars contains a) && (shape(a) contains k) })
