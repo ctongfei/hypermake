@@ -7,36 +7,37 @@ import hypermake.util._
 
 import scala.collection._
 
-/** A task is a job that is declared by the `task` definition. It is a job that is specific to a running environment.
+/** A task is a job that is declared by the `task` definition. It is a job that is specific to a
+  * running environment.
   */
 class Task(
     val name: String,
-    val env: Env,
+    val fileSys: FileSys,
     val `case`: Case,
     val inputs: Map[String, Value],
-    val inputEnvs: Map[String, Env],
+    val inputFs: Map[String, FileSys],
     val outputFileNames: Map[String, Value.Pure],
-    val outputEnvs: Map[String, Env],
+    val outputFs: Map[String, FileSys],
     val decorators: Seq[Decorator],
     val rawScript: Script
 )(implicit ctx: Context)
     extends Job()(ctx) {
 
   def outputs: Map[String, Value.Output] = outputFileNames.keys.map { k =>
-    k -> Value.Output(outputFileNames(k).value, outputEnvs.getOrElse(k, env), this)
+    k -> Value.Output(outputFileNames(k).value, outputFs.getOrElse(k, fileSys), this)
   }.toMap
 }
 
 class PointedTaskTensor(
-                         val name: String,
-                         val env: Env,
-                         val shape: PointedShape,
-                         val inputs: Map[String, PointedTensor[Value]],
-                         val inputEnvs: Map[String, Env],
-                         val outputFileNames: Map[String, PointedTensor[Value.Pure]],
-                         val outputEnvs: Map[String, Env],
-                         val decorators: Seq[Decorator],
-                         val script: PointedTensor[Script]
+    val name: String,
+    val fs: FileSys,
+    val shape: PointedShape,
+    val inputs: Map[String, PointedTensor[Value]],
+    val inputFs: Map[String, FileSys],
+    val outputFileNames: Map[String, PointedTensor[Value.Pure]],
+    val outputFs: Map[String, FileSys],
+    val decorators: Seq[Decorator],
+    val script: PointedTensor[Script]
 )(implicit ctx: Context)
     extends PointedTensor[Task] {
   self =>
@@ -47,7 +48,7 @@ class PointedTaskTensor(
       val is = inputs.mapValuesE(_.select(c).default)
       val os = outputFileNames.mapValuesE(_.select(c).default)
       val scr = script.select(c).default
-      Some(new Task(name, env, cc, is, inputEnvs, os, outputEnvs, decorators, scr))
+      Some(new Task(name, fs, cc, is, inputFs, os, outputFs, decorators, scr))
     } else None
   }
 
@@ -65,7 +66,17 @@ class PointedTaskTensor(
 
   def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedTaskTensor = {
     val outScript = script.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedTaskTensor(name, env, shape, inputs, inputEnvs, outputFileNames, outputEnvs, decorators, outScript)
+    new PointedTaskTensor(
+      name,
+      fs,
+      shape,
+      inputs,
+      inputFs,
+      outputFileNames,
+      outputFs,
+      decorators,
+      outScript
+    )
   }
 
   override def equals(obj: Any) = obj match {

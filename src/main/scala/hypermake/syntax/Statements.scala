@@ -4,10 +4,11 @@ import scala.collection._
 import fastparse._
 import ast._
 
-
-/** The statement grammar of Hypermake. These are sensitive to newlines and indentations, following the Python format.
+/** The statement grammar of Hypermake. These are sensitive to newlines and indentations, following
+  * the Python format.
   */
 class Statements(indent: Int) {
+
   import Expressions.{whitespace => _, _}
 
   implicit object whitespace extends fastparse.Whitespace {
@@ -26,15 +27,19 @@ class Statements(indent: Int) {
 
   def taskDef[$: P] = P {
     decoratorCalls ~
-      Lexical.token("task") ~/ identifier ~ envModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
-  } map { case (decorators, name, envMod, inputs, outputs, impl) =>
-    TaskDef(decorators, name, envMod, inputs, outputs.getOrElse(Assignments(Seq())), impl)
+      Lexical.token(
+        "task"
+      ) ~/ identifier ~ fsModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
+  } map { case (decorators, name, fsModifier, inputs, outputs, impl) =>
+    TaskDef(decorators, name, fsModifier, inputs, outputs.getOrElse(Assignments(Seq())), impl)
   }
 
   def packageDef[$: P] = P {
     decoratorCalls ~
       Lexical.token("package") ~/ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl
-  } map { case (decorators, name, inputs, output, impl) => PackageDef(decorators, name, inputs, output, impl) }
+  } map { case (decorators, name, inputs, output, impl) =>
+    PackageDef(decorators, name, inputs, output, impl)
+  }
 
   def planDef[$: P] = P {
     Lexical.token("plan") ~/ identifier ~ "=" ~ "{" ~/ taskRef.rep ~ "}"
@@ -86,7 +91,14 @@ class Statements(indent: Int) {
     "=" ~ call
   } map FuncCallImpl
 
-  def impl[$: P]: P[TaskImpl] = P { scriptImpl | funcCallImpl }
+  def impl[$: P]: P[TaskImpl] = P {
+    scriptImpl | funcCallImpl
+  }
+  // TODO: suiteImpl of a task
+  // task t(a) -> b = {
+  //   task f(a) -> c =
+  //   task g(c) -> b
+  // }
 
   def suiteImpl[$: P] = P {
     "{" ~ suite ~ "}"

@@ -8,7 +8,8 @@ import hypermake.util.orderedMap
 
 import scala.collection._
 
-/** The expression grammar of Hypermake. These definitions ignore whitespaces and do not care about indentation.
+/** The expression grammar of Hypermake. These definitions ignore whitespaces and do not care about
+  * indentation.
   */
 object Expressions {
 
@@ -30,19 +31,21 @@ object Expressions {
     identifier.rep(min = 1, sep = ".")
   }.map(IdentifierPath)
 
-  def envModifier[$: P] = P {
+  def fsModifier[$: P] = P {
     ("@" ~ identifierPath).?
-  } map EnvModifier
+  } map FileSysModifier
 
   def stringLiteral[$: P]: P[StringLiteral] = P {
-    string ~ envModifier
+    string ~ fsModifier
   } map { case (s, fsm) => StringLiteral(s, fsm) }
 
   def dictLiteral[$: P]: P[DictLiteral] = P {
     "{" ~ axisName ~ ":" ~
       (
         keyValuePair.rep(1).map(orderedMap)
-          | Lexical.inlineCommand.map(cmd => orderedMap(cmd.result().map(k => (Percent.escape(k), StringLiteral(k)))))
+          | Lexical.inlineCommand.map(cmd =>
+            orderedMap(cmd.result().map(k => (Percent.escape(k), StringLiteral(k))))
+          )
       ) ~ "}"
   } map { case (a, ps) => DictLiteral(a, ps) }
 
@@ -51,7 +54,7 @@ object Expressions {
   def keyValuePair[$: P] = P {
     string ~ ("=" ~ expr).?
   } map { case (k, ov) =>
-    ov.fold[(String, Expr)]((k, StringLiteral(k, EnvModifier(None))))((v: Expr) => (k, v))
+    ov.fold[(String, Expr)]((k, StringLiteral(k, FileSysModifier(None))))((v: Expr) => (k, v))
   }
 
   //  def key1[$: P] = P {
@@ -110,7 +113,7 @@ object Expressions {
   def expr[$: P]: P[Expr] = literal | valRef
 
   def parameter[$: P] = P {
-    identifier ~ envModifier
+    identifier ~ fsModifier
   } map { case (name, ofs) => Parameter(name, ofs) }
 
   def explicitAssignment[$: P] = P {
@@ -144,7 +147,9 @@ object Expressions {
   } map Decoration
 
   def decoratorCalls[$: P] =
-    decoratorCall.rep map (cs => DecoratorCalls(cs.reverse)) // reverse so that the first decorator is the outermost
+    decoratorCall.rep map (cs =>
+      DecoratorCalls(cs.reverse)
+    ) // reverse so that the first decorator is the outermost
 
   def funcCallImpl[$: P] = P {
     "=" ~ call
@@ -152,7 +157,8 @@ object Expressions {
 
   // def impl[$: P]: P[Impl] = scriptImpl | funcCallImpl
 
-  def outputParamList[$: P] = identifier.map(x => Identifiers(Seq(x))) | ("(" ~ inputParamList ~ ")")
+  def outputParamList[$: P] =
+    identifier.map(x => Identifiers(Seq(x))) | ("(" ~ inputParamList ~ ")")
 
   def outputAssignments[$: P] = P {
     sameNameAssignment.map(a => Assignments(Seq(a))) | assignments

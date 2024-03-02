@@ -11,8 +11,9 @@ object ast {
   sealed trait Node {
     self =>
 
-    /** A canonical string representation of this AST node, without any syntactic sugar. This string should be parsed
-      * back to an identical AST object, and serves as the `toString()` implementation.
+    /** A canonical string representation of this AST node, without any syntactic sugar. This string
+      * should be parsed back to an identical AST object, and serves as the `toString()`
+      * implementation.
       */
     def str: String
 
@@ -39,8 +40,8 @@ object ast {
     override def toString = str
   }
 
-  /** Represents any (potentially parameterized) String value. An [[Expr]] can be either a [[Literal]] or a [[ValRef]],
-    * or a [[TaskOutputRef1]] or a [[TaskOutputRefN]].
+  /** Represents any (potentially parameterized) String value. An [[Expr]] can be either a
+    * [[Literal]] or a [[ValRef]].
     */
   sealed trait Expr extends Node
 
@@ -78,10 +79,10 @@ object ast {
     override def hashCode(): Int = str.hashCode
   }
 
-  case class EnvModifier(optEnv: Option[IdentifierPath]) extends Node {
-    def str = optEnv.fold("")("@" + _.str)
+  case class FileSysModifier(optFs: Option[IdentifierPath]) extends Node {
+    def str = optFs.fold("")("@" + _.str)
 
-    def children = optEnv.toList
+    def children = optFs.toList
   }
 
   case class InlineCommand(command: String) extends Node {
@@ -103,15 +104,16 @@ object ast {
     def children = Nil
   }
 
-  /** Represents a literal. A literal can be either a String singleton ([[StringLiteral]]) or a nested dict literal
-    * ([[DictLiteral]]).
+  /** Represents a literal. A literal can be either a String singleton ([[StringLiteral]]) or a
+    * nested dict literal ([[DictLiteral]]).
     */
   sealed trait Literal extends Expr
 
-  case class StringLiteral(value: String, envModifier: EnvModifier = EnvModifier(None)) extends Literal {
-    def str = s"${Escaper.Shell.escape(value)}$envModifier"
+  case class StringLiteral(value: String, fsModifier: FileSysModifier = FileSysModifier(None))
+      extends Literal {
+    def str = s"${Escaper.Shell.escape(value)}$fsModifier"
 
-    def children = envModifier :: Nil
+    def children = fsModifier :: Nil
   }
 
   case class DictLiteral(axis: AxisName, assignments: Map[String, Expr]) extends Literal {
@@ -119,14 +121,6 @@ object ast {
 
     def children = Iterable(axis) ++ assignments.values
   }
-
-  // sealed trait KeySelector extends Node
-  //
-  // case class Key1(key: String) extends KeySelector {
-  //  def str = key
-  //
-  //  def children = Nil
-  // }
 
   sealed trait KeyN extends Node
 
@@ -142,25 +136,11 @@ object ast {
     def children = Nil
   }
 
-  // case class Index1(axis: Identifier, key: Key1) extends Node {
-  //  def str = s"$axis: $key"
-  //
-  //  def children = axis :: key :: Nil
-  // }
-
   case class AxisIndex(axis: Identifier, keys: KeyN) extends Node {
     def str = s"$axis: $keys"
 
     def children = axis :: keys :: Nil
   }
-  //
-  // case class Indices1(indices: Seq[Index1]) extends MapWrapper[Identifier, Key1] with Node {
-  //  def str = if (indices.isEmpty) "" else s"[${indices.mkString(", ")}]"
-  //
-  //  def children = indices
-  //
-  //  def underlying = orderedMap(indices.map { case Index1(axis, key) => (axis, key) })
-  // }
 
   case class AxisIndices(indices: Seq[AxisIndex]) extends MapWrapper[Identifier, KeyN] with Node {
     def str = if (indices.isEmpty) "" else s"[${indices.mkString(", ")}]"
@@ -169,12 +149,6 @@ object ast {
 
     def underlying = orderedMap(indices.map { case AxisIndex(axis, keys) => (axis, keys) })
   }
-
-  // case class TaskRef1(name: Identifier, indices: Indices1) extends Node {
-  //  def str = s"$name$indices"
-  //
-  //  def children = Iterable(name) ++ indices.flatMap { case (k, v) => Iterable(k, v) }
-  // }
 
   case class TaskRef(name: IdentifierPath, indices: AxisIndices) extends Node {
     def str = s"$name$indices"
@@ -187,28 +161,17 @@ object ast {
     def children = Nil
   }
 
-  case class ValRef(name: IdentifierPath, indices: AxisIndices, output: Option[OutputRef]) extends Expr {
+  case class ValRef(name: IdentifierPath, indices: AxisIndices, output: Option[OutputRef])
+      extends Expr {
     def str = s"$$$name$indices${output.fold("")(_.str)}"
 
     def children = Iterable(name) ++ indices.flatMap { case (k, v) => Iterable(k, v) }
   }
-//
-//  //case class TaskOutputRef1(task: TaskRef1, name: Identifier) extends Expr {
-//  //  def str = s"$$$task.$name"
-//  //
-//  //  def children = task :: name :: Nil
-//  //}
-//
-//  case class TaskOutputRef(tasks: TaskRef, name: Identifier) extends Expr {
-//    def str = s"$$$tasks.$name"
-//
-//    def children = tasks :: name :: Nil
-//  }
 
-  case class Parameter(name: Identifier, env: EnvModifier) extends Node {
-    def str = s"$name$env"
+  case class Parameter(name: Identifier, fsModifier: FileSysModifier) extends Node {
+    def str = s"$name$fsModifier"
 
-    override def children = name :: env :: Nil
+    override def children = name :: fsModifier :: Nil
   }
 
   sealed trait Assignment extends Node
@@ -231,16 +194,22 @@ object ast {
     def children = Iterable(param)
   }
 
-  case class Assignments(assignments: Seq[Assignment]) extends MapWrapper[Identifier, (EnvModifier, Expr)] with Node {
+  case class Assignments(assignments: Seq[Assignment])
+      extends MapWrapper[Identifier, (FileSysModifier, Expr)]
+      with Node {
     def str = assignments.mkString(", ")
 
     def children = assignments
 
     val underlying = orderedMap(assignments.map {
-      case ExplicitAssignment(param, v) => (param.name, (param.env, v))
+      case ExplicitAssignment(param, v) => (param.name, (param.fsModifier, v))
       case RefAssignment(param) =>
-        (param.name, (param.env, ValRef(IdentifierPath(Seq(param.name)), AxisIndices(Nil), None)))
-      case SameNameAssignment(param) => (param.name, (param.env, StringLiteral(param.name.name, param.env)))
+        (
+          param.name,
+          (param.fsModifier, ValRef(IdentifierPath(Seq(param.name)), AxisIndices(Nil), None))
+        )
+      case SameNameAssignment(param) =>
+        (param.name, (param.fsModifier, StringLiteral(param.name.name, param.fsModifier)))
     })
   }
 
@@ -303,20 +272,20 @@ object ast {
   case class TaskDef(
       decorators: DecoratorCalls,
       name: Identifier,
-      env: EnvModifier,
+      fsModifier: FileSysModifier,
       inputs: Assignments,
       outputs: Assignments,
       impl: TaskImpl
   ) extends Def {
-    def str = s"${decorators}task $name$env($inputs) -> ($outputs)$impl"
+    def str = s"${decorators}task $name$fsModifier($inputs) -> ($outputs)$impl"
 
-    def children = decorators.calls ++ Iterable(env, name, inputs, outputs, impl)
+    def children = decorators.calls ++ Iterable(fsModifier, name, inputs, outputs, impl)
   }
 
   case class ServiceDef(
       decorators: DecoratorCalls,
       name: Identifier,
-      env: EnvModifier,
+      fsModifier: FileSysModifier,
       inputs: Assignments,
       impl: TaskImpl
   ) extends Def {
@@ -370,7 +339,8 @@ object ast {
     def children = moduleName.toList
   }
 
-  case class ImportObject(modulePath: IdentifierPath, moduleName: Option[Identifier]) extends Statement {
+  case class ImportObject(modulePath: IdentifierPath, moduleName: Option[Identifier])
+      extends Statement {
     def str = moduleName match {
       case Some(m) => s"import $modulePath as $m"
       case None    => s"import $modulePath as $modulePath"

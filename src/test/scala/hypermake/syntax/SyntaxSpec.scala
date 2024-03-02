@@ -9,7 +9,7 @@ object SyntaxGen {
 
   def identifier = Gen.identifier.map(Identifier)
   def identifierPath = Gen.nonEmptyListOf(identifier).map(IdentifierPath)
-  def envModifier = Gen.option(identifierPath).map(EnvModifier)
+  def envModifier = Gen.option(identifierPath).map(FileSysModifier)
   def stringLiteral = for {
     s <- Gen.alphaNumStr
     m <- envModifier

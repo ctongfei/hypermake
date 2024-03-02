@@ -14,14 +14,14 @@ class Context(implicit val runtime: RuntimeConfig) {
 
   private[hypermake] var root: Obj = new Obj
   private[hypermake] var allCases: PointedShape = PointedShape.singleton
-  private[hypermake] val localEnv: Env = new Env.Local()(this)
-  private[hypermake] val envTable = mutable.HashMap[String, Env]("local" -> localEnv)
+  private[hypermake] val local: FileSys = new FileSys.Local()(this)
+  private[hypermake] val fsTable = mutable.HashMap[String, FileSys]("local" -> local)
 
-  def getAxis(name: Axis) = allCases.underlying.getOrElse(name, throw UndefinedException("Axis", name.name))
+  def getAxis(name: Axis) =
+    allCases.underlying.getOrElse(name, throw UndefinedException("Axis", name.name))
 
-  // TODO: env are now objects!
-  def getEnv(name: String): Env = {
-    envTable.getOrElse(name, throw UndefinedException("Environment", name))
+  def getFs(name: String): FileSys = {
+    fsTable.getOrElse(name, throw UndefinedException("File system", name))
   }
 
   def normalizeCase(c: Case): Case = {
@@ -52,7 +52,8 @@ class Context(implicit val runtime: RuntimeConfig) {
     clauses
   }
 
-  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in the file system.
+  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in
+    * the file system.
     */
   def percentEncodedCaseStringPath(args: Case) = {
     val clauses = percentEncodedClauses(args)
@@ -69,7 +70,10 @@ class Context(implicit val runtime: RuntimeConfig) {
     val clauses = canonicalizeCase(args)
     if (clauses.isEmpty)
       Color.LightGreen("default").render
-    else clauses.map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }.mkString(", ")
+    else
+      clauses
+        .map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }
+        .mkString(", ")
   }
 
 //  def envOutputRoot(envName: Name): String = {

@@ -30,9 +30,9 @@ class Obj {
     new DefaultMapBase[String, PointedTaskTensor] {
       def get(key: String) =
         try {
-          val Array(packageName, packageEnv) = key.split("@")
-          val env = Env(packageEnv)
-          Some(packages(packageName).on(env))
+          val Array(packageName, packageFs) = key.split("@")
+          val fs = FileSys(packageFs)
+          Some(packages(packageName).on(fs))
         } catch { _ => taskTable.get(key) }
       def iterator = taskTable.iterator
     }

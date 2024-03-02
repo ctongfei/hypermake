@@ -2,7 +2,8 @@ package hypermake.syntax
 
 import hypermake.syntax.ast._
 
-/** The lexical part of the grammar of Hypermake. The following non-terminal definitions are sensitive to whitespace.
+/** The lexical part of the grammar of Hypermake. The following non-terminal definitions are
+  * sensitive to whitespace.
   */
 object Lexical {
 
@@ -16,8 +17,9 @@ object Lexical {
     "task",
     "plan",
     "service",
-    "module",
-    "package"
+    "package",
+    "class",
+    "object"
   )
 
   def token[$: P](s: String) = s ~ !(letter | digit | "_")

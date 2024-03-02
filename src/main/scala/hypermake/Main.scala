@@ -144,7 +144,7 @@ object Main extends App {
                 } yield u
 
               case Subcommand.Invalidate =>
-                val allRuns = File(s"${ctx.localEnv.root}/.runs").children.map(_ / "jobs")
+                val allRuns = File(s"${ctx.local.root}/.runs").children.map(_ / "jobs")
                 val allRunJobs = allRuns.flatMap(_.lines).toSet[String].map { s =>
                   parser.parseTask(fastparse.parse(s, Expressions.taskRef(_)).get.value)
                 }

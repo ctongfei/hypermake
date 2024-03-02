@@ -6,3 +6,6 @@ class S3(bucket):
   def mkdir(dir):
     true
 
+
+class EFS:
+  ...

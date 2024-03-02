@@ -1,5 +1,5 @@
 import aws
-import az.storage
+import azure.storage
 import "test.hm"
 import "pipeline/data.hm" as data
-import az.storage.blob as asb
+import azure.storage as asb

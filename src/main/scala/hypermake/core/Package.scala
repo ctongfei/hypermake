@@ -15,17 +15,17 @@ class Package(
                val decorators: Seq[Decorator],
                val rawScript: Script
 )(implicit ctx: Context) {
-  def on(env: Env): Task = new Task(
-    name = s"$name@$env",
-    env = env,
+  def on(fs: FileSys): Task = new Task(
+    name = s"$name@$fs",
+    fileSys = fs,
     `case` = `case`,
     inputs = inputs,
-    inputEnvs = inputs.mapValuesE {
-      case _: Value.Pure          => Env("")
-      case _: Value.PackageOutput => env
+    inputFs = inputs.mapValuesE {
+      case _: Value.Pure          => FileSys("")
+      case _: Value.PackageOutput => fs
     },
     outputFileNames = Map(outputFileName),
-    outputEnvs = Map(outputFileName._1 -> env),
+    outputFs = Map(outputFileName._1 -> fs),
     decorators = decorators, // TODO: what if decorators refer to env-dependent values?
     rawScript = rawScript
   )
@@ -62,14 +62,14 @@ case class PointedPackageTensor(
 
   /** Returns a task that builds this package on a specific environment.
     */
-  def on(env: Env)(implicit ctx: Context) = new PointedTaskTensor(
-    s"$name@${env.name}", // package@ec2
-    env,
+  def on(fs: FileSys)(implicit ctx: Context) = new PointedTaskTensor(
+    s"$name@${fs.name}", // package@ec2
+    fs,
     shape,
     inputs,
     Map(),
     Map(outputFileName),
-    Map(outputFileName._1 -> env),
+    Map(outputFileName._1 -> fs),
     decorators,
     rawScript
   )

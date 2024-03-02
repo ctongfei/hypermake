@@ -7,15 +7,15 @@ import hypermake.execution._
 import scala.collection._
 
 /** This is essentially a string potentially paired with multiple dependent tasks.
- */
+  */
 sealed trait Value {
   def value: String
 
   def absValue(implicit runtime: RuntimeConfig): String
 
-  def isPath: Boolean = envOption.isDefined
+  def isPath: Boolean = optFs.isDefined
 
-  def envOption: Option[Env]
+  def optFs: Option[FileSys]
 
   def dependencies: Set[Job]
 
@@ -23,56 +23,58 @@ sealed trait Value {
 
   def asIfPure: Value.Pure = this match {
     case x: Value.Pure => x
-    case _ => throw ValueNotPureException(value)
+    case _             => throw ValueNotPureException(value)
   }
 }
 
 object Value {
 
-  sealed trait EnvAgnostic extends Value
+  sealed trait FileSysAgnostic extends Value
 
-  case class Pure(value: String) extends EnvAgnostic {
+  case class Pure(value: String) extends FileSysAgnostic {
     def absValue(implicit runtime: RuntimeConfig) = value
 
-    def envOption = None
+    def optFs = None
 
     def dependencies = Set()
   }
 
-  case class PackageOutput(pack: Package) extends EnvAgnostic {
+  case class PackageOutput(pack: Package) extends FileSysAgnostic {
     def value = pack.outputFileName._2.value
 
     def absValue(implicit runtime: RuntimeConfig) = ???
 
-    def envOption = None
+    def optFs = None
 
     def dependencies = Set()
 
-    def on(env: Env): Output = Output(value, env, pack.on(env))
+    def on(fs: FileSys): Output = Output(value, fs, pack.on(fs))
   }
 
-  sealed trait EnvDependent extends Value {
-    def env: Env
+  sealed trait FileSysDependent extends Value {
+    def fileSys: FileSys
 
-    override def envOption = Some(env)
+    override def optFs = Some(fileSys)
   }
 
-  case class Input(value: String, env: Env) extends EnvDependent {
+  case class Input(value: String, fileSys: FileSys) extends FileSysDependent {
     def absValue(implicit runtime: RuntimeConfig) = value
 
     def dependencies = Set()
   }
 
-  case class Output(value: String, env: Env, job: Job) extends EnvDependent {
-    def absValue(implicit runtime: RuntimeConfig) = s"${job.absolutePath}${env.separator}$value"
+  case class Output(value: String, fileSys: FileSys, job: Job) extends FileSysDependent {
+    def absValue(implicit runtime: RuntimeConfig) = s"${job.absolutePath}${fileSys.separator}$value"
 
     def dependencies = Set(job)
   }
 
-  case class Multiple(cases: Tensor[Value], env: Env)(implicit runtime: RuntimeConfig) extends EnvDependent {
+  case class Multiple(cases: Tensor[Value], fileSys: FileSys)(implicit runtime: RuntimeConfig)
+      extends FileSysDependent {
     override def value = cases.map(_.value).allElements.mkString(runtime.IFS_CHAR)
 
-    def absValue(implicit runtime: RuntimeConfig) = cases.map(_.absValue).allElements.mkString(runtime.IFS_CHAR)
+    def absValue(implicit runtime: RuntimeConfig) =
+      cases.map(_.absValue).allElements.mkString(runtime.IFS_CHAR)
 
     override def dependencies = cases.map(_.dependencies).allElements.reduce(_ union _)
   }

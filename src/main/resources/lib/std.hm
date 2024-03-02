@@ -2,4 +2,3 @@
 class Interpreter(interpreter):
   def apply(file):
     $interpreter $file
-

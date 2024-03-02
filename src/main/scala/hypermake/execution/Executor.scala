@@ -18,9 +18,10 @@ object Executor {
 
   def recordJobsRun(jobs: Iterable[Job], cli: CLI.Service)(implicit ctx: Context): HIO[Unit] = {
     implicit val std: StdSinks = cli.globalSinks
-    val nowStr = dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
-    val env = ctx.localEnv
-    import env._
+    val nowStr =
+      dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
+    val fs = ctx.local
+    import fs._
     val logPath = s"$root${/}.runs${/}$nowStr"
     for {
       _ <- mkdir(logPath)
@@ -28,7 +29,9 @@ object Executor {
     } yield u
   }
 
-  def run(jobs: Iterable[Job])(action: Job => HIO[Boolean])(implicit runtime: RuntimeConfig): HIO[Unit] = {
+  def run(
+      jobs: Iterable[Job]
+  )(action: Job => HIO[Boolean])(implicit runtime: RuntimeConfig): HIO[Unit] = {
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
       u <- ZIO.foreach_(jobs) { j => semaphore.withPermit(action(j)).orElseSucceed(()) }
@@ -56,7 +59,8 @@ object Executor {
               cli.update(j, Status.Succeeded) *> promises(j).succeed(())
             else
               cli.update(j, Status.Failed) *> (
-                if (runtime.keepGoing) promises(j).succeed(()) // if keep-going, ignore failure and carry on
+                if (runtime.keepGoing)
+                  promises(j).succeed(()) // if keep-going, ignore failure and carry on
                 else promises(j).fail(JobFailedException(j))
               )
         } yield u

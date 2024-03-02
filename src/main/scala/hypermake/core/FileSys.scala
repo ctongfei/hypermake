@@ -8,16 +8,17 @@ import hypermake.util._
 import zio._
 import zio.duration._
 import zio.process._
-
 import java.nio.file.{Paths, Files => JFiles}
 import scala.collection._
 
-/** Encapsulates a running environment that could be local, or some remote grid. Such an environment must possess a
-  * basic file system, as well as the capability to run arbitrary shell script.
-  */
-trait Env {
+import hypermake.core.FileSys.local
 
-  /** Identifier of this environment.
+/** Encapsulates a file system that could be local, or some remote grid. Such a file system must
+  * possess a basic file system, as well as the capability to run arbitrary shell script.
+  */
+trait FileSys {
+
+  /** Identifier of this file system.
     */
   def name: String
 
@@ -31,7 +32,7 @@ trait Env {
 
   def / = separator
 
-  /** Output root on this environment. Intermediate results will be stored in this directory.
+  /** Output root on this file system. Intermediate results will be stored in this directory.
     */
   def root: String
 
@@ -67,7 +68,22 @@ trait Env {
 
   def delete(f: String)(implicit std: StdSinks): HIO[Unit]
 
-  def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks): HIO[Unit]
+  def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
+
+  def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
+
+  def copyFrom(src: String, srcFs: FileSys, dst: String)(implicit
+      ctx: Context,
+      std: StdSinks
+  ): HIO[Unit] = {
+    if (srcFs == this)
+      link(src, dst)
+    else if (srcFs == ctx.local)
+      upload(src, dst)
+    else if (this == ctx.local)
+      srcFs.download(src, dst)
+    else FileSys.copy(src, srcFs, dst, this)
+  }
 
   def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
       std: StdSinks
@@ -86,21 +102,24 @@ trait Env {
     u <- if (isLocked) delete(s"$f${/}.lock") else ZIO.succeed(())
   } yield u
 
-  def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] = {
+  def linkValue(x: Value, dst: String)(implicit
+      ctx: Context,
+      std: StdSinks
+  ): HIO[Option[String]] = {
     x match {
       case Value.Pure(_) => ZIO.none // do nothing
-      case Value.Input(path, env) =>
+      case Value.Input(path, fs) =>
         val e =
-          if (env == this) link(path, dst)
-          else copyFrom(path, env, dst)
+          if (fs == this) link(path, dst)
+          else copyFrom(path, fs, dst)
         e as Some(dst)
       case Value.PackageOutput(pack) =>
         val p = pack.output.on(this).value
         link(p, dst) as Some(dst)
-      case Value.Output(path, env, job) =>
+      case Value.Output(path, fs, job) =>
         val e =
-          if (env == this) link(resolvePath(path, job.absolutePath), dst)
-          else copyFrom(env.resolvePath(path, job.absolutePath), env, dst)
+          if (fs == this) link(resolvePath(path, job.absolutePath), dst)
+          else copyFrom(fs.resolvePath(path, job.absolutePath), fs, dst)
         e as Some(dst)
       case Value.Multiple(values, _) =>
         for {
@@ -116,35 +135,41 @@ trait Env {
   override def toString = name
 
   override def equals(o: Any) = o match {
-    case o: Env => name == o.name
-    case _      => false
+    case o: FileSys => name == o.name
+    case _          => false
   }
 
 }
 
-object Env {
+object FileSys {
 
   def getValueByName(name: String)(implicit ctx: Context) = ctx.root.values(name).default.value
 
-  def getValueByNameOpt(name: String)(implicit ctx: Context) = ctx.root.values.get(name).map(_.default.value)
+  def getValueByNameOpt(name: String)(implicit ctx: Context) =
+    ctx.root.values.get(name).map(_.default.value)
 
   def getScriptByName(name: String)(implicit ctx: Context) = ctx.root.functions(name).impl.default
 
+  def getScriptByNames(names: String*)(implicit ctx: Context) =
+    names.foldLeft[Option[Script]](None) { (acc, name) =>
+      acc.orElse(ctx.root.functions.get(name).map(_.impl.default))
+    }
+
   def apply(name: String)(implicit ctx: Context) = {
     if (name == "local")
-      ctx.localEnv
-    else if (ctx.envTable contains name)
-      ctx.getEnv(name)
+      ctx.local
+    else if (ctx.fsTable contains name)
+      ctx.getFs(name)
     else {
-      val env = new Env.Custom(name)
-      ctx.envTable += name -> env
-      env
+      val fs = new FileSys.Custom(name)
+      ctx.fsTable += name -> fs
+      fs
     }
   }
 
-  def local(implicit ctx: Context) = ctx.localEnv
+  def local(implicit ctx: Context) = ctx.local
 
-  class Local(implicit ctx: Context) extends Env {
+  class Local(implicit ctx: Context) extends FileSys {
 
     final val name = "local"
     val separator = java.io.File.separatorChar
@@ -184,15 +209,16 @@ object Env {
       JFiles.createSymbolicLink(dstPath, relativePath)
     }
 
-    override def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
-      proc <- getScriptByName(s"copy_from_${srcEnv}_to_local")
-        .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally(ctx.runtime.workDir)(ctx.runtime, std)
-      exitCode <- proc.exitCode
-      u <- if (exitCode.code == 0) ZIO.succeed(()) else ZIO.fail(DataTransferFailedException(srcEnv.name, src))
-    } yield u
+    def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = link(src, dst)
 
-    override def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
+    def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = link(src, dst)
+
+    override def execute(
+        wd: String,
+        command: String,
+        args: Seq[String],
+        envArgs: Map[String, String]
+    )(implicit
         std: StdSinks
     ) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
@@ -212,7 +238,7 @@ object Env {
 
   }
 
-  class Custom(val name: String)(implicit ctx: Context) extends Env {
+  class Custom(val name: String)(implicit ctx: Context) extends FileSys {
 
     import ctx._
 
@@ -220,15 +246,22 @@ object Env {
       getValueByNameOpt(s"${name}.separator").map(_.head).getOrElse(java.io.File.separatorChar)
 
     def pathSeparator =
-      getValueByNameOpt(s"${name}.path_separator").map(_.head).getOrElse(java.io.File.pathSeparatorChar)
+      getValueByNameOpt(s"${name}.path_separator")
+        .map(_.head)
+        .getOrElse(java.io.File.pathSeparatorChar)
 
     def root = getValueByName(s"${name}.root")
 
     def refreshInterval =
-      getValueByNameOpt(s"${name}.refresh_interval").map(_.toInt).getOrElse(5).seconds // by default, 5s
+      getValueByNameOpt(s"${name}.refresh_interval")
+        .map(_.toInt)
+        .getOrElse(5)
+        .seconds // by default, 5s
 
     def read(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.read").withArgs("file" -> f).executeLocally(ctx.runtime.workDir)
+      process <- getScriptByName(s"${name}.read")
+        .withArgs("file" -> f)
+        .executeLocally(ctx.runtime.workDir)
       stdout <- process.stdout.string
     } yield stdout
 
@@ -238,7 +271,7 @@ object Env {
         _ <- IO {
           File(tempScriptFile).write(content)
         }
-        u <- copyFrom(tempScriptFile, ctx.localEnv, f)
+        u <- upload(tempScriptFile, f)
       } yield u
     }
 
@@ -277,18 +310,28 @@ object Env {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def copyFrom(src: String, srcEnv: Env, dst: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"copy_from_${srcEnv}_to_$name")
+    def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
+      process <- getScriptByName(s"${name}.upload")
         .withArgs("src" -> src, "dst" -> dst)
         .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) = for {
+    def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
+      process <- getScriptByName(s"${name}.download")
+        .withArgs("src" -> src, "dst" -> dst)
+        .executeLocally(ctx.runtime.workDir)
+      u <- process.successfulExitCode.unit
+    } yield u
+
+    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(
+        implicit std: StdSinks
+    ) = for {
       process <- getScriptByName(s"${name}.execute")
         .withArgs(
           "command" ->
-            s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args.mkString(" ")}"
+            s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args
+                .mkString(" ")}"
         )
         .executeLocally(wd)
       _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
@@ -296,4 +339,19 @@ object Env {
     } yield exitCode
 
   }
+
+  /** Copy between environments. */
+  def copy(src: String, srcFs: FileSys, dst: String, dstFs: FileSys)(implicit
+      ctx: Context,
+      std: StdSinks
+  ): HIO[Unit] = for {
+    process <- getScriptByName(s"copy_from_${srcFs}_to_${dstFs}")
+      .withArgs("src" -> src, "dst" -> dst)
+      .executeLocally(ctx.runtime.workDir)(ctx.runtime, std)
+    exitCode <- process.exitCode
+    u <-
+      if (exitCode.code == 0) ZIO.succeed(())
+      else ZIO.fail(DataTransferFailedException(srcFs.name, src))
+  } yield u
+
 }

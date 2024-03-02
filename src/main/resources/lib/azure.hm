@@ -1,8 +1,9 @@
-# Defines a Azure Storage Blob module that can be used as an environment in Hypermake.
+# Defines a Azure Blob Storage module that can be used as an environment in Hypermake.
+# Underlyingly, it uses the `az storage blob` command group.
 # Use as follows:
-# import az.storage
-# object my_blob = az.storage.blob(container="my_container", extra_args="")
-class blob(container, extra_args):
+# import azure
+# object my_storage = azure.BlobStorage(container="my_container", extra_args="")
+class BlobStorage(container, extra_args):
 
   def read(file):
     az storage blob download \
@@ -54,3 +55,6 @@ class blob(container, extra_args):
       --name $src \
       --file $dst \
       $extra_args
+
+
+#class DataLakeStorageGen2(container, extra_args):

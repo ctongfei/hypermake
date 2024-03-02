@@ -1,6 +1,3 @@
-def Exec(interpreter="python") <- (input="script.py"):
-  $interpreter $input
-
 @Exec(interpreter="python")
 task run(x="test") -> ():
   import os
