@@ -13,23 +13,25 @@
       
       
       
+        <link rel="prev" href="../hello/">
       
-        <link rel="next" href="tutorial/hello/">
+      
+        <link rel="next" href="../branch/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
     
     
       
-        <title>HyperMake</title>
+        <title>Inputs & outputs - HyperMake</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#inputs-outputs-and-composing-tasks" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="HyperMake" class="md-header__button md-logo" aria-label="HyperMake" data-md-component="logo">
+    <a href="../.." title="HyperMake" class="md-header__button md-logo" aria-label="HyperMake" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -103,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              Inputs & outputs
             
           </span>
         </div>
@@ -190,7 +197,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="HyperMake" class="md-nav__button md-logo" aria-label="HyperMake" data-md-component="logo">
+    <a href="../.." title="HyperMake" class="md-nav__button md-logo" aria-label="HyperMake" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -217,17 +224,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -236,7 +236,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -245,19 +244,21 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -271,7 +272,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorial
@@ -285,7 +286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/hello/" class="md-nav__link">
+      <a href="../hello/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -303,10 +304,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="tutorial/compose/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -315,6 +325,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -327,7 +338,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/branch/" class="md-nav__link">
+      <a href="../branch/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -348,7 +359,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/parameterized-compose/" class="md-nav__link">
+      <a href="../parameterized-compose/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -369,7 +380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/functions/" class="md-nav__link">
+      <a href="../functions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -390,7 +401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/decorators/" class="md-nav__link">
+      <a href="../decorators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -411,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/packages/" class="md-nav__link">
+      <a href="../packages/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -432,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/modules/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -453,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tuntorial/filesystems.md" class="md-nav__link">
+      <a href="../../tuntorial/filesystems.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -518,7 +529,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/aws/" class="md-nav__link">
+      <a href="../../stdlib/aws/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -539,7 +550,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/azure/" class="md-nav__link">
+      <a href="../../stdlib/azure/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -560,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/conda/" class="md-nav__link">
+      <a href="../../stdlib/conda/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,7 +592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/sftp/" class="md-nav__link">
+      <a href="../../stdlib/sftp/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -619,6 +630,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -636,9 +649,47 @@
   
 
 
-  <h1>Introduction</h1>
-
-
+<h1 id="inputs-outputs-and-composing-tasks">Inputs, outputs, and composing tasks</h1>
+<p>A task can take parameters, and yield outputs.
+<div class="highlight"><pre><span></span><code><span class="nv">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://news.ycombinator.org&quot;</span>
+task<span class="w"> </span>download<span class="o">(</span><span class="nv">url</span><span class="o">=</span>$<span class="o">)</span><span class="w"> </span>-&gt;<span class="w"> </span><span class="o">(</span><span class="nv">out</span><span class="o">=</span><span class="s2">&quot;homepage.html&quot;</span><span class="o">)</span>:
+<span class="w">  </span>wget<span class="w"> </span><span class="nv">$url</span><span class="w"> </span>-O<span class="w"> </span><span class="nv">$out</span>
+</code></pre></div></p>
+<div class="admonition info inline end">
+<p>Generally, when declaring a parameter whose default argument is a variable with the same name,
+one can omit the argument name by just writing <code>$</code>.</p>
+</div>
+<p>Running the task <code>download</code> will download the homepage of the Hacker News. Note the parameter is declared as <code>url=$</code>: 
+This is a shorthand for <code>url=$url</code>.</p>
+<p>This task creates a single output called <code>homepage.html</code>: You can find this file at <code>out/download/default</code> directory. 
+One can simply write <code>out</code> instead of <code>(out="homepage.html")</code>: in this case the output file name will be <code>out</code>.</p>
+<p>Now, we'd like to extract all the headlines: their URLs and titles.
+We create another task that takes the output of the <code>download</code> task as input:
+<div class="highlight"><pre><span></span><code>task<span class="w"> </span>get_titles<span class="o">(</span><span class="nv">html</span><span class="o">=</span><span class="nv">$download</span>.out<span class="o">)</span><span class="w"> </span>-&gt;<span class="w"> </span>out:
+<span class="w">  </span>cat<span class="w"> </span><span class="nv">$html</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>perl<span class="w"> </span>-ne<span class="w"> </span><span class="s1">&#39;if (/&lt;a href=&quot;(.*?)&quot; class=&quot;storylink&quot;&gt;(.*?)&lt;\/a&gt;/) { print &quot;$1\t$2\n&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>&gt;<span class="w"> </span><span class="nv">$out</span>
+</code></pre></div></p>
+<p>It creates the following pipeline:</p>
+<pre class="mermaid"><code>flowchart LR
+    download --&gt; get_titles</code></pre>
+<p>Running the following command
+<div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>tutorial/ycomb.hm<span class="w"> </span>run<span class="w"> </span>get_titles
+</code></pre></div>
+will sequentially run the two dependent jobs: first <code>download</code> then <code>get_titles</code>,
+and the resulting TSV table will be located in <code>out/get_titles/default/out</code>.</p>
+<p>In the directory <code>out/get_titles/default</code>, you can find the following files that may be of interest:</p>
+<ul>
+<li><code>out</code>: the resulting TSV table</li>
+<li><code>script.sh</code>: the script that was used to run the task</li>
+<li><code>stdout</code>: the standard output of the task</li>
+<li><code>stderr</code>: the standard error of the task</li>
+<li><code>args</code>: A shell script that contains the arguments that were used to run the task</li>
+<li><code>exitcode</code>: A file that contains the exit code of the task</li>
+</ul>
+<p>To recreate the task in shell, you can use the following command. It should behaves the same as if directly running from Hypermake.
+<div class="highlight"><pre><span></span><code>.<span class="w"> </span>args<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>.<span class="w"> </span>script.sh
+</code></pre></div></p>
 
 
 
@@ -689,10 +740,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7c377c4.min.js"></script>
       
     
   </body>

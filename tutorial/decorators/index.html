@@ -13,23 +13,25 @@
       
       
       
+        <link rel="prev" href="../functions/">
       
-        <link rel="next" href="tutorial/hello/">
+      
+        <link rel="next" href="../packages/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
     
     
       
-        <title>HyperMake</title>
+        <title>Decorators - HyperMake</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#decorators" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="HyperMake" class="md-header__button md-logo" aria-label="HyperMake" data-md-component="logo">
+    <a href="../.." title="HyperMake" class="md-header__button md-logo" aria-label="HyperMake" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -103,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              Decorators
             
           </span>
         </div>
@@ -190,7 +197,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="HyperMake" class="md-nav__button md-logo" aria-label="HyperMake" data-md-component="logo">
+    <a href="../.." title="HyperMake" class="md-nav__button md-logo" aria-label="HyperMake" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -217,17 +224,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -236,7 +236,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -245,19 +244,21 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -271,7 +272,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorial
@@ -285,7 +286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/hello/" class="md-nav__link">
+      <a href="../hello/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -306,7 +307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/compose/" class="md-nav__link">
+      <a href="../compose/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -327,7 +328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/branch/" class="md-nav__link">
+      <a href="../branch/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -348,7 +349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/parameterized-compose/" class="md-nav__link">
+      <a href="../parameterized-compose/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -369,7 +370,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/functions/" class="md-nav__link">
+      <a href="../functions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -387,10 +388,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="tutorial/decorators/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Decorators
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -399,6 +420,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-a-simple-decorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: A simple decorator
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-a-parameterized-decorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: A parameterized decorator
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-chaining-decorators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 3: Chaining decorators
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -411,7 +479,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/packages/" class="md-nav__link">
+      <a href="../packages/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -432,7 +500,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/modules/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -453,7 +521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tuntorial/filesystems.md" class="md-nav__link">
+      <a href="../../tuntorial/filesystems.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -518,7 +586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/aws/" class="md-nav__link">
+      <a href="../../stdlib/aws/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -539,7 +607,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/azure/" class="md-nav__link">
+      <a href="../../stdlib/azure/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -560,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/conda/" class="md-nav__link">
+      <a href="../../stdlib/conda/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,7 +649,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/sftp/" class="md-nav__link">
+      <a href="../../stdlib/sftp/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -619,6 +687,43 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-a-simple-decorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: A simple decorator
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-a-parameterized-decorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: A parameterized decorator
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-chaining-decorators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 3: Chaining decorators
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -636,9 +741,79 @@
   
 
 
-  <h1>Introduction</h1>
+<h1 id="decorators">Decorators</h1>
+<p>In Hypermake, a task can be decorated with some decorators, effectively modifying its behavior. This can support </p>
+<ul>
+<li>Running with different shell;</li>
+<li>Running in specific virtual environments;</li>
+<li>Running through some cluster submission systems;</li>
+<li>etc.</li>
+</ul>
+<p>The general syntax for defining a decorator is:</p>
+<p><div class="highlight"><pre><span></span><code>def<span class="w"> </span>&lt;decoratorName&gt;<span class="o">(</span>&lt;arguments&gt;<span class="o">)</span><span class="w"> </span>&lt;-<span class="w"> </span><span class="nv">input</span><span class="o">=</span>&lt;internalScriptName&gt;:
+<span class="w">  </span>&lt;script&gt;
+</code></pre></div>
+and when applying a decorator, one could write
+<div class="highlight"><pre><span></span><code>@&lt;decoratorName&gt;<span class="o">(</span>&lt;arguments&gt;<span class="o">)</span>
+task<span class="w"> </span>taskName<span class="o">(</span>...<span class="o">)</span><span class="w"> </span>-&gt;<span class="w"> </span>out:
+<span class="w">  </span>...
+</code></pre></div></p>
+<p>This will modify the task with the decorator. The script to be modified will be stored as <code>internalScriptName</code>.</p>
+<h4 id="example-1-a-simple-decorator">Example 1: A simple decorator</h4>
+<p>An example that let us runs a task in Python instead of shell:
+<div class="highlight"><pre><span></span><code>def<span class="w"> </span>python<span class="o">()</span><span class="w"> </span>&lt;-<span class="w"> </span><span class="nv">internalPythonScript</span><span class="o">=</span><span class="s2">&quot;script.py&quot;</span>:
+<span class="w">  </span>python<span class="w"> </span><span class="nv">$internalPythonScript</span>
 
+@python
+task<span class="w"> </span>helloWorldInPython:
+<span class="w">  </span>print<span class="o">(</span><span class="s2">&quot;Hello World&quot;</span><span class="w"> </span>+<span class="w"> </span><span class="s2">&quot; &quot;</span><span class="w"> </span>+<span class="w"> </span><span class="s2">&quot;in Python!&quot;</span><span class="o">)</span>
+</code></pre></div></p>
+<p>And we can invoke the task from the command line:
+<div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>tutorial/decorators.hm<span class="w"> </span>run<span class="w"> </span>helloWorldInPython
+</code></pre></div></p>
+<p>Let's see what's happening under the hood here. The script in the task <code>helloWorldInPython</code> is decorated with <code>@python</code>.
+The script with the line <code>print(...)</code> is stored as <code>script.py</code> as directed in the decorator. Then, in shell, the command
+in the decorator is run instead: <code>python script.py</code>.</p>
+<h4 id="example-2-a-parameterized-decorator">Example 2: A parameterized decorator</h4>
+<p>In Python, a task can be run in different Conda virtual environments. This is a decorator that lets us do that.</p>
+<div class="highlight"><pre><span></span><code>def<span class="w"> </span>conda<span class="o">(</span>env<span class="o">)</span><span class="w"> </span>&lt;-<span class="w"> </span><span class="nv">internalCondaScript</span><span class="o">=</span><span class="s2">&quot;conda-internal.sh&quot;</span>:
+<span class="w">  </span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">command</span><span class="w"> </span>conda<span class="w"> </span><span class="s1">&#39;shell.bash&#39;</span><span class="w"> </span><span class="s1">&#39;hook&#39;</span><span class="w"> </span><span class="m">2</span>&gt;<span class="w"> </span>/dev/null<span class="k">)</span><span class="s2">&quot;</span>
+<span class="w">  </span>conda<span class="w"> </span>activate<span class="w"> </span><span class="nv">$env</span>
+<span class="w">  </span>.<span class="w"> </span><span class="nv">$internalCondaScript</span>
+<span class="w">  </span>conda<span class="w"> </span>deactivate
 
+@conda<span class="o">(</span><span class="nv">env</span><span class="o">={</span>Env:<span class="w"> </span>base<span class="w"> </span>myenv<span class="o">})</span>
+task<span class="w"> </span>helloWorldFromEnv:
+<span class="w">  </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;print(&#39;Hello World in Python from </span><span class="nv">$env</span><span class="s2">!&#39;)&quot;</span>
+</code></pre></div>
+<p>Note that in the task <code>helloWorldFromEnv</code>, the decorator <code>conda</code> has a parameterized argument: <code>env={Env: base myenv}</code>.
+We can invoke both cases of the task <code>helloWorldFromEnv</code>:
+<div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>tutorial/decorators.hm<span class="w"> </span>run<span class="w"> </span><span class="s1">&#39;helloWorldFromEnv[Env: *]&#39;</span>
+</code></pre></div></p>
+<p>We will see both lines
+<div class="highlight"><pre><span></span><code>Hello World in Python from base!
+Hello World in Python from myenv!
+</code></pre></div>
+output to the terminal.</p>
+<h4 id="example-3-chaining-decorators">Example 3: Chaining decorators</h4>
+<p>We have now created two decorators:</p>
+<ul>
+<li><code>@python</code> that executes a script using Python instead of Bash as the interpreter;</li>
+<li><code>@conda</code> that runs a task in a specific Conda virtual environment.</li>
+</ul>
+<p>Can we compose these decorators? Yes.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@conda</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="n">Env</span><span class="p">:</span> <span class="n">base</span> <span class="n">myenv</span><span class="p">})</span>
+<span class="nd">@python</span>
+<span class="n">task</span> <span class="n">helloWorldInPythonFromEnv</span><span class="p">:</span>
+  <span class="kn">import</span> <span class="nn">os</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hello World in Python from </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;env&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="admonition info inline end">
+<p>One can use <code>os.environ[var]</code> to get the environment variable <code>$var</code> in Python.</p>
+</div>
+<p>First, our script is wrapped by <code>@python</code>, then <code>@conda(env)</code>. 
+Recall that Hypermake passes parameters into the script as environment variables: 
+we cannot use <code>$env</code> to get the Hypermake variable in Python.</p>
 
 
 
@@ -689,10 +864,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7c377c4.min.js"></script>
       
     
   </body>

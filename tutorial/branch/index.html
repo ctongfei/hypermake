@@ -13,23 +13,25 @@
       
       
       
+        <link rel="prev" href="../compose/">
       
-        <link rel="next" href="tutorial/hello/">
+      
+        <link rel="next" href="../parameterized-compose/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
     
     
       
-        <title>HyperMake</title>
+        <title>Parameters - HyperMake</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#parameters" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="HyperMake" class="md-header__button md-logo" aria-label="HyperMake" data-md-component="logo">
+    <a href="../.." title="HyperMake" class="md-header__button md-logo" aria-label="HyperMake" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -103,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              Parameters
             
           </span>
         </div>
@@ -190,7 +197,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="HyperMake" class="md-nav__button md-logo" aria-label="HyperMake" data-md-component="logo">
+    <a href="../.." title="HyperMake" class="md-nav__button md-logo" aria-label="HyperMake" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -217,17 +224,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -236,7 +236,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -245,19 +244,21 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -271,7 +272,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorial
@@ -285,7 +286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/hello/" class="md-nav__link">
+      <a href="../hello/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -306,7 +307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/compose/" class="md-nav__link">
+      <a href="../compose/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -324,10 +325,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="tutorial/branch/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -336,6 +346,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -348,7 +359,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/parameterized-compose/" class="md-nav__link">
+      <a href="../parameterized-compose/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -369,7 +380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/functions/" class="md-nav__link">
+      <a href="../functions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -390,7 +401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/decorators/" class="md-nav__link">
+      <a href="../decorators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -411,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/packages/" class="md-nav__link">
+      <a href="../packages/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -432,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/modules/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -453,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tuntorial/filesystems.md" class="md-nav__link">
+      <a href="../../tuntorial/filesystems.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -518,7 +529,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/aws/" class="md-nav__link">
+      <a href="../../stdlib/aws/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -539,7 +550,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/azure/" class="md-nav__link">
+      <a href="../../stdlib/azure/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -560,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/conda/" class="md-nav__link">
+      <a href="../../stdlib/conda/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,7 +592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/sftp/" class="md-nav__link">
+      <a href="../../stdlib/sftp/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -619,6 +630,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -636,9 +649,46 @@
   
 
 
-  <h1>Introduction</h1>
+<h1 id="parameters">Parameters</h1>
+<p>We'd like to <em>parameterize</em> our tasks: there could be multiple versions of a task.
+This could be different datasets, different preprocessing pipelines, different pretrained models, etc.
+Hypermake models these configurations as <strong>parameters</strong> to values and tasks.</p>
+<p>For example, we are here downloading various versions of the <a href="https://nlp.stanford.edu/projects/glove/">GloVe embeddings</a>
+from the Stanford NLP website:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">gloveUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">{</span>Version:
+<span class="w">  </span><span class="nv">6b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.6B.zip&quot;</span>
+<span class="w">  </span><span class="nv">cc42b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.42B.300d.zip&quot;</span>
+<span class="w">  </span><span class="nv">cc840b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.840B.300d.zip&quot;</span>
+<span class="w">  </span><span class="nv">twitter27b</span><span class="o">=</span><span class="s2">&quot;http://nlp.stanford.edu/data/glove.twitter.27B.zip&quot;</span>
+<span class="o">}</span>
 
-
+task<span class="w"> </span>downloadGloVe<span class="o">(</span><span class="nv">gloveUrl</span><span class="o">=</span>$<span class="o">)</span><span class="w"> </span>-&gt;<span class="w"> </span>out:
+<span class="w">  </span>sleep<span class="w"> </span><span class="k">$((</span><span class="o">(</span><span class="w"> </span><span class="nv">$RANDOM</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="o">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">1</span><span class="k">))</span>s
+<span class="w">  </span>wget<span class="w"> </span>-O<span class="w"> </span>glove.zip<span class="w"> </span><span class="nv">$gloveUrl</span>
+<span class="w">  </span>unzip<span class="w"> </span>glove.zip
+<span class="w">  </span>mv<span class="w"> </span>*.txt<span class="w"> </span><span class="nv">$out</span>
+<span class="w">  </span>rm<span class="w"> </span>glove.zip
+</code></pre></div>
+<div class="admonition info inline end">
+<p>If the key is the same as the value, one can omit the value in the declaration, like this:
+<code>{Version: 6b cc42b cc840b twitter27b}</code>.</p>
+</div>
+<p>Note that we declared a <code>Dict</code>-like object here: <code>{Version: 6b=XX cc42b=XX cc840b=XX twitter27b=XX}</code>.
+This is a parameter declaration: the name of the parameter is <code>Version</code>, and it has 4 potential keys <code>6b</code>, <code>cc42b</code>, <code>cc840b</code>, and <code>twitter27b</code>.
+Each key is associated with a value that follows the key (that is the URL in this example).</p>
+<p>Our task <code>downloadGloVe</code> is now parameterized with variable <code>Version</code>. To refer to one of these task (a <strong>case</strong>),
+we can use the indexing notation <code>task[Var:key]</code>: here for example <code>downloadGloVe[Version:6b]</code>.</p>
+<p>We can use the task referring expressions in the Hypermake command line interface. To download GloVe <code>6b</code> version, do
+<div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>glove.hm<span class="w"> </span>run<span class="w"> </span>downloadGloVe<span class="o">[</span>Version:6b<span class="o">]</span>
+</code></pre></div>
+One can use <code>[Var:*]</code> syntax to refer to <strong>all</strong> cases of the task. The following command line invocation downloads all GloVe versions:
+<div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>glove.hm<span class="w"> </span>run<span class="w"> </span><span class="s1">&#39;downloadGloVe[Version: *]&#39;</span><span class="w"> </span>-j4
+</code></pre></div></p>
+<div class="admonition info inline end">
+<p>Single-quoting the task <code>downloadGlove[Version: *]</code> prohibits bash from expanding the wildcard <code>*</code> symbol.</p>
+</div>
+<p>Again, we can find the output files in <code>out/downloadGloVe/Version=XX</code>.</p>
+<p><code>-j4</code> is a flag that specifies the number of parallel jobs to run. Here we run 4 jobs in parallel.</p>
 
 
 
@@ -689,10 +739,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7c377c4.min.js"></script>
       
     
   </body>
