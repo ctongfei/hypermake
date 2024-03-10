@@ -74,7 +74,9 @@ class Shape(val underlying: Map[Axis, Set[String]]) {
             if (indices(i) < values(i).length - 1) {
               indices(i) += 1
               finished = (0 until n).forall(i => indices(i) == values(i).length - 1)
-              return Case((axes lazyZip values lazyZip indices).map { case (a, v, i) => a -> v(i) }.toMap)
+              return Case((axes lazyZip values lazyZip indices).map { case (a, v, i) =>
+                a -> v(i)
+              }.toMap)
             } else indices(i) = 0
             i += 1
           }
@@ -90,6 +92,11 @@ class Shape(val underlying: Map[Axis, Set[String]]) {
         s"{$a: ${ks.mkString(" ")}}"
       }
       .mkString(" × ")
+  }
+
+  def make[A](f: Case => A): Tensor[A] = new Tensor[A] {
+    def shape = self
+    def get(indices: Case) = Some(f(indices))
   }
 
 }

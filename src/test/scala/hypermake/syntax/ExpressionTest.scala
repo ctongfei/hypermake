@@ -14,7 +14,7 @@ object SyntaxGen {
     s <- Gen.alphaNumStr
     m <- envModifier
   } yield StringLiteral(s, m)
-  def axisName = Gen.alphaNumStr.map(AxisName.apply)
+  def axisName = Gen.identifier.map(AxisName.apply)
 
   def dictLiteral: Gen[DictLiteral] = ???
 

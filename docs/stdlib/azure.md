@@ -1,18 +1,14 @@
-## Module `az.storage.blob`
+# Module `azure`
+
+## `azure.BlobStorage`
 
 Enables Azure Blob Storage support.
 
-Usage:
-```py
-import az.storage
-# or
-import az.storage.blob(container='xxx') as asb
-```
-It creates an environment with name `name`.
 
 Example usage:
 ```py
-import az.storage.blob (
+import azure 
+object az_storage = azure.BlobStorage(
     name = "az_storage", 
     container = "my_container", 
     extra_args = "--account-name xxx --account-key yyy"
@@ -21,9 +17,6 @@ import az.storage.blob (
 data_path = "/path/to/data" @az_storage
 ```
 
-## Module `az.ml`
+## `azure.DataLakeStorageGen2`
 
-Usage:
-```py
-
-```
+## `azure.MLCompute`

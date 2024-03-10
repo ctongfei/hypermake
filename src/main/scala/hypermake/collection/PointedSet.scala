@@ -1,8 +1,11 @@
 package hypermake.collection
 
-import hypermake.exception.AxesDefaultKeyMismatchException
-
 import scala.collection._
+
+import cats.syntax.hash._
+import cats.Hash
+import cats.implicits._
+import hypermake.exception.AxesDefaultKeyMismatchException
 
 /** A set with a default element.
   */
@@ -31,6 +34,14 @@ trait PointedSet[A] extends Set[A] {
     this.underlying subsetOf that.underlying
   }
 
+  def equals(that: PointedSet[A]) = {
+    if (this.default != that.default)
+      throw AxesDefaultKeyMismatchException(None, this.default.toString, that.default.toString)
+    this.underlying equals that.underlying
+  }
+
+  override def hashCode() = (default, underlying).hashCode()
+
 }
 
 object PointedSet {
@@ -42,6 +53,12 @@ object PointedSet {
 
       def underlying = underlyingSet
     }
+  }
+
+  // does not utilize `cats.Hash`: just uses Scala set with default equality and hash
+  implicit def Hash[A]: Hash[PointedSet[A]] = new Hash[PointedSet[A]] {
+    def hash(x: PointedSet[A]) = x.hashCode()
+    def eqv(x: PointedSet[A], y: PointedSet[A]): Boolean = x equals y
   }
 
 }

@@ -12,13 +12,13 @@ case class Axis(name: String) {
 
 object Axis {
 
-  implicit object Eq extends Order[Axis] with Hash[Axis] {
+  implicit object Order extends Order[Axis] with Hash[Axis] {
 
     override def hash(x: Axis): Int = x.name.hashCode
 
     def compare(x: Axis, y: Axis) = x.name compare y.name
   }
 
-  implicit val ordering: Ordering[Axis] = Eq.toOrdering
+  implicit val ordering: Ordering[Axis] = Order.toOrdering
 
 }

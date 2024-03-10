@@ -21,7 +21,9 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "fansi" % "0.4.0",
   "com.github.pathikrit" %% "better-files" % "3.9.2",
   "org.jline" % "jline" % "3.23.0",
-  "org.scalatest" %% "scalatest" % "3.2.18" % "test",
-  "org.scalacheck" %% "scalacheck" % "1.17.0" % "test",
-  "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % "test"
+  "org.typelevel" %% "cats-laws" % "2.9.0" % Test,
+  "org.typelevel" %% "discipline-scalatest" % "2.2.0" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.18" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
+  "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
 )

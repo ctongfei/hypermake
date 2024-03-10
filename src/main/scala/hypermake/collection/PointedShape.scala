@@ -2,7 +2,10 @@ package hypermake.collection
 
 import scala.collection._
 
-class PointedShape(override val underlying: Map[Axis, PointedSet[String]]) extends Shape(underlying) {
+import cats.kernel._
+
+class PointedShape(override val underlying: Map[Axis, PointedSet[String]])
+    extends Shape(underlying) {
   self =>
 
   def default: Case = Case(underlying.view.mapValues(_.default).toMap)
@@ -36,6 +39,16 @@ class PointedShape(override val underlying: Map[Axis, PointedSet[String]]) exten
         a -> that(a)
     }.toMap
   }
+
+  override def make[A](f: Case => A): PointedTensor[A] = new PointedTensor[A] {
+    def shape = self
+    def get(indices: Case) = Some(f(indices))
+  }
+
+  def equals(that: PointedShape) = {
+    (self.vars equals that.vars) && self.vars.forall(a => self(a) equals that(a))
+  }
+
 }
 
 object PointedShape {
@@ -43,5 +56,22 @@ object PointedShape {
   def singleton = new PointedShape(Map())
 
   def apply(underlying: Map[Axis, PointedSet[String]]) = new PointedShape(underlying)
+
+  implicit object BoundedSemilattice extends BoundedSemilattice[PointedShape] {
+    def empty = singleton
+    def combine(x: PointedShape, y: PointedShape) = x outerJoin y
+  }
+
+  implicit object PartialOrder extends PartialOrder[PointedShape] {
+    override def eqv(x: PointedShape, y: PointedShape) =
+      (x.vars equals y.vars) && x.vars.forall(a => x(a) == y(a))
+
+    def partialCompare(x: PointedShape, y: PointedShape) =
+      if (eqv(x, y)) 0.0
+      else if ((x.vars subsetOf y.vars) && x.vars.forall(a => x(a) equals y(a))) -1.0
+      else if ((y.vars subsetOf x.vars) && y.vars.forall(a => y(a) equals x(a))) 1.0
+      else Double.NaN
+
+  }
 
 }

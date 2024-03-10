@@ -10,6 +10,9 @@ theme:
     scheme: default
     primary: 'blue grey'
     accent: grey
+  font:
+    text: 'Inter'
+    code: 'Noto Sans Mono'
 
 repo_name: 'ctongfei/hypermake'
 repo_url: 'https://github.com/ctongfei/hypermake'
@@ -26,17 +29,17 @@ markdown_extensions:
 nav:
   - 'Introduction': 'index.md'
   - 'Tutorial':
-      - "01 Hello, world!": 'tutorial/01-hello.md'
-      - "02 Inputs & outputs": 'tutorial/02-compose.md'
-      - "03 Parameters": 'tutorial/03-branch.md'
-      - "04 Parameterized pipelines": 'tutorial/04-parameterized-compose.md'
-      - "05 Functions": 'tutorial/05-functions.md'
-      - "06 Decorators": 'tutorial/06-decorators.md'
-      - "07 Packages": 'tutorial/07-packages.md'
-      - "08 Modules": 'tutorial/08-modules.md'
-      - "09 Environments": 'tuntorial/09-environments.md'
+      - "Hello, world!": 'tutorial/hello.md'
+      - "Inputs & outputs": 'tutorial/compose.md'
+      - "Parameters": 'tutorial/branch.md'
+      - "Parameterized pipelines": 'tutorial/parameterized-compose.md'
+      - "Functions": 'tutorial/functions.md'
+      - "Decorators": 'tutorial/decorators.md'
+      - "Packages": 'tutorial/packages.md'
+      - "Modules": 'tutorial/modules.md'
+      - "Environments": 'tuntorial/filesystems.md'
   - 'Library Reference':
       - "AWS": 'stdlib/aws.md'
-      - "Azure": 'stdlib/az.md'
-      - "Git": 'stdlib/git.md'
-      - "Python": 'stdlib/python.md'
+      - "Azure": 'stdlib/azure.md'
+      - "Conda": 'stdlib/conda.md'
+      - "SFTP": 'stdlib/sftp.md'

@@ -5,8 +5,8 @@ import hypermake.util._
 
 import scala.collection._
 
-/** A [[Tensor]] but with default value for each axis. As a result, each `PointedTensor[A]` value has a single default value
-  * `A`, similar to a pointed set.
+/** A [[Tensor]] but with default value for each axis. As a result, each `PointedTensor[A]` value
+  * has a single default value `A`, similar to a pointed set.
   *
   * @tparam A
   *   Element type
@@ -30,14 +30,15 @@ trait PointedTensor[+A] extends Tensor[A] {
 
   def product[B](that: PointedTensor[B]): PointedTensor[(A, B)] = productWith(that)((_, _))
 
-  def productWith[B, C](that: PointedTensor[B])(f: (A, B) => C): PointedTensor[C] = new PointedTensor[C] {
-    def shape = self.shape outerJoin that.shape
+  def productWith[B, C](that: PointedTensor[B])(f: (A, B) => C): PointedTensor[C] =
+    new PointedTensor[C] {
+      def shape = self.shape outerJoin that.shape
 
-    def get(c: Case) = for {
-      a <- self.get(c)
-      b <- that.get(c)
-    } yield f(a, b)
-  }
+      def get(c: Case) = for {
+        a <- self.get(c)
+        b <- that.get(c)
+      } yield f(a, b)
+    }
 
   override def map[B](f: A => B): PointedTensor[B] = new Mapped(self, f)
 
@@ -56,21 +57,22 @@ trait PointedTensor[+A] extends Tensor[A] {
   def reduceSelected[B](cc: Shape, r: Tensor[A] => B): PointedTensor[B] =
     curry(cc.vars).map(r)
 
-  override def curry(innerVars: Set[Axis]): PointedTensor[PointedTensor[A]] = new PointedTensor[PointedTensor[A]] {
-    private[this] val outerVars = self.vars.filterNot(innerVars)
+  override def curry(innerVars: Set[Axis]): PointedTensor[PointedTensor[A]] =
+    new PointedTensor[PointedTensor[A]] {
+      private[this] val outerVars = self.vars.filterNot(innerVars)
 
-    def shape = self.shape.filterVars(outerVars)
+      def shape = self.shape.filterVars(outerVars)
 
-    def get(c: Case) = {
-      if (
-        c.assignments.forall { case (a, k) =>
-          (!(outerVars contains a) || ((outerVars contains a) && (shape(a) contains k)))
-        }
-      )
-        Some(self.select(c))
-      else None
+      def get(c: Case) = {
+        if (
+          c.assignments.forall { case (a, k) =>
+            (!(outerVars contains a) || ((outerVars contains a) && (shape(a) contains k)))
+          }
+        )
+          Some(self.select(c))
+        else None
+      }
     }
-  }
 
   override def select(c: Case): PointedTensor[A] = new Selected(self, c)
 
@@ -87,7 +89,8 @@ object PointedTensor {
   def of[A](a: String, outerCase: (String, PointedTensor[A])*) =
     OfNestedMap(Axis(a), outerCase.toMap.pointed(outerCase.head._1))
 
-  /** The `pure` operation of the PointedCube monad: construct a single value without parameterization.
+  /** The `pure` operation of the PointedCube monad: construct a single value without
+    * parameterization.
     */
   case class Singleton[A](x: A) extends PointedTensor[A] {
     def shape = PointedShape(Map()) // single case
@@ -106,10 +109,13 @@ object PointedTensor {
     } yield a
   }
 
-  case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedTensor[A]]) extends PointedTensor[A] {
+  case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedTensor[A]])
+      extends PointedTensor[A] {
     val innerCases = outerCase.head._2.shape
     val innerAxes = innerCases.vars
-    assert(outerCase.forall { case (_, c) => c.vars == innerAxes }) // make sure inner axes are identical
+    assert(outerCase.forall { case (_, c) =>
+      c.vars == innerAxes
+    }) // make sure inner axes are identical
 
     def shape = PointedShape(Map(a -> outerCase.keySet) ++ innerCases.assignments)
 
@@ -117,6 +123,10 @@ object PointedTensor {
       innerCube <- outerCase.get(c(a))
       a <- innerCube.get(c)
     } yield a
+  }
+
+  implicit def Eq[A]: Eq[PointedTensor[A]] = (a, b) => {
+    (a.shape equals b.shape) && a.shape.all.forall(c => a.get(c) == b.get(c))
   }
 
   /** `PointedCube` forms a commutative monad.
@@ -131,7 +141,9 @@ object PointedTensor {
     override def product[A, B](fa: PointedTensor[A], fb: PointedTensor[B]) = fa product fb
   }
 
-  class Mapped[A, B](self: PointedTensor[A], f: A => B) extends Tensor.Mapped[A, B](self, f) with PointedTensor[B] {
+  class Mapped[A, B](self: PointedTensor[A], f: A => B)
+      extends Tensor.Mapped[A, B](self, f)
+      with PointedTensor[B] {
     override def shape = self.shape
   }
 
