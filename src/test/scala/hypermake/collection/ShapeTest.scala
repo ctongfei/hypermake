@@ -17,8 +17,8 @@ object ShapeGen {
   def axisLabel: Gen[Axis] = Gen.identifier.map(Axis.apply)
 
   def nonEmptySet: Gen[Set[String]] = for {
-    n <- Gen.poisson(5).filter(_ > 0)
-    s <- Gen.listOfN(n, Gen.alphaNumStr)
+    n <- Gen.choose(1, 4)
+    s <- Gen.listOfN(n, Gen.alphaNumStr.filter(_.nonEmpty))
   } yield s.toSet
 
   def pointedSet: Gen[PointedSet[String]] = for {
@@ -38,7 +38,7 @@ object ShapeGen {
   }
 
   def pointedShape: Gen[PointedShape] = for {
-    n <- Gen.poisson(3)
+    n <- Gen.choose(0, 5)
     axes <- Gen.listOfN(n, axis)
   } yield PointedShape(axes.toMap)
 

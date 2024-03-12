@@ -76,7 +76,14 @@ trait PointedTensor[+A] extends Tensor[A] {
 
   override def select(c: Case): PointedTensor[A] = new Selected(self, c)
 
-  override def toString = s"[${shape.vars.mkString(", ")}] default = $default"
+  // override def toString = s"[${shape.vars.mkString(", ")}] default = $default"
+  override def toString = {
+    self.allPairs
+      .map { case (c, a) =>
+        s"$c -> $a"
+      }
+      .mkString("\n")
+  }
 
   /** Gets the default element of a cube.
     */

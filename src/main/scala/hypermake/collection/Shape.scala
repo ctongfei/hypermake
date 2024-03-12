@@ -86,6 +86,8 @@ class Shape(val underlying: Map[Axis, Set[String]]) {
     }
   }
 
+  def numElements = underlying.values.map(_.size).product
+
   override def toString = {
     underlying
       .map { case (a, ks) =>

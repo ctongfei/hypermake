@@ -5,9 +5,8 @@ import hypermake.util.MapWrapper
 
 import scala.collection._
 
-/**
- * Encapsulates the parameters of a specific case of a variable or task.
- */
+/** Encapsulates the parameters of a specific case of a variable or task.
+  */
 class Case(val underlying: Map[Axis, String]) {
 
   def vars = underlying.keySet
@@ -21,6 +20,8 @@ class Case(val underlying: Map[Axis, String]) {
   def assignments: Iterable[(Axis, String)] = underlying
 
   def ++(that: Case) = Case(this.underlying ++ that.underlying)
+
+  override def toString = underlying.map { case (a, k) => s"$a: $k" }.mkString("[", ", ", "]")
 
 }
 

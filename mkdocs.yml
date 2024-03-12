@@ -37,9 +37,9 @@ nav:
       - "Decorators": 'tutorial/decorators.md'
       - "Packages": 'tutorial/packages.md'
       - "Modules": 'tutorial/modules.md'
-      - "Environments": 'tuntorial/filesystems.md'
+      - "Environments": 'tutorial/filesystems.md'
   - 'Library Reference':
       - "AWS": 'stdlib/aws.md'
-      - "Azure": 'stdlib/azure.md'
+      - "Azure": 'stdlib/az.md'
       - "Conda": 'stdlib/conda.md'
       - "SFTP": 'stdlib/sftp.md'

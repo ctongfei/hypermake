@@ -4,6 +4,8 @@ import scala.collection._
 
 import cats.kernel._
 
+import hypermake.util._
+
 class PointedShape(override val underlying: Map[Axis, PointedSet[String]])
     extends Shape(underlying) {
   self =>
