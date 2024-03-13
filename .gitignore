@@ -87,4 +87,5 @@ project/plugins/project/
 .history
 .cache
 .lib/
+site/
 

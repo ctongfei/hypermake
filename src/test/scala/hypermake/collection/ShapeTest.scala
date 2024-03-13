@@ -26,6 +26,10 @@ object ShapeGen {
     d <- Gen.oneOf(s.toSeq)
   } yield PointedSet(s, d)
 
+  def pointedSubset[A](s: PointedSet[A]): Gen[PointedSet[A]] = for {
+    elems <- Gen.someOf(s)
+  } yield PointedSet(Set.from(elems :+ s.default), s.default)
+
   def axis: Gen[(Axis, PointedSet[String])] = for {
     a <- axisLabel
     s <- pointedSet
@@ -48,11 +52,11 @@ object ShapeGen {
 
 }
 
-class PartialOrdersAgree[A](val x: PartialOrder[A], val y: PartialOrder[A])(implicit
+class PartialOrdersConsistency[A](val x: PartialOrder[A], val y: PartialOrder[A])(implicit
     arbA: Arbitrary[A]
 ) extends Laws {
-  def agree = new DefaultRuleSet(
-    "partialOrdersAgree",
+  def consistency = new DefaultRuleSet(
+    "partialOrdersConsistency",
     None,
     "same" -> Prop.forAll((a: A, b: A) => x.lteqv(a, b) == y.lteqv(a, b))
   )
@@ -76,11 +80,11 @@ class ShapeTest
   )
 
   checkAll(
-    "PointedShape BoundedSemilattice agrees with PartialOrder",
-    new PartialOrdersAgree(
+    "PointedShape BoundedSemilattice consistent with PartialOrder",
+    new PartialOrdersConsistency(
       PointedShape.PartialOrder,
       PointedShape.BoundedSemilattice.asJoinPartialOrder
-    ).agree
+    ).consistency
   )
 
 }

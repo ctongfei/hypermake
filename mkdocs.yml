@@ -27,7 +27,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
-  - 'Introduction': 'index.md'
+  - 'Introduction': 'intro.md'
   - 'Tutorial':
       - "Hello, world!": 'tutorial/hello.md'
       - "Inputs & outputs": 'tutorial/compose.md'

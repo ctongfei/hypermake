@@ -20,10 +20,15 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "fastparse" % "3.0.2",
   "com.lihaoyi" %% "fansi" % "0.4.0",
   "com.github.pathikrit" %% "better-files" % "3.9.2",
-  "org.jline" % "jline" % "3.23.0",
-  "org.typelevel" %% "cats-laws" % "2.9.0" % Test,
-  "org.typelevel" %% "discipline-scalatest" % "2.2.0" % Test,
-  "org.scalatest" %% "scalatest" % "3.2.18" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
-  "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
+  "org.jline" % "jline" % "3.23.0"
 )
+
+// Test dependencies
+libraryDependencies ++= Seq(
+  "org.typelevel" %% "cats-laws" % "2.9.0",
+  "org.typelevel" %% "discipline-scalatest" % "2.2.0",
+  "org.scalatest" %% "scalatest" % "3.2.18",
+  "org.scalacheck" %% "scalacheck" % "1.17.0",
+  "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0",
+  "io.chrisdavenport" %% "cats-scalacheck" % "0.2.0"
+).map(_ % Test)

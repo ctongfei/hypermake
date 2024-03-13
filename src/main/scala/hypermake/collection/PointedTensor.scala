@@ -139,6 +139,8 @@ object PointedTensor {
   /** `PointedCube` forms a commutative monad.
     */
   implicit object Monad extends StackSafeMonad[PointedTensor] with CommutativeMonad[PointedTensor] {
+    // TODO: not actually stack-safe
+
     def pure[A](x: A) = Singleton(x)
 
     def flatMap[A, B](fa: PointedTensor[A])(f: A => PointedTensor[B]) = fa flatMap f
@@ -146,6 +148,7 @@ object PointedTensor {
     override def map[A, B](fa: PointedTensor[A])(f: A => B) = fa map f
 
     override def product[A, B](fa: PointedTensor[A], fb: PointedTensor[B]) = fa product fb
+
   }
 
   class Mapped[A, B](self: PointedTensor[A], f: A => B)
