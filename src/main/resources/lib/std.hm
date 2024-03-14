@@ -1,4 +1,4 @@
 # Execute the script with the given Python interpreter.
 class Interpreter(interpreter):
-  def apply(file):
+  def run(file):
     $interpreter $file

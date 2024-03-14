@@ -7,7 +7,7 @@ import hypermake.util._
 
 import scala.collection._
 
-/** An object that takes the signature `def apply(inputScript): outputScript` and wraps around the
+/** An object that takes the signature `def run(inputScript): outputScript` and wraps around the
   * input script to produce the output script. This is used to decorate tasks.
   */
 case class Decorator(
@@ -36,16 +36,17 @@ case class Decorator(
 
 object Decorator {
   def fromObj(obj: Obj): Decorator = {
-    val applyFunc = obj.funcTable.getOrElse("apply", throw ObjectIsNotDecoratorException(obj))
-    if (applyFunc.params.size != 1) throw ObjectIsNotDecoratorException(obj)
+    val runFunc = obj.funcTable.getOrElse("run", throw ObjectIsNotDecoratorException(obj))
+    if (runFunc.params.size != 1) throw ObjectIsNotDecoratorException(obj)
 
+    // TODO: alive
     val aliveFunc = obj.funcTable.get("alive")
     if (aliveFunc.nonEmpty && aliveFunc.get.params.nonEmpty)
       throw ObjectIsNotDecoratorException(obj)
 
     Decorator(
-      applyFunc.params.head,
-      applyFunc.impl,
+      runFunc.params.head,
+      runFunc.impl,
       aliveFunc.map(_.impl)
     )
   }

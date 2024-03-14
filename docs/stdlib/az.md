@@ -22,4 +22,6 @@ data_path = "/path/to/data" @az_storage
 
 Enables Azure Data Lake Storage (ADLS) Gen2 containers to be used as a file system in HyperMake. Behind the scenes it uses the `az storage fs` CLI command family.
 
-## `az.MLCompute`
+## `az.MLJob`
+
+Enables Azure ML command jobs as a submitter in HyperMake. Behind the scenes it uses the `az ml job` CLI command family.

@@ -219,10 +219,10 @@ object ast {
     def children = Iterable(name, args)
   }
 
-  case class Decoration(obj: IdentifierPath) extends Node {
-    def str = s"@$obj\n"
+  case class Decoration(cls: IdentifierPath, args: Option[Assignments]) extends Node {
+    def str = args.fold(s"@$cls\n") { a => s"@$cls($a)\n" }
 
-    def children = Iterable(obj)
+    def children = Iterable(cls) ++ args
   }
 
   case class DecoratorCalls(calls: Seq[Decoration]) extends Node {

@@ -214,8 +214,16 @@ class SemanticParser(implicit val ctx: Context) {
 
   implicit object ParseDecoratorCall extends Denotation[ast.Decoration, Decorator] {
     def denotation(dc: ast.Decoration) = {
-      val obj = root.objects(dc.obj.!)
-      Decorator.fromObj(obj)
+      val Decoration(clsName, optArgs) = dc
+      optArgs match {
+        case None =>
+          val obj = root.objects(clsName.!)
+          Decorator.fromObj(obj)
+        case Some(args) =>
+          val cls = root.classes(clsName.!)
+          val obj = cls.instantiate(args.map { case (k, (_, v)) => k.! -> v.!! })
+          Decorator.fromObj(obj)
+      }
     }
   }
 

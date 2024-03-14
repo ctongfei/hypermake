@@ -1,7 +1,7 @@
 # Wraps the given script in a Conda environment.
 class Environment(environment):
 
-  def apply(_internal_conda_script):
+  def run(_internal_conda_script):
     eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
     conda activate $environment
     . $_internal_conda_script

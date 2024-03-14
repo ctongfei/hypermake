@@ -143,8 +143,10 @@ object Expressions {
   } map { case (funcName, inputs) => Call(funcName, inputs) }
 
   def decoratorCall[$: P] = P {
-    "@" ~ identifierPath
-  } map Decoration
+    "@" ~ identifierPath ~ assignments.?
+  } map { case (cls, args) =>
+    Decoration(cls, args)
+  }
 
   def decoratorCalls[$: P] =
     decoratorCall.rep map (cs =>
