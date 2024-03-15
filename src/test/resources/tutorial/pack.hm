@@ -1,4 +1,4 @@
-package unli -> out:
+package unli() -> out:
   git clone https://github.com/ctongfei/unli out
 
 snliUrl="https://nlp.stanford.edu/projects/snli/snli_1.0.zip"

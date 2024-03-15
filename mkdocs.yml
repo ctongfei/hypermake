@@ -27,19 +27,19 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
-  - 'Introduction': 'intro.md'
   - 'Tutorial':
       - "Hello, world!": 'tutorial/hello.md'
       - "Inputs & outputs": 'tutorial/compose.md'
       - "Parameters": 'tutorial/branch.md'
       - "Parameterized pipelines": 'tutorial/parameterized-compose.md'
-      - "Functions": 'tutorial/functions.md'
+      - "Subroutines": 'tutorial/subroutines.md'
       - "Decorators": 'tutorial/decorators.md'
       - "Packages": 'tutorial/packages.md'
       - "Modules": 'tutorial/modules.md'
-      - "Environments": 'tutorial/filesystems.md'
+      - "File systems": 'tutorial/filesys.md'
   - 'Library Reference':
+      - "Std": 'stdlib/std.md'
       - "AWS": 'stdlib/aws.md'
       - "Azure": 'stdlib/az.md'
       - "Conda": 'stdlib/conda.md'
-      - "SFTP": 'stdlib/sftp.md'
+      - "SSH": 'stdlib/ssh.md'

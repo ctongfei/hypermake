@@ -1,2 +1,2 @@
-task hello:
+task hello():
   echo "Hello, world!"

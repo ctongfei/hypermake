@@ -330,10 +330,12 @@ object FileSys {
       process <- getScriptByName(s"${name}.execute")
         .withArgs(
           "command" ->
-            s"${envVars.map { case (k, v) => s"$k=${Escaper.Shell.escape(v)}" }.mkString(" ")} $command ${args
-                .mkString(" ")}"
+            s"""cd ${resolvePath(wd)};
+               | ${envVars.map { case (k, v) => s"$k=$v" }.mkString(" ")}
+               | $command ${args.mkString(" ")} > stdout 2> stderr
+               |""".stripMargin.replace("\n", "")
         )
-        .executeLocally(wd)
+        .executeLocally(FileSys.local.resolvePath(wd))
       _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
       exitCode <- process.exitCode
     } yield exitCode

@@ -1,3 +1,0 @@
-# Module `sftp`
-
-## `sftp.Server`

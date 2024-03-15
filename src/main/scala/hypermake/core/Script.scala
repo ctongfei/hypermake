@@ -35,12 +35,13 @@ case class Script(
     * @param workDir
     *   The working directory to run this temporary script.
     */
-  def executeLocally(workDir: String)(implicit runtime: RuntimeConfig, std: StdSinks): HIO[Process] = {
+  def executeLocally(
+      workDir: String
+  )(implicit runtime: RuntimeConfig, std: StdSinks): HIO[Process] = {
     val tempScriptFile = runtime.newTempFile(prefix = "hypermake_temp_script")
     // allows the case where the interpreter has arguments: python -v ...
     // TODO: proper handling of bash quotes
     val command = s"${runtime.shell} $tempScriptFile".split(' ')
-
     for {
       _ <- IO {
         File(tempScriptFile).write(script)

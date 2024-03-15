@@ -1,6 +1,9 @@
 package hypermake.cli
 
+import java.io.{FilterOutputStream, OutputStream}
 import java.nio.file._
+import java.nio.charset.StandardCharsets
+import better.files._
 import zio._
 import zio.console._
 import zio.stream._
@@ -8,10 +11,6 @@ import hypermake.core.Job
 import hypermake.execution.{RuntimeConfig, Status}
 import hypermake.util._
 import hypermake.util.printing.Style
-
-import java.io.{FilterOutputStream, OutputStream}
-import java.nio.charset.StandardCharsets
-
 
 class PrefixedOutputStream(os: OutputStream, prefix: String) extends FilterOutputStream(os) {
 
@@ -52,17 +51,21 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     }
   }
 
-  /**
-   * Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
-   */
+  /** Returns two sinks for consuming the standard output (stdout) and the standard error (stderr)
+    * streams.
+    */
   def sinks(job: Job) = {
-    val os = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.out, style.render(job)))
-    val es = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render(job)))
+    val os =
+      ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.out, style.render(job)))
+    val es =
+      ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render(job)))
+    if (!File(job.absolutePath).exists)
+      File(job.absolutePath).createDirectories() // mkdir -p ${job.absolutePath}
     val ofs = ZSink.fromFile(Paths.get(job.absolutePath, "stdout"))
     val efs = ZSink.fromFile(Paths.get(job.absolutePath, "stderr"))
     if (runtime.silent)
       StdSinks(ofs, efs)
-    else StdSinks((os zipWithPar ofs) ((a, _) => a), (es zipWithPar efs) ((a, _) => a))
+    else StdSinks((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
   }
 
   def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)
@@ -83,7 +86,9 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
 
 object PlainCLI {
 
-  def create(style: Style = Style.Plain)(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
+  def create(
+      style: Style = Style.Plain
+  )(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
     Managed.succeed(new PlainCLI(style, runtime))
   }
 

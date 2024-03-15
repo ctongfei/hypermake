@@ -1,0 +1,29 @@
+class Server(host, root="/"):
+
+  def read(file):
+    ssh $host "cat $file"
+
+  def exists(file):
+    ssh $host "test -e $file"
+
+  def execute(command):
+    ssh $host "$command"
+
+  def mkdir(dir):
+    ssh $host "mkdir -p $dir"
+
+  def link(src, dst):
+    ssh $host "ln -s $src $dst"
+
+  def touch(file):
+    ssh $host "touch $file"
+
+  def delete(file):
+    ssh $host "rm -r $file"
+
+  def upload(src, dst):
+    scp -r $src $host:$dst
+
+  def download(src, dst):
+    scp -r $host:$src $dst
+

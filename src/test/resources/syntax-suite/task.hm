@@ -1,23 +1,28 @@
-task t0() -> out:
+task t0() -> (out):
     yes
 
-task t1():
+task t1:
     yes
 
-task t2() -> out:
+task t2 -> out:
     yes
 
-task t3(a = "a", b = "b") -> out:
+task t3():
+    yes
+
+task t4() -> out:
+    yes
+
+task t5(a = "a", b = "b") -> out:
     echo $a $b
 
-task t4(a = "a", b = "b") -> (c = "c", d = "d"):
+task t6(a = "a", b = "b") -> (c = "c", d = "d"):
     echo $a > $c
     echo $b > $d
 
-task t5(a = $t3.out) -> out:
+task t7(a = $t4.out) -> out:
     echo $a > $out
 
-task t6(a = $t3.out, b = {B: c=$t4.c d=$t4.d}) -> out:
-    echo $a > $out
-    echo $c > $out
-
+task t8(a = $t3.out, b = {B: c=$t6.c d=$t6.d}) -> (e, f):
+    echo $a > $e
+    echo $c > $f

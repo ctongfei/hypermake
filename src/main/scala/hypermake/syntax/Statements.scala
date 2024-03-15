@@ -29,16 +29,23 @@ class Statements(indent: Int) {
     decoratorCalls ~
       Lexical.token(
         "task"
-      ) ~/ identifier ~ fsModifier ~ assignments ~ ("->" ~ outputAssignments).? ~ impl
+      ) ~/ identifier ~ fsModifier ~ assignments.? ~ ("->" ~ outputAssignments).? ~ impl
   } map { case (decorators, name, fsModifier, inputs, outputs, impl) =>
-    TaskDef(decorators, name, fsModifier, inputs, outputs.getOrElse(Assignments(Seq())), impl)
+    TaskDef(
+      decorators,
+      name,
+      fsModifier,
+      inputs.getOrElse(Assignments(Seq())),
+      outputs.getOrElse(Assignments(Seq())),
+      impl
+    )
   }
 
   def packageDef[$: P] = P {
     decoratorCalls ~
-      Lexical.token("package") ~/ identifier ~ assignments ~ "->" ~ outputAssignment1 ~ scriptImpl
+      Lexical.token("package") ~/ identifier ~ assignments.? ~ "->" ~ outputAssignment1 ~ scriptImpl
   } map { case (decorators, name, inputs, output, impl) =>
-    PackageDef(decorators, name, inputs, output, impl)
+    PackageDef(decorators, name, inputs.getOrElse(Assignments(Seq())), output, impl)
   }
 
   def planDef[$: P] = P {
@@ -94,6 +101,7 @@ class Statements(indent: Int) {
   def impl[$: P]: P[TaskImpl] = P {
     scriptImpl | funcCallImpl
   }
+
   // TODO: suiteImpl of a task
   // task t(a) -> b = {
   //   task f(a) -> c =

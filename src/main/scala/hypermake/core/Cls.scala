@@ -14,12 +14,13 @@ import hypermake.syntax.ast._
   * @param inheritedArgs
   */
 case class Cls(
-                name: String,
-                params: Map[String, PointedTensor[Value]],
-                obj: Obj,
-                inheritedArgs: Map[String, PointedTensor[Value]] = Map()
+    name: String,
+    params: Map[String, PointedTensor[Value]],
+    obj: Obj,
+    inheritedArgs: Map[String, PointedTensor[Value]] = Map()
 ) {
   def withNewArgs(args: Map[String, PointedTensor[Value]]): Cls = {
+    val newArgs = inheritedArgs ++ args
     val newObj = Obj.fromDefs(
       obj.defs.map {
         case Definition(name, pct: PointedTaskTensor) =>
@@ -30,10 +31,10 @@ case class Cls(
           Definition(name, pft.withNewArgs(args))
         case Definition(name, value: Cls) =>
           Definition(name, value.withNewArgs(args))
-        case d: Definition[_] => d  // values and objects
-      }
+        case d: Definition[_] => d // values and objects
+      } ++ newArgs.map { case (k, v) => Definition(k, v) }
     )
-    Cls(name, params, newObj, inheritedArgs ++ args)
+    Cls(name, params, newObj, newArgs)
   }
 
   def instantiate(args: Map[String, PointedTensor[Value]]): Obj = {

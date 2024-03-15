@@ -47,7 +47,8 @@ abstract class Job(implicit ctx: Context) {
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name,
-    "HYPERMAKE_JOB_CASE_JSON" -> caseInJson
+    "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
+    "HYPERMAKE_JOB_PATH" -> path
   )
 
   /** Path relative to the output root of the job file system. */
@@ -80,7 +81,7 @@ abstract class Job(implicit ctx: Context) {
   def isDone(implicit std: StdSinks): HIO[Boolean] = for {
     exitCode <- fileSys
       .read(fileSys.resolvePath("exitcode", absolutePath))
-      .map(_.toInt)
+      .mapEffect(_.toInt)
       .catchAll(_ => IO.succeed(-1))
     outputsExist <- checkOutputs
   } yield exitCode == 0 && outputsExist
@@ -133,14 +134,14 @@ abstract class Job(implicit ctx: Context) {
 
   def execute(cli: CLI.Service)(implicit std: StdSinks): HIO[Boolean] = {
     val effect = for {
-      _ <- removeOutputs
+      _ <- removeOutputs.ignore // may fail, but we don't care, proceed
       _ <- fileSys.mkdir(absolutePath)
       _ <- cli.update(this, Status.Waiting)
       _ <- fileSys.lock(absolutePath)
       linkedArgs <- linkInputs
       args <- writeScript(linkedArgs)
       _ <- cli.update(this, Status.Running)
-      exitCode <- fileSys.execute(absolutePath, runtime.shell, Seq("script.sh"), args)
+      exitCode <- fileSys.execute(path, runtime.shell, Seq("script.sh"), args)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
     effect.ensuring(fileSys.unlock(absolutePath).orElseSucceed())

@@ -58,10 +58,34 @@ object ExprGen {
   implicit val arbExpr: Arbitrary[Expr] = Arbitrary(expr)
 }
 
-class ExprSyntaxTest extends AnyFunSuite with FunSuiteDiscipline with ScalaCheckPropertyChecks {
+class ExprSyntaxTest
+    extends AnyFunSuite
+    with FunSuiteDiscipline
+    with ScalaCheckPropertyChecks
+    with SyntacticParserTestMixin {
   import ExprGen._
+
   checkAll(
     "ExprSyntaxInvertibility",
     new SyntaxInvertibility[Expr](Expressions.expr(_)).invertibility
   )
+
+  test("Syntax of literals") {
+    runTest("literal.hm")
+  }
+
+  test("Syntax of references") {
+    runTest("ref.hm")
+  }
+
+  test("Syntax of tasks") {
+    runTest("task.hm")
+  }
+//  test("Syntax of objects") {
+//    runTest("object.hm")
+//  }
+//  test("Syntax of import statements") {
+//    runTest("import.hm")
+//  }
+
 }

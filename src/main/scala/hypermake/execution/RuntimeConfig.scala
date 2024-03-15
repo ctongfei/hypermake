@@ -28,8 +28,8 @@ class RuntimeConfig private (
     val yes: Boolean
 ) {
 
-  /** Environment variable containing paths where HyperMake resolves import statements; akin to C's `CPATH` or Python's
-    * `PYTHONPATH`.
+  /** Environment variable containing paths where HyperMake resolves import statements; akin to C's
+    * `CPATH` or Python's `PYTHONPATH`.
     */
   final val HYPERMAKE_PATH = "HYPERMAKE_PATH"
 
@@ -40,7 +40,8 @@ class RuntimeConfig private (
 
   final val IFS_CHAR = IFS.head.toString
 
-  lazy val paths = envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
+  lazy val paths =
+    envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
   lazy val bundledStdLibPath = this.getClass.getClassLoader.getResource("lib").getPath
 
@@ -99,7 +100,7 @@ class RuntimeConfig private (
 
 object RuntimeConfig {
 
-  private val defaultShell = "bash -e"
+  private val defaultShell = "bash -eux"
 
   def create(
       definedVars: Map[String, String] = Map(),
@@ -122,13 +123,14 @@ object RuntimeConfig {
       yes = yes
     )
 
-  def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = create(
-    includePaths = options.collect { case Opt.Include(f) => f },
-    shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse(defaultShell),
-    numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
-    keepGoing = runOptions contains RunOpt.KeepGoing,
-    silent = runOptions contains RunOpt.Silent,
-    yes = runOptions contains RunOpt.Yes
-  )
+  def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) =
+    create(
+      includePaths = options.collect { case Opt.Include(f) => f },
+      shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse(defaultShell),
+      numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
+      keepGoing = runOptions contains RunOpt.KeepGoing,
+      silent = runOptions contains RunOpt.Silent,
+      yes = runOptions contains RunOpt.Yes
+    )
 
 }

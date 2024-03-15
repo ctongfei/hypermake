@@ -1,4 +1,4 @@
-# Execute the script with the given Python interpreter.
+# Execute the script with the given interpreter.
 class Interpreter(interpreter):
-  def run(file):
-    $interpreter $file
+  def run(_interal_interpreter_script):
+    $interpreter $_interal_interpreter_script
