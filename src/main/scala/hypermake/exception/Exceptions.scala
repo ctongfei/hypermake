@@ -1,10 +1,11 @@
 package hypermake.exception
 
+import scala.collection._
+
 import fastparse._
+
 import hypermake.collection._
 import hypermake.core._
-
-import scala.collection._
 
 case class ParsingException(failure: Parsed.Failure)
     extends Exception(s"Parsing error: \n${failure.trace().longMsg}")

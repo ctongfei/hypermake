@@ -7,8 +7,8 @@ import hypermake.syntax.ast._
   */
 object Lexical {
 
-  import fastparse._
   import fastparse.NoWhitespace._
+  import fastparse._
 
   val keywords = Set(
     "as",

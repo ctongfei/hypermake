@@ -1,9 +1,9 @@
 package hypermake.collection
 
+import scala.collection._
+
 import hypermake.exception._
 import hypermake.util._
-
-import scala.collection._
 
 trait Graph[A] {
   self =>
@@ -140,7 +140,9 @@ trait Graph[A] {
       }
     }
     ZIO
-      .foreach(a zip rows)({ case (row, x) => display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s") })
+      .foreach(a zip rows)({ case (row, x) =>
+        display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s")
+      })
       .map(_.mkString("\n"))
   }
 }

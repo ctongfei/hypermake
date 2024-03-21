@@ -81,11 +81,13 @@ class ExprSyntaxTest
   test("Syntax of tasks") {
     runTest("task.hm")
   }
-//  test("Syntax of objects") {
-//    runTest("object.hm")
-//  }
-//  test("Syntax of import statements") {
-//    runTest("import.hm")
-//  }
+
+  test("Syntax of objects") {
+    runTest("object.hm")
+  }
+
+  test("Syntax of import statements") {
+    runTest("import.hm")
+  }
 
 }

@@ -1,18 +1,19 @@
 package hypermake.semantics
 
+import scala.collection._
+import scala.util.matching.Regex
+
 import better.files._
 import cats.instances.all._
-import cats.syntax.unorderedTraverse._
 import cats.syntax.monad._
+import cats.syntax.unorderedTraverse._
+
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
 import hypermake.syntax._
 import hypermake.syntax.ast._
 import hypermake.util._
-
-import scala.collection._
-import scala.util.matching.Regex
 
 /** A semantic parsing run.
   *
@@ -153,9 +154,7 @@ class SemanticParser(implicit val ctx: Context) {
       extends ContextualDenotation[
         (Map[String, PointedTensor[Value]], FileSys),
         Expr,
-        PointedTensor[
-          Value
-        ]
+        PointedTensor[Value]
       ] {
     def defaultContext = (Map(), FileSys.local)
 
@@ -204,17 +203,14 @@ class SemanticParser(implicit val ctx: Context) {
       }
   }
 
-  implicit object ParseFuncCall extends Denotation[ast.Call, PointedTensor[Script]] {
-    def denotation(fc: ast.Call) = {
-      val f = root.functions(fc.name.!)
-      val args = fc.args.map { case (k, (_, v)) => k.! -> v.!! }
-      f.withNewArgs(args).impl
-    }
+  implicit def ParseFuncCall: Denotation[ast.Call, PointedTensor[Script]] = { (fc: ast.Call) =>
+    val f = root.functions(fc.name.!)
+    val args = fc.args.map { case (k, (_, v)) => k.! -> v.!! }
+    f.withNewArgs(args).impl
   }
 
-  implicit object ParseDecoratorCall extends Denotation[ast.Decoration, Decorator] {
-    def denotation(dc: ast.Decoration) = {
-      val Decoration(clsName, optArgs) = dc
+  implicit def ParseDecoratorCall: Denotation[ast.Decoration, Decorator] = {
+    case Decoration(clsName, optArgs) =>
       optArgs match {
         case None =>
           val obj = root.objects(clsName.!)
@@ -224,7 +220,6 @@ class SemanticParser(implicit val ctx: Context) {
           val obj = cls.instantiate(args.map { case (k, (_, v)) => k.! -> v.!! })
           Decorator.fromObj(obj)
       }
-    }
   }
 
   implicit def ParseFuncDef: Denotation[FuncDef, Definition[PointedFuncTensor]] = {

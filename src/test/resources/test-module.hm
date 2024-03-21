@@ -1,4 +1,4 @@
-module A(name):
+class A(name):
   task print():
      echo $name
 

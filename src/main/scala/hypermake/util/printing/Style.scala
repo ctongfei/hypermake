@@ -1,9 +1,10 @@
 package hypermake.util.printing
 
 import fansi._
-import hypermake.execution._
-import hypermake.core._
+
 import hypermake.collection._
+import hypermake.core._
+import hypermake.execution._
 
 trait Style {
 

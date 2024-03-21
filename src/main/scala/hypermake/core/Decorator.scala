@@ -1,11 +1,11 @@
 package hypermake.core
 
+import scala.collection._
+
 import hypermake.collection._
 import hypermake.exception.ObjectIsNotDecoratorException
 import hypermake.semantics._
 import hypermake.util._
-
-import scala.collection._
 
 /** An object that takes the signature `def run(inputScript): outputScript` and wraps around the
   * input script to produce the output script. This is used to decorate tasks.

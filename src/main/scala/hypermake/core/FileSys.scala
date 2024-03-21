@@ -1,17 +1,17 @@
 package hypermake.core
 
-import better.files.File
-import hypermake.collection._
-import hypermake.exception.DataTransferFailedException
-import hypermake.semantics.Context
-import hypermake.util._
+import java.nio.file.{Files => JFiles, Paths}
+import scala.collection._
+
+import better.files._
 import zio._
 import zio.duration._
 import zio.process._
-import java.nio.file.{Paths, Files => JFiles}
-import scala.collection._
 
-import hypermake.core.FileSys.local
+import hypermake.exception.DataTransferFailedException
+import hypermake.semantics.Context
+import hypermake.util.Escaper.Shell
+import hypermake.util._
 
 /** Encapsulates a file system that could be local, or some remote grid. Such a file system must
   * possess a basic file system, as well as the capability to run arbitrary shell script.
@@ -331,7 +331,7 @@ object FileSys {
         .withArgs(
           "command" ->
             s"""cd ${resolvePath(wd)};
-               | ${envVars.map { case (k, v) => s"$k=$v" }.mkString(" ")}
+               | ${envVars.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")}
                | $command ${args.mkString(" ")} > stdout 2> stderr
                |""".stripMargin.replace("\n", "")
         )

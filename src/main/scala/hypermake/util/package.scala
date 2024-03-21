@@ -1,13 +1,15 @@
 package hypermake
 
-import scala.collection.immutable.{Map => IMap}
 import scala.collection._
+import scala.collection.immutable.{Map => IMap}
+
 import fastparse._
+import zio._
+import zio.stream.ZSink
+
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.exception._
-import zio._
-import zio.stream.ZSink
 
 package object util {
 

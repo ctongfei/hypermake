@@ -1,17 +1,14 @@
 package hypermake.core
 
-import cats.implicits._
-import cats.syntax.unorderedTraverse._
+import java.io.{File => JFile}
+import scala.collection._
+
 import better.files._
-import cats.UnorderedTraverse
-import hypermake.collection._
-import hypermake.execution._
-import hypermake.util._
 import zio._
 import zio.process._
 
-import java.io.{File => JFile}
-import scala.collection._
+import hypermake.execution._
+import hypermake.util._
 
 /** Encapsulates a script together with its external arguments.
   */

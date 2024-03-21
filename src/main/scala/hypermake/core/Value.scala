@@ -1,10 +1,10 @@
 package hypermake.core
 
+import scala.collection._
+
 import hypermake.collection._
 import hypermake.exception.ValueNotPureException
 import hypermake.execution._
-
-import scala.collection._
 
 /** This is essentially a string potentially paired with multiple dependent tasks.
   */

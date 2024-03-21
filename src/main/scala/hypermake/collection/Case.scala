@@ -1,9 +1,9 @@
 package hypermake.collection
 
+import scala.collection._
+
 import hypermake.syntax.ast.Identifier
 import hypermake.util.MapWrapper
-
-import scala.collection._
 
 /** Encapsulates the parameters of a specific case of a variable or task.
   */

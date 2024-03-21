@@ -2,9 +2,10 @@ package hypermake.collection
 
 import scala.collection._
 
-import cats.syntax.hash._
 import cats.Hash
 import cats.implicits._
+import cats.syntax.hash._
+
 import hypermake.exception.AxesDefaultKeyMismatchException
 
 /** A set with a default element.

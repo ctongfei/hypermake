@@ -1,12 +1,13 @@
 package hypermake.syntax
 
+import scala.collection._
+
 import fastparse._
+
 import hypermake.collection.Axis
 import hypermake.syntax.ast._
 import hypermake.util.Escaper.Percent
 import hypermake.util.orderedMap
-
-import scala.collection._
 
 /** The expression grammar of Hypermake. These definitions ignore whitespaces and do not care about
   * indentation.

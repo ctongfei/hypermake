@@ -1,17 +1,18 @@
 package hypermake.core
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import scala.collection._
+import scala.collection.decorators._
+
+import zio._
+
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.execution._
 import hypermake.semantics.Context
 import hypermake.util.Escaper._
 import hypermake.util._
-import zio._
-
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
-import scala.collection._
-import scala.collection.decorators._
 
 /** A job is any block of shell script that is executed by HyperMake. A job can either be a task, a
   * package, or a service.
@@ -144,7 +145,9 @@ abstract class Job(implicit ctx: Context) {
       exitCode <- fileSys.execute(path, runtime.shell, Seq("script.sh"), args)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
-    effect.ensuring(fileSys.unlock(absolutePath).orElseSucceed())
+    val potentiallyAbsolvedEffect =
+      if (runtime.keepGoing) effect.catchAll(_ => ZIO.succeed(false)) else effect
+    potentiallyAbsolvedEffect.ensuring(fileSys.unlock(absolutePath).orElseSucceed())
   }
 
   def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = {

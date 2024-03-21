@@ -1,9 +1,9 @@
 package hypermake.util
 
-import zio.stream._
-
 import java.io._
 import java.nio.charset.{Charset, StandardCharsets}
+
+import zio.stream._
 
 object StandardStreams {
 

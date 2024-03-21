@@ -1,13 +1,14 @@
 package hypermake.execution
 
 import fansi._
-import hypermake.core.Job
-import hypermake.util._
-import hypermake.util.printing.Style
 import org.jline.terminal._
 import org.jline.utils.InfoCmp
 import zio._
 import zio.console._
+
+import hypermake.core.Job
+import hypermake.util._
+import hypermake.util.printing.Style
 
 class StatusMonitor(jobs: IndexedSeq[Job], semaphore: Semaphore, style: Style = Style.Powerline) {
 

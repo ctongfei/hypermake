@@ -1,9 +1,10 @@
 package hypermake.collection
 
-import cats._
-import hypermake.util._
-
 import scala.collection._
+
+import cats._
+
+import hypermake.util._
 
 /** A [[Tensor]] but with default value for each axis. As a result, each `PointedTensor[A]` value
   * has a single default value `A`, similar to a pointed set.

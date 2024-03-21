@@ -1,6 +1,7 @@
 package hypermake.collection
 
 import scala.collection._
+
 import hypermake.util.DefaultMapBase
 
 /** An identifier path in the format of "a.b.c". */

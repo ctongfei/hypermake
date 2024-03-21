@@ -1,12 +1,14 @@
 package hypermake.cli
 
 import java.io.{FilterOutputStream, OutputStream}
-import java.nio.file._
 import java.nio.charset.StandardCharsets
+import java.nio.file._
+
 import better.files._
 import zio._
 import zio.console._
 import zio.stream._
+
 import hypermake.core.Job
 import hypermake.execution.{RuntimeConfig, Status}
 import hypermake.util._

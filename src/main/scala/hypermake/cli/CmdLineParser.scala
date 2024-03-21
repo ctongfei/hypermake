@@ -1,6 +1,7 @@
 package hypermake.cli
 
 import fastparse._
+
 import hypermake.exception._
 import hypermake.syntax.Lexical.identifier
 import hypermake.syntax._

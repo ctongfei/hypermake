@@ -1,11 +1,11 @@
 package hypermake.core
 
+import scala.collection._
+
 import hypermake.collection._
 import hypermake.exception._
 import hypermake.semantics._
 import hypermake.util.DefaultMapBase
-
-import scala.collection._
 
 /** An object (a.k.a. module) that organizes definitions. */
 class Obj {

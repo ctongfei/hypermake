@@ -4,6 +4,7 @@ import scala.collection._
 
 import cats.instances.map._
 import cats.syntax.unorderedTraverse._
+
 import hypermake.collection._
 import hypermake.exception.ParametersUnboundException
 
@@ -32,10 +33,10 @@ case class Func(
 }
 
 class PointedFuncTensor(
-                         val name: String,
-                         val shape: PointedShape,
-                         val params: Set[String],
-                         val impl: PointedTensor[Script]
+    val name: String,
+    val shape: PointedShape,
+    val params: Set[String],
+    val impl: PointedTensor[Script]
 ) extends PointedTensor[Func] { self =>
 
   def get(c: Case): Option[Func] = {

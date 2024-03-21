@@ -1,8 +1,8 @@
 package hypermake.syntax
 
-import hypermake.util._
-
 import scala.collection._
+
+import hypermake.util._
 
 object ast {
 

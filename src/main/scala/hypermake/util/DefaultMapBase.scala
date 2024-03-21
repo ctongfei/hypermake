@@ -2,9 +2,9 @@ package hypermake.util
 
 import scala.collection._
 
-/**
- * Endows a map with default `removed` and `updated` methods to ease the implementation of a new map.
- */
+/** Endows a map with default `removed` and `updated` methods to ease the implementation of a new
+  * map.
+  */
 abstract class DefaultMapBase[A, +B] extends immutable.Map[A, B] {
   override def removed(key: A) = view.filterKeys(_ != key).toMap
 

@@ -1,7 +1,9 @@
 package hypermake.semantics
 
 import scala.collection._
+
 import io.circe.syntax._
+
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._

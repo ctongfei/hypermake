@@ -1,12 +1,12 @@
 package hypermake.collection
 
+import scala.collection._
+
 import cats._
 import cats.kernel.CommutativeMonoid
 
-import scala.collection._
-
-/** A value of type `A` parameterized by arbitrary string-keyed string values (i.e., a string-to-string map). This is a
-  * ''non-pointed'' version of [[PointedTensor]].
+/** A value of type `A` parameterized by arbitrary string-keyed string values (i.e., a
+  * string-to-string map). This is a ''non-pointed'' version of [[PointedTensor]].
   *
   * @tparam A
   *   Element type of the cube
@@ -16,8 +16,8 @@ trait Tensor[+A] {
 
   import Tensor._
 
-  /** The map of all cases of this cube: with the key being the axis identifier and the value being the set of values it
-    * can take.
+  /** The map of all cases of this cube: with the key being the axis identifier and the value being
+    * the set of values it can take.
     */
   def shape: Shape
 
@@ -25,7 +25,8 @@ trait Tensor[+A] {
 
   def apply(indices: (Axis, String)*): A = get(Case.from(indices: _*)).get
 
-  /** Selects a sub-cube based on the given indices. All indexed axes disappear in the returning cube.
+  /** Selects a sub-cube based on the given indices. All indexed axes disappear in the returning
+    * cube.
     */
   def select(c: Case): Tensor[A] = new Selected(self, c)
 
@@ -38,7 +39,8 @@ trait Tensor[+A] {
     */
   def curry(innerAxes: Set[Axis]): Tensor[Tensor[A]] = new Curried(self, innerAxes)
 
-  /** Selects a sub-cube based on the given indices set. Indexed axes are retained in the returning cube.
+  /** Selects a sub-cube based on the given indices set. Indexed axes are retained in the returning
+    * cube.
     */
   def selectMany(cc: Shape): Tensor[A] = new SelectedMany(self, cc)
 

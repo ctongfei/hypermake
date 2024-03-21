@@ -1,4 +1,6 @@
-@Exec(interpreter="python")
+import std
+
+@std.Interpreter(interpreter="python")
 task run(x="test") -> ():
   import os
   globals().update(os.environ)

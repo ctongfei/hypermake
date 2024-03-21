@@ -1,8 +1,8 @@
 package hypermake.core
 
-import hypermake.collection._
-
 import scala.collection._
+
+import hypermake.collection._
 
 /** Represents a collection of slices of tasks whose execution can be invoked from the command line.
   */

@@ -1,10 +1,12 @@
 package hypermake
 
 import scala.collection._
+
 import fastparse.{P, Parsed, parse}
+
 import hypermake.exception.ParsingException
-import hypermake.syntax.ast._
 import hypermake.syntax.Statements.top
+import hypermake.syntax.ast._
 
 package object syntax {
 

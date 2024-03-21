@@ -1,11 +1,12 @@
 package hypermake.core
 
+import scala.collection._
+
 import cats.implicits._
+
 import hypermake.collection._
 import hypermake.semantics.Context
 import hypermake.util._
-
-import scala.collection._
 
 /** A task is a job that is declared by the `task` definition. It is a job that is specific to a
   * running environment.

@@ -1,19 +1,20 @@
 package hypermake.core
 
+import scala.collection._
+
 import cats.implicits._
+
 import hypermake.collection._
 import hypermake.semantics.Context
 import hypermake.util._
 
-import scala.collection._
-
 class Package(
-               val name: String,
-               val `case`: Case,
-               val inputs: Map[String, Value],
-               val outputFileName: (String, Value.Pure),
-               val decorators: Seq[Decorator],
-               val rawScript: Script
+    val name: String,
+    val `case`: Case,
+    val inputs: Map[String, Value],
+    val outputFileName: (String, Value.Pure),
+    val decorators: Seq[Decorator],
+    val rawScript: Script
 )(implicit ctx: Context) {
   def on(fs: FileSys): Task = new Task(
     name = s"$name@$fs",
@@ -36,12 +37,12 @@ class Package(
 /** A package can be realized on multiple environments, and cannot be dependent on any other task.
   */
 case class PointedPackageTensor(
-                                 name: String,
-                                 shape: PointedShape,
-                                 inputs: Map[String, PointedTensor[Value]],
-                                 outputFileName: (String, PointedTensor[Value.Pure]),
-                                 decorators: Seq[Decorator],
-                                 rawScript: PointedTensor[Script]
+    name: String,
+    shape: PointedShape,
+    inputs: Map[String, PointedTensor[Value]],
+    outputFileName: (String, PointedTensor[Value.Pure]),
+    decorators: Seq[Decorator],
+    rawScript: PointedTensor[Script]
 )(implicit ctx: Context)
     extends PointedTensor[Package] {
 

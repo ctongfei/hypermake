@@ -1,15 +1,16 @@
 package hypermake.cli
 
+import zio._
+import zio.stream.ZStream
+
 import hypermake.core._
 import hypermake.execution._
 import hypermake.util._
-import zio.stream.ZStream
-import zio._
-
 
 object CLI {
 
   trait Service {
+
     /** Creates a pair of sinks for the matser Hypermake thread. */
     def globalSinks: StdSinks
 

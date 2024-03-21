@@ -1,13 +1,14 @@
 package hypermake.execution
 
-import better.files.File
-import hypermake.cli.CmdLineAST
-import hypermake.cli.CmdLineAST._
-import hypermake.util.printing._
-
 import java.io.{File => JFile, _}
 import java.nio.file.{Files => JFiles, _}
 import scala.jdk.CollectionConverters._
+
+import better.files.File
+
+import hypermake.cli.CmdLineAST
+import hypermake.cli.CmdLineAST._
+import hypermake.util.printing._
 
 /** Encapsulates the runtime environment of a Hypermake run.
   *

@@ -3,6 +3,7 @@ package hypermake
 import better.files.File
 import zio._
 import zio.console._
+
 import hypermake.cli.CmdLineAST._
 import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
 import hypermake.collection.Graph
@@ -23,14 +24,22 @@ object Main extends App {
     s"""
        |$headerMessage
        | ${B("Usage:")}
-       |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
+       |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO(
+        "running options"
+      )}] [targets]
        |
        | ${B("Options:")}
-       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V(
+       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V(
+        "$v"
+      )}   : Defines an additional variable ${K("k")} = ${V(
         "v"
       )} in the script.
-       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
-       |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V(
+       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V(
+        "file"
+      )} to parse.
+       |  -S ${V("$path")}, --shell ${V(
+        "$path"
+      )}    : Specifies default shell to use. By default this is "${V(
         "bash -e"
       )}".
        |  -H, --help                 : Prints this message and exit.
@@ -40,7 +49,9 @@ object Main extends App {
        |  list                       : Lists the variables and tasks in this pipeline.
        |  get-path ${V("$targets")}          : Prints the path of the given tasks.
        |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
-       |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
+       |  dry-run ${V(
+        "$targets"
+      )}           : Lists all dependent tasks implicated by the given tasks or plans.
        |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
        |  unlock ${V(
         "$targets"
@@ -49,7 +60,9 @@ object Main extends App {
        |  mark-as-done ${V("$targets")}      : Marks the given tasks as if they have exited normally.
        |
        | ${B("Running options:")}
-       |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
+       |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V(
+        "n"
+      )} jobs running in parallel at once.
        |  -k, --keep-going           : Keep going even when some jobs failed.
        |  -s, --silent               : Silent mode: redirect stdout and stderr to files.
        |  -v, --verbose              : Verbose mode.
@@ -66,7 +79,8 @@ object Main extends App {
       case Cmd.Version => putStrLn(s"Hypermake $version").orDie as ExitCode(0)
 
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
-        implicit val runtime: RuntimeConfig = RuntimeConfig.createFromCLIOptions(options, runOptions)
+        implicit val runtime: RuntimeConfig =
+          RuntimeConfig.createFromCLIOptions(options, runOptions)
         val cli = PlainCLI.create()
 
         // Constructs a semantic parser and its accompanying parsing context
@@ -75,14 +89,17 @@ object Main extends App {
         // TODO: Defines variables specified with the -D switch
         // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
         // Imports files specified with the -I switch
-        runtime.includePaths foreach { f => parser.semanticParseFile(runtime.resolveFile(f), topLevel = true) }
+        runtime.includePaths foreach { f =>
+          parser.semanticParseFile(runtime.resolveFile(f), topLevel = true)
+        }
         parser.semanticParseFile(File(scriptFile), topLevel = true)
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
 
         def showTaskCube(pct: PointedTaskTensor) = {
           val name = if (pct.name contains "@") BU(pct.name) else B(pct.name)
-          "• " + name + (if (pct.vars.isEmpty) "" else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
+          "• " + name + (if (pct.vars.isEmpty) ""
+                         else pct.vars.map(n => Kx(n.name)).mkString("[", ", ", "]"))
         }
 
         val eff = for {
@@ -123,7 +140,9 @@ object Main extends App {
                 val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
                 for {
                   _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
+                  _ <- putStrLn(
+                    s"The following ${jobGraph.numNodes} jobs are implied in the given target:"
+                  )
                   s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
                   _ <- putStrLn(s)
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
@@ -138,7 +157,9 @@ object Main extends App {
                 val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
                 for {
                   _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(s"The following ${jobGraph.numNodes} jobs are implied in the given target:")
+                  _ <- putStrLn(
+                    s"The following ${jobGraph.numNodes} jobs are implied in the given target:"
+                  )
                   s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
                   u <- putStrLn(s)
                 } yield u
@@ -153,10 +174,14 @@ object Main extends App {
                 val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
                 for {
                   _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:")
+                  _ <- putStrLn(
+                    s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:"
+                  )
                   _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
-                  u <- if (yes) Executor.run(sortedJobsToBeInvalidated)(_.invalidate as true) else ZIO.succeed(())
+                  u <-
+                    if (yes) Executor.run(sortedJobsToBeInvalidated)(_.invalidate as true)
+                    else ZIO.succeed(())
                 } yield u
 
               case Subcommand.Unlock =>

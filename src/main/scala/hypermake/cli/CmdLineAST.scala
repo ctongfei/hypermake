@@ -11,12 +11,12 @@ object CmdLineAST {
     case object Help extends Cmd // H
     case object Version extends Cmd // V
     case class Run(
-                    options: Seq[Opt],
-                    script: String,
-                    runOptions: Seq[RunOpt],
-                    task: Subcommand,
-                    targets: Seq[TaskRef]
-                  ) extends Cmd
+        options: Seq[Opt],
+        script: String,
+        runOptions: Seq[RunOpt],
+        task: Subcommand,
+        targets: Seq[TaskRef]
+    ) extends Cmd
   }
 
   sealed abstract class Opt

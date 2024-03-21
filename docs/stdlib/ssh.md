@@ -14,7 +14,7 @@ object my_server = ssh.Server(
     root='/home/user/out'  # root of HyperMake output on the remote server
 )
 
-task my_remote_task@my_server(input) -> output@my_server:
+task my_remote_task@my_server(input@server) -> output@my_server:
     # This task will be executed on the remote server
     # and the input will be copied to the remote server.
     # The output is expected to appear on the remote server.
