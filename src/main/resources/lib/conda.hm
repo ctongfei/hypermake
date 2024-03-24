@@ -1,3 +1,9 @@
+# Builds a Conda environment from a YAML file.
+def build_from_yaml(name, yaml, out):
+  mkdir -p $out
+  conda env create --name $name --file $yaml --prefix $out
+
+
 # Wraps the given script in a Conda environment.
 class Environment(environment):
 

@@ -1,8 +1,0 @@
-class A(name):
-  task print():
-     echo $name
-
-
-a = A(name = "a")
-
-b = A(name = "b")

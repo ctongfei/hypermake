@@ -37,8 +37,12 @@ object Expressions {
   } map FileSysModifier
 
   def stringLiteral[$: P]: P[StringLiteral] = P {
-    string ~ fsModifier
-  } map { case (s, fsm) => StringLiteral(s, fsm) }
+    Lexical.unquotedString | (Lexical.quotedString ~~ fsModifier)
+  } map {
+    case s: String                         => StringLiteral(s, FileSysModifier(None))
+    case (s: String, fsm: FileSysModifier) =>
+      StringLiteral(s, fsm)
+  }
 
   def dictLiteral[$: P]: P[DictLiteral] = P {
     "{" ~ axisName ~ ":" ~

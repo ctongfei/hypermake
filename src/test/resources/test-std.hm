@@ -1,5 +1,0 @@
-import std
-
-@std.Interpreter(interpreter="python")
-task test():
-  print("Hello, world!")

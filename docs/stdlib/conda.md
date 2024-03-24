@@ -9,7 +9,7 @@ Enables a job to be run within a Conda environment.
 ```python
 import conda
 
-@conda.Environment(name="myenv")
+@conda.Environment(environment="myenv")
 task check_if_cuda_is_available():
     python -c "import torch; print(torch.cuda.is_available())"
 ```
@@ -19,7 +19,7 @@ This can even be expressed with nested decorators:
 import std
 import conda
 
-@conda.Environment(name="myenv")
+@conda.Environment(environment="myenv")
 @std.Interpreter(interpreter="python")
 task check_if_cuda_is_available():
     import torch

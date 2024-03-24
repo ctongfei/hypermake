@@ -222,9 +222,10 @@ object FileSys {
         std: StdSinks
     ) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
+      val resolvedWd = resolvePath(wd)
       val pb = zio.process
         .Command(interpreter, (interpreterArgs ++ args): _*)
-        .workingDirectory(File(wd).toJava.getAbsoluteFile)
+        .workingDirectory(File(resolvedWd).toJava.getAbsoluteFile)
         .env(envArgs.toMap)
         .stderr(ProcessOutput.Pipe)
         .stdout(ProcessOutput.Pipe)
@@ -232,7 +233,7 @@ object FileSys {
         process <- pb.run
         _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
         exitCode <- process.exitCode
-        _ <- write(s"$wd${/}exitcode", exitCode.code.toString)
+        _ <- write(s"$resolvedWd${/}exitcode", exitCode.code.toString)
       } yield exitCode
     }
 

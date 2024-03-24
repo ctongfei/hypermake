@@ -8,6 +8,7 @@ import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 object StringGen {
 
+  // stress test
   val char = Gen.oneOf(' ', '\'', '\"', '\\', '\n', '\t', '\r', '\f', '\b', 'a', 'A', '0')
   val str = Gen.stringOf(char)
   implicit val arbString: Arbitrary[String] = Arbitrary(str)

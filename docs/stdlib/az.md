@@ -15,7 +15,7 @@ object az_storage = az.BlobStorage(
     extra_args="--account-name xxx --account-key yyy"
 )
 
-data_path = "/path/to/data" @az_storage
+data_path = "/path/to/data"@az_storage
 ```
 
 ## `az.DataLakeStorageGen2`

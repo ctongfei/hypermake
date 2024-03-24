@@ -10,8 +10,10 @@ Example usage:
 ```py
 import std
 
+sender = {Sender: Alice Bob}
+
 @std.Interpreter(interpreter="python3")
-task hello_world(sender="Alice"):
+task hello_world(sender=$):
     import os
     print(f"Hello, world from {os.environ["sender"]}!")
 ```

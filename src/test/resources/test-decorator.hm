@@ -1,9 +1,0 @@
-import std
-
-@std.Interpreter(interpreter="python")
-task run(x="test") -> ():
-  import os
-  globals().update(os.environ)
-  print(x)
-
-plan Run = {run}

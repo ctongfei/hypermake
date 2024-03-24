@@ -1,0 +1,10 @@
+import std
+
+local.root = "./test-out"
+
+@std.Interpreter(interpreter="python")
+task test_interpreter:
+  print("Hello, world!")
+
+plan Run = {test_interpreter}
+
