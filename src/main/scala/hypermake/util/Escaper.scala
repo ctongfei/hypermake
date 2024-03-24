@@ -23,15 +23,12 @@ object Escaper {
   /** Escapes strings using C/C++ standard.
     */
   object C extends Escaper {
-    val escapedChars: Map[Char, Char] = Map(
-      '\u0007' -> 'a',
+    private val escapedChars: Map[Char, Char] = Map(
       '\b' -> 'b',
-      '\u001b' -> 'e',
       '\f' -> 'f',
       '\n' -> 'n',
       '\r' -> 'r',
       '\t' -> 't',
-      '\u000b' -> 'v',
       '\\' -> '\\',
       '\"' -> '\"',
       '\'' -> '\''
@@ -40,7 +37,7 @@ object Escaper {
     def escape(s: String) = {
       val sb = new StringBuilder()
       for (c <- s)
-        sb append (if (escapedChars contains c) "\\" + c else c.toString)
+        sb append (if (escapedChars contains c) "\\" + escapedChars(c) else c.toString)
       sb.toString()
     }
 

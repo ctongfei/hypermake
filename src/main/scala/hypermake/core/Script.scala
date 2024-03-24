@@ -54,15 +54,3 @@ case class Script(
   }
 
 }
-//
-//class PointedCubeScript(
-//    val cases: PointedCaseTensor,
-//    val script: String,
-//    val args: Map[String, PointedTensor[Value]] = Map(),
-//    val nestingLevel: Int = 0
-//)(implicit runtime: RuntimeConfig)
-//    extends PointedTensor[Script] {
-//
-//  def get(c: Case) = args.toMap.unorderedSequence.get(c).map(as => Script(script, as, nestingLevel))
-//
-//}
