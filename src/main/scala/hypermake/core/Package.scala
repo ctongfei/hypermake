@@ -41,7 +41,7 @@ case class PointedPackageTensor(
     shape: PointedShape,
     inputs: Map[String, PointedTensor[Value]],
     outputFileName: (String, PointedTensor[Value.Pure]),
-    decorators: Seq[Decorator],
+    decorators: Seq[PointedDecoratorTensor],
     rawScript: PointedTensor[Script]
 )(implicit ctx: Context)
     extends PointedTensor[Package] {
@@ -54,7 +54,7 @@ case class PointedPackageTensor(
           `case` = shape.normalizeCase(c),
           inputs = inputs.mapValuesE(_.select(c).default),
           outputFileName = outputFileName._1 -> outputFileName._2.select(c).default,
-          decorators = decorators,
+          decorators = decorators.map(_.select(c).default),
           rawScript = rawScript.select(c).default
         )
       )

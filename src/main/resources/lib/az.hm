@@ -1,8 +1,8 @@
-# Defines a Azure Blob Storage module that can be used as a file system in HyperMake.
-# Behind the scenes it uses the `az storage blob` command group.
-# Use as follows:
-# import az
-# object my_storage = az.BlobStorage(container="my_container", extra_args="")
+## Defines a Azure Blob Storage module that can be used as a file system in HyperMake.
+## Behind the scenes it uses the `az storage blob` command group.
+## Use as follows:
+## import az
+## object my_storage = az.BlobStorage(container="my_container", extra_args="")
 class BlobStorage(container, extra_args):
 
   def read(file):

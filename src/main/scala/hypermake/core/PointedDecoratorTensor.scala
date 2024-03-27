@@ -7,14 +7,35 @@ import hypermake.exception.ObjectIsNotDecoratorException
 import hypermake.semantics._
 import hypermake.util._
 
+case class Decorator(
+    innerFileArg: String,
+    script: Script
+) {
+  def apply(input: Script, fs: FileSys): Script =
+    Script(
+      script.script,
+      input.args ++ script.args ++ Map(
+        innerFileArg -> Value.Input(s"script.${input.nestingLevel}", fs)
+      ),
+      input.nestingLevel + 1
+    )
+
+}
+
 /** An object that takes the signature `def run(inputScript): outputScript` and wraps around the
   * input script to produce the output script. This is used to decorate tasks.
   */
-case class Decorator(
+case class PointedDecoratorTensor(
     innerFileArg: String,
-    script: PointedTensor[Script],
-    alive: Option[PointedTensor[Script]]
-) {
+    script: PointedTensor[Script]
+    // alive: Option[PointedTensor[Script]]
+) extends PointedTensor[Decorator] {
+
+  def shape: PointedShape = script.shape
+
+  def get(c: Case): Option[Decorator] = {
+    script.get(c).map(Decorator(innerFileArg, _))
+  }
 
   /** Wraps around input script and returns output script.
     *
@@ -34,20 +55,20 @@ case class Decorator(
 
 }
 
-object Decorator {
-  def fromObj(obj: Obj): Decorator = {
+object PointedDecoratorTensor {
+  def fromObj(obj: Obj): PointedDecoratorTensor = {
     val runFunc = obj.funcTable.getOrElse("run", throw ObjectIsNotDecoratorException(obj))
     if (runFunc.params.size != 1) throw ObjectIsNotDecoratorException(obj)
 
     // TODO: alive
-    val aliveFunc = obj.funcTable.get("alive")
-    if (aliveFunc.nonEmpty && aliveFunc.get.params.nonEmpty)
-      throw ObjectIsNotDecoratorException(obj)
+//    val aliveFunc = obj.funcTable.get("alive")
+//    if (aliveFunc.nonEmpty && aliveFunc.get.params.nonEmpty)
+//      throw ObjectIsNotDecoratorException(obj)
 
-    Decorator(
+    PointedDecoratorTensor(
       runFunc.params.head,
-      runFunc.impl,
-      aliveFunc.map(_.impl)
+      runFunc.impl
+      // aliveFunc.map(_.impl)
     )
   }
 }

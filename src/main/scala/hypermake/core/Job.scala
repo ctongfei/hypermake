@@ -69,7 +69,7 @@ abstract class Job(implicit ctx: Context) {
 
   /** Set of dependent jobs. */
   lazy val dependentJobs: Set[Job] =
-    inputs.values.flatMap(_.dependencies).toSet
+    (inputs ++ decorators.flatMap(_.script.args)).values.flatMap(_.dependencies).toSet
 
   lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs ++ outputs)
 
@@ -89,10 +89,14 @@ abstract class Job(implicit ctx: Context) {
 
   /** An operation that links output of dependent jobs to the working directory of this job. */
   def linkInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
-    for ((name, (input, fs)) <- inputs zipByKey inputFs)
+    val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, fileSys) }
+    for ((name, (input, fs)) <- (inputs zipByKey inputFs) ++ decoratorInputs)
       yield fs
         .linkValue(input, fs.resolvePath(name, absolutePath))
-        .as(name -> Some(name))
+        .map {
+          case Some(_) => name -> Some(name) // linked input
+          case None    => name -> None // pure input, is not linked
+        }
   } map { effs =>
     effs.collect({ case (k, Some(v)) => k -> v }).toMap
   }
@@ -118,7 +122,7 @@ abstract class Job(implicit ctx: Context) {
       finalScript <- ZIO.foldLeft(decorators)(script) { case (scr, dec) =>
         fileSys
           .write(f"$absolutePath${fileSys./}script.${scr.nestingLevel}", scr.script)
-          .as(dec(PointedTensor.Singleton(scr), fileSys).get(`case`).get)
+          .as(dec(scr, fileSys))
       } // wraps the script with decorator calls sequentially
       _ <- fileSys.write(absolutePath / "script.sh", finalScript.script)
 

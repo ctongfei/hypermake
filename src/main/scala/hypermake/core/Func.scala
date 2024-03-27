@@ -11,6 +11,7 @@ import hypermake.exception.ParametersUnboundException
 case class Func(
     name: String,
     params: Set[String],
+    outputs: Set[String],
     impl: Script
 ) {
 
@@ -27,29 +28,33 @@ case class Func(
     */
   def withNewArgs(args: Map[String, Value]): Func = {
     val unboundParams = params.filter(a => !args.contains(a))
-    Func(name, unboundParams, impl.withNewArgs(args))
+    val unboundOutputs = outputs.filter(a => !args.contains(a))
+    Func(name, unboundParams, unboundOutputs, impl.withNewArgs(args))
   }
 
 }
 
-class PointedFuncTensor(
-    val name: String,
-    val shape: PointedShape,
-    val params: Set[String],
-    val impl: PointedTensor[Script]
+case class PointedFuncTensor(
+    name: String,
+    params: Set[String],
+    outputs: Set[String],
+    impl: PointedTensor[Script]
 ) extends PointedTensor[Func] { self =>
 
+  def shape = impl.shape
+
   def get(c: Case): Option[Func] = {
-    if (shape containsCase c) {
+    if (impl.shape containsCase c) {
       val scr = impl.select(c).default
-      Some(Func(name, params, scr))
+      Some(Func(name, params, outputs, scr))
     } else None
   }
 
   def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedFuncTensor = {
-    val unboundParams = params.filter(a => !args.contains(a))
+    val unboundInputParams = params.filter(a => !args.contains(a))
+    val unboundOutputParams = outputs.filter(a => !args.contains(a))
     val outScript = impl.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
-    new PointedFuncTensor(name, shape, unboundParams, outScript)
+    new PointedFuncTensor(name, unboundInputParams, unboundOutputParams, outScript)
   }
 
 }

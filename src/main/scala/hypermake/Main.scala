@@ -85,14 +85,14 @@ object Main extends App {
 
         // Constructs a semantic parser and its accompanying parsing context
         implicit val ctx: Context = new Context()
-        val parser = new SemanticParser()
+        val parser = new SemanticParser(ctx.root)
         // TODO: Defines variables specified with the -D switch
         // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
         // Imports files specified with the -I switch
         runtime.includePaths foreach { f =>
-          parser.semanticParseFile(runtime.resolveFile(f), topLevel = true)
+          parser.semanticParseFile(runtime.resolveFile(f), scope = ctx.root)
         }
-        parser.semanticParseFile(File(scriptFile), topLevel = true)
+        parser.semanticParseFile(File(scriptFile), scope = ctx.root)
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
 

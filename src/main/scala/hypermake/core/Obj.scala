@@ -8,7 +8,7 @@ import hypermake.semantics._
 import hypermake.util.DefaultMapBase
 
 /** An object (a.k.a. module) that organizes definitions. */
-class Obj {
+class Obj(val prefix: Path) {
 
   private[hypermake] val valueTable = mutable.HashMap[String, PointedTensor[Value]]()
   private[hypermake] val funcTable = mutable.HashMap[String, PointedFuncTensor]()
@@ -43,7 +43,7 @@ class Obj {
     val target = path.init.components.foldLeft(this) { (o, p) =>
       if (o.objTable contains p) o.objects(p)
       else {
-        val newObj = new Obj
+        val newObj = new Obj(o.prefix / p)
         o.objTable += p -> newObj
         newObj
       }
@@ -97,8 +97,8 @@ class Obj {
 
 object Obj {
 
-  def fromDefs(defs: Iterable[Definition[_]]): Obj = {
-    val obj = new Obj
+  def fromDefs(prefix: Path, defs: Iterable[Definition[_]]): Obj = {
+    val obj = new Obj(prefix)
     defs.foreach(obj.addDef)
     obj
   }

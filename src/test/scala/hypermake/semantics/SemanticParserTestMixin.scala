@@ -12,8 +12,8 @@ trait SemanticParserTestMixin { self: AnyFunSuite =>
   def runTest(name: String) = try {
     implicit val runtime = RuntimeConfig.create()
     implicit val ctx = new Context()
-    val parser = new SemanticParser
-    val obj = parser.semanticParseFile(semanticsSuiteFile(name), topLevel = true)
+    val parser = new SemanticParser(ctx.root)
+    val obj = parser.semanticParseFile(semanticsSuiteFile(name), scope = ctx.root)
   } catch {
     case e: Throwable => fail(e)
   }

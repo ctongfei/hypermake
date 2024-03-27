@@ -13,11 +13,19 @@ case class Path(components: List[String]) {
   def init = Path(components.init)
   def last = components.last
 
+  def /(c: String) = Path(components :+ c)
+
+}
+
+object Path {
+  val root = Path()
+  def apply(components: String*): Path = Path(components.toList)
 }
 
 /** A prefix trie-based map whose keys are paths. */
 class PathMap[R, +A](root: R, children: R => Map[String, R], base: R => Map[String, A])
-    extends DefaultMapBase[Path, A] {
+    extends DefaultMapBase[Path, A] { self =>
+  // TODO: type R should be existential
 
   def childMap(key: String): PathMap[R, A] = children(root)
     .get(key)
@@ -27,9 +35,12 @@ class PathMap[R, +A](root: R, children: R => Map[String, R], base: R => Map[Stri
   def get(key: String): Option[A] = get(Path(key.split('.').toList))
 
   def get(key: Path): Option[A] = {
-    val head :: tail = key.components
-    if (tail.isEmpty) base(root).get(head)
-    else childMap(head).get(Path(tail))
+    if (key.components.isEmpty) None
+    else {
+      val head :: tail = key.components
+      if (tail.isEmpty) base(root).get(head)
+      else childMap(head).get(Path(tail))
+    }
   }
 
   def apply(key: String): A = apply(Path(key.split('.').toList))
@@ -51,6 +62,11 @@ class PathMap[R, +A](root: R, children: R => Map[String, R], base: R => Map[Stri
     base(obj).map { case (k, v) => Path(path.components :+ k) -> v }
   }
 
+  def ++[B >: A](that: PathMap[R, B]): DefaultMapBase[Path, B] = new DefaultMapBase[Path, B] {
+    def get(key: Path) = self.get(key).orElse(that.get(key))
+
+    def iterator = ???
+  }
 }
 
 object PathMap {

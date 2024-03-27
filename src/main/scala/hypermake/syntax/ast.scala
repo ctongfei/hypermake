@@ -298,16 +298,17 @@ object ast {
       decorators: DecoratorCalls,
       name: Identifier,
       inputs: Assignments,
-      output: ExplicitAssignment,
-      impl: ScriptImpl
+      output: Option[ExplicitAssignment],
+      impl: TaskImpl
   ) extends Def {
     def str = s"${decorators}package $name($inputs) -> $output$impl"
 
-    def children = decorators.calls ++ Iterable(name, inputs, output, impl)
+    def children = decorators.calls ++ Iterable(name, inputs) ++ output.toList ++ Iterable(impl)
   }
 
-  case class FuncDef(name: Identifier, params: Assignments, impl: TaskImpl) extends Def {
-    def str = s"""def $name($params)$impl"""
+  case class FuncDef(name: Identifier, params: Assignments, outputs: Assignments, impl: TaskImpl)
+      extends Def {
+    def str = s"""def $name($params) -> ($outputs)$impl"""
 
     def children = Iterable(name, params, impl)
   }

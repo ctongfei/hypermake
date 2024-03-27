@@ -1,0 +1,58 @@
+import std
+import conda
+
+local.root = "test-out"
+
+package env = conda.env_create(file="/home/tongfei/proj/hypermake/src/test/resources/pipeline-suite/iris/environment.yaml"@local)
+
+classifier = {Classifier: knn svc maxent}
+
+object iris:
+
+  task download() -> (data="iris.csv"):
+     wget https://archive.ics.uci.edu/static/public/53/iris.zip -O iris.zip
+     unzip iris.zip
+     cat bezdekIris.data | shuf > iris.csv
+
+
+  @conda.activate(environment=$env)
+  @std.Interpreter(interpreter="python")
+  task train(data=$download.data, classifier=$) -> (model="model.pkl.z"):
+     import os
+     import joblib
+     import pandas as pd
+     import sklearn
+     import sklearn.neighbors
+
+     df = pd.read_csv(os.environ["data"], header=None)
+     X = df.iloc[50:, 0:4]
+     y = df.iloc[50:, 4]
+     clf = {
+       "knn": sklearn.neighbors.KNeighborsClassifier(),
+       "svc": sklearn.svm.SVC(),
+       "maxent": sklearn.linear_model.LogisticRegression(),
+     }[os.environ["classifier"]]
+     clf.fit(X, y)
+     joblib.dump(clf, os.environ["model"], compress=True)
+
+  @conda.activate(environment=$env)
+  @std.Interpreter(interpreter="python")
+  task test(data=$download.data, model=$train.model, classifier=$) -> (res="results.txt"):
+     import os
+     import joblib
+     import pandas as pd
+
+     df = pd.read_csv(os.environ["data"], header=None)
+     X = df.iloc[:50, 0:4]
+     y = df.iloc[:50, 4]
+     clf = joblib.load(os.environ["model"])
+     acc = clf.score(X, y)
+     with open(os.environ["res"], "w") as f:
+       print(f"{os.environ['classifier']}\t{acc}", file=f)
+
+#  task model_selection(res=$test[Classifier:*].res):
+#    echo "The best model is"
+#    cat $res | sort -k 1 | tail -n 1
+
+
+plan Run = { iris.test[Classifier: *] }

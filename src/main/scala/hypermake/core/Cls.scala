@@ -23,6 +23,7 @@ case class Cls(
   def withNewArgs(args: Map[String, PointedTensor[Value]]): Cls = {
     val newArgs = inheritedArgs ++ args
     val newObj = Obj.fromDefs(
+      obj.prefix,
       obj.defs.map {
         case Definition(name, pct: PointedTaskTensor) =>
           Definition(name, pct.withNewArgs(args))

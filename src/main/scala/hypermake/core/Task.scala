@@ -37,7 +37,7 @@ class PointedTaskTensor(
     val inputFs: Map[String, FileSys],
     val outputFileNames: Map[String, PointedTensor[Value.Pure]],
     val outputFs: Map[String, FileSys],
-    val decorators: Seq[Decorator],
+    val decorators: Seq[PointedDecoratorTensor],
     val script: PointedTensor[Script]
 )(implicit ctx: Context)
     extends PointedTensor[Task] {
@@ -48,8 +48,9 @@ class PointedTaskTensor(
       val cc = shape.normalizeCase(c)
       val is = inputs.mapValuesE(_.select(c).default)
       val os = outputFileNames.mapValuesE(_.select(c).default)
+      val decs = decorators.map(_.select(c).default)
       val scr = script.select(c).default
-      Some(new Task(name, fs, cc, is, inputFs, os, outputFs, decorators, scr))
+      Some(new Task(name, fs, cc, is, inputFs, os, outputFs, decs, scr))
     } else None
   }
 

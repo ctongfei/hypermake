@@ -1,14 +1,16 @@
 # Builds a Conda environment from a YAML file.
-def build_from_yaml(name, yaml, out):
+def env_create(file) -> out:
   mkdir -p $out
-  conda env create --name $name --file $yaml --prefix $out
+  conda env create \
+    --file $file \
+    --prefix $out
 
 
 # Wraps the given script in a Conda environment.
-class Environment(environment):
+class activate(environment):
 
   def run(_internal_conda_script):
     eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-    conda activate $environment
+    conda activate ./$environment
     . $_internal_conda_script
     conda deactivate

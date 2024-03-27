@@ -21,9 +21,9 @@ class Statements(indent: Int) {
   } map { case (id, v) => ValDef(id, v) }
 
   def funcDef[$: P] = P {
-    Lexical.token("def") ~/ identifier ~ assignments ~ scriptImpl
-  } map { case (name, params, impl) =>
-    FuncDef(name, params, impl)
+    Lexical.token("def") ~/ identifier ~ assignments ~ ("->" ~ outputAssignments).? ~ scriptImpl
+  } map { case (name, params, outputs, impl) =>
+    FuncDef(name, params, outputs.getOrElse(Assignments(Seq())), impl)
   }
 
   def taskDef[$: P] = P {
@@ -44,7 +44,7 @@ class Statements(indent: Int) {
 
   def packageDef[$: P] = P {
     decoratorCalls ~
-      Lexical.token("package") ~/ identifier ~ assignments.? ~ "->" ~ outputAssignment1 ~ scriptImpl
+      Lexical.token("package") ~/ identifier ~ assignments.? ~ ("->" ~ outputAssignment1).? ~ impl
   } map { case (decorators, name, inputs, output, impl) =>
     PackageDef(decorators, name, inputs.getOrElse(Assignments(Seq())), output, impl)
   }
@@ -105,8 +105,8 @@ class Statements(indent: Int) {
 
   // TODO: suiteImpl of a task
   // task t(a) -> b = {
-  //   task f(a) -> c =
-  //   task g(c) -> b
+  //   task f(a) -> c = F(a, c)
+  //   task g(c) -> b = G(c, b)
   // }
 
   def suiteImpl[$: P] = P {

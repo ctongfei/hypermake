@@ -54,3 +54,6 @@ case class ObjectIsNotDecoratorException(obj: Obj)
       s"Object “$obj” cannot be used as a decorator since it does not have a unary member function “run”."
     )
 // TODO: should be obj.name
+
+case class PackageOutputException(n: String)
+    extends Exception(s"Package “$n” can only have exactly 1 output.")
