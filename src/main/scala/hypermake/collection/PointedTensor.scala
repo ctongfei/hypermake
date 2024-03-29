@@ -56,7 +56,7 @@ trait PointedTensor[+A] extends Tensor[A] {
     curry(vars diff cc.vars).selectMany(cc)
 
   def reduceSelected[B](cc: Shape, r: Tensor[A] => B): PointedTensor[B] =
-    curry(vars diff cc.vars).map(r)
+    curry(cc.vars).map(r)
 
   override def curry(innerVars: Set[Axis]): PointedTensor[PointedTensor[A]] =
     new PointedTensor[PointedTensor[A]] {

@@ -1,0 +1,3 @@
+def clone(repo) -> out:
+  mkdir -p $out
+  git clone $repo $out

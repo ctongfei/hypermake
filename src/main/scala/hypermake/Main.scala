@@ -24,24 +24,12 @@ object Main extends App {
     s"""
        |$headerMessage
        | ${B("Usage:")}
-       |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO(
-        "running options"
-      )}] [targets]
+       |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
        |
        | ${B("Options:")}
-       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V(
-        "$v"
-      )}   : Defines an additional variable ${K("k")} = ${V(
-        "v"
-      )} in the script.
-       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V(
-        "file"
-      )} to parse.
-       |  -S ${V("$path")}, --shell ${V(
-        "$path"
-      )}    : Specifies default shell to use. By default this is "${V(
-        "bash -e"
-      )}".
+       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
+       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
+       |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
        |  -H, --help                 : Prints this message and exit.
        |  -V, --version              : Shows Hypermake version and exit.
        |
@@ -49,20 +37,14 @@ object Main extends App {
        |  list                       : Lists the variables and tasks in this pipeline.
        |  get-path ${V("$targets")}          : Prints the path of the given tasks.
        |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
-       |  dry-run ${V(
-        "$targets"
-      )}           : Lists all dependent tasks implicated by the given tasks or plans.
+       |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
        |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
-       |  unlock ${V(
-        "$targets"
-      )}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
+       |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
        |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
        |  mark-as-done ${V("$targets")}      : Marks the given tasks as if they have exited normally.
        |
        | ${B("Running options:")}
-       |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V(
-        "n"
-      )} jobs running in parallel at once.
+       |  -j ${V("$n")}, --jobs ${V("$n")}           : Allow ${V("n")} jobs running in parallel at once.
        |  -k, --keep-going           : Keep going even when some jobs failed.
        |  -s, --silent               : Silent mode: redirect stdout and stderr to files.
        |  -v, --verbose              : Verbose mode.
@@ -76,7 +58,7 @@ object Main extends App {
 
     cmd match {
       case Cmd.Help    => putStrLn(helpMessage).orDie as ExitCode(0)
-      case Cmd.Version => putStrLn(s"Hypermake $version").orDie as ExitCode(0)
+      case Cmd.Version => putStrLn(s"HyperMake $version").orDie as ExitCode(0)
 
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
         implicit val runtime: RuntimeConfig =
@@ -165,8 +147,8 @@ object Main extends App {
                 } yield u
 
               case Subcommand.Invalidate =>
-                val allRuns = File(s"${ctx.local.root}/.runs").children.map(_ / "jobs")
-                val allRunJobs = allRuns.flatMap(_.lines).toSet[String].map { s =>
+                val allRuns = File(s"${ctx.local.root}/.runs").children.map(_ / "jobs").toSeq
+                val allRunJobs = allRuns.flatMap(_.lines).toSet[String].flatMap { s =>
                   parser.parseTask(fastparse.parse(s, Expressions.taskRef(_)).get.value)
                 }
                 val jobGraph = Graph.explore[Job](allRunJobs, _.dependentJobs)

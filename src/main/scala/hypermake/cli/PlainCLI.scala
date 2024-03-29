@@ -53,8 +53,7 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     }
   }
 
-  /** Returns two sinks for consuming the standard output (stdout) and the standard error (stderr)
-    * streams.
+  /** Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
     */
   def sinks(job: Job) = {
     val os =
@@ -89,7 +88,7 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
 object PlainCLI {
 
   def create(
-      style: Style = Style.Plain
+      style: Style = Style.Powerline
   )(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
     Managed.succeed(new PlainCLI(style, runtime))
   }

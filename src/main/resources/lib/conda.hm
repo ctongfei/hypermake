@@ -1,5 +1,5 @@
 # Builds a Conda environment from a YAML file.
-def env_create(file) -> out:
+def create_env(file) -> out:
   mkdir -p $out
   conda env create \
     --file $file \
