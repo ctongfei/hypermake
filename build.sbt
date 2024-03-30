@@ -3,7 +3,7 @@ organization := "me.tongfei"
 isSnapshot := true
 version := "0.1.0"
 scalaVersion := "2.13.12"
-scalacOptions := Seq("-deprecation")
+scalacOptions := Seq("-deprecation", "-release:8")
 
 //enablePlugins(GraalVMNativeImagePlugin)
 //ThisBuild/semanticdbVersion := scalafixSemanticdb.revision

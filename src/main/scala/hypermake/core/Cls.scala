@@ -8,12 +8,13 @@ import hypermake.semantics.{Context, Definition}
 import hypermake.syntax.ast._
 import hypermake.util._
 
-/** Represents a Hypermake class.
-  * @param name
-  * @param params
-  * @param defs
-  * @param inheritedArgs
-  */
+/**
+ * Represents a Hypermake class.
+ * @param name Name of this class, from root
+ * @param params Constructor parameters, with their default values
+ * @param obj The object definition of this class
+ * @param inheritedArgs Arguments inherited from a partial instantiation
+ */
 case class Cls(
     name: String,
     params: Map[String, PointedTensor[Value]],
@@ -39,6 +40,11 @@ case class Cls(
     Cls(name, params, newObj, newArgs)
   }
 
+  /**
+   * Instantiate this class with the given arguments and returns an object.
+   * @param args Arguments passed to the constructor of this class
+   * @return The instantiated object
+   */
   def instantiate(args: Map[String, PointedTensor[Value]]): Obj = {
     val unboundParams = params.filterKeysE(a => !args.contains(a)).keySet
     if (unboundParams.nonEmpty)

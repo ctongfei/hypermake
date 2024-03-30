@@ -18,13 +18,13 @@ class Obj(val prefix: Path) {
   private[hypermake] val classTable = mutable.HashMap[String, Cls]()
   private[hypermake] val objTable = mutable.HashMap[String, Obj]()
 
-  def values = new PathMap[Obj, PointedTensor[Value]](this, _.objTable, _.valueTable)
-  def functions = new PathMap[Obj, PointedFuncTensor](this, _.objTable, _.funcTable)
-  def tasks = new PathMap[Obj, PointedTaskTensor](this, _.objTable, _.taskTable)
-  def plans = new PathMap[Obj, Plan](this, _.objTable, _.planTable)
-  def packages = new PathMap[Obj, PointedPackageTensor](this, _.objTable, _.packageTable)
-  def classes = new PathMap[Obj, Cls](this, _.objTable, _.classTable)
-  def objects = new PathMap[Obj, Obj](this, _.objTable, _.objTable)
+  def values = PathMap[Obj, PointedTensor[Value]](this, _.objTable, _.valueTable)
+  def functions = PathMap[Obj, PointedFuncTensor](this, _.objTable, _.funcTable)
+  def tasks = PathMap[Obj, PointedTaskTensor](this, _.objTable, _.taskTable)
+  def plans = PathMap[Obj, Plan](this, _.objTable, _.planTable)
+  def packages = PathMap[Obj, PointedPackageTensor](this, _.objTable, _.packageTable)
+  def classes = PathMap[Obj, Cls](this, _.objTable, _.classTable)
+  def objects = PathMap[Obj, Obj](this, _.objTable, _.objTable)
 
   def packageAwareTasks(implicit ctx: Context): Map[String, PointedTaskTensor] =
     new DefaultMapBase[String, PointedTaskTensor] {

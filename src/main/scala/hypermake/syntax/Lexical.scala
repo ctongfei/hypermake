@@ -2,9 +2,10 @@ package hypermake.syntax
 
 import hypermake.syntax.ast._
 
-/** The lexical part of the grammar of Hypermake. The following non-terminal definitions are
-  * sensitive to whitespace.
-  */
+/**
+ * The lexical part of the grammar of Hypermake.
+ * The following non-terminal definitions are sensitive to whitespace.
+ */
 object Lexical {
 
   import fastparse.NoWhitespace._
@@ -33,6 +34,10 @@ object Lexical {
   def noNewlineWsComment[$: P] = P {
     (CharsWhileIn(" ") | comment | "\\\n").rep
   }
+
+//  def docString[$: P] = P {
+//    "\"\"\"" ~ (!"\"\"\"" ~ AnyChar).rep.! ~ "\"\"\""
+//  } map DocString
 
   def lowercase[$: P] = P(CharIn("a-z"))
   def uppercase[$: P] = P(CharIn("A-Z"))

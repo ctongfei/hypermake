@@ -5,9 +5,9 @@ import scala.collection._
 import ast._
 import fastparse._
 
-/** The statement grammar of Hypermake. These are sensitive to newlines and indentations, following
-  * the Python format.
-  */
+/**
+ * The statement grammar of Hypermake. These are sensitive to newlines and indentations, following the Python format.
+ */
 class Statements(indent: Int) {
 
   import Expressions.{whitespace => _, _}

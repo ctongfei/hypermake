@@ -5,15 +5,16 @@ import zio._
 import zio.console._
 
 import hypermake.cli.CmdLineAST._
-import hypermake.cli.{CLI, CmdLineParser, PlainCLI}
-import hypermake.collection.Graph
-import hypermake.core.{Job, PointedTaskTensor}
-import hypermake.execution.{Executor, RuntimeConfig}
-import hypermake.semantics.{Context, SemanticParser}
-import hypermake.syntax.{Expressions, Statements}
+import hypermake.cli._
+import hypermake.collection._
+import hypermake.core._
+import hypermake.execution._
+import hypermake.semantics._
+import hypermake.syntax._
 import hypermake.util.StdSinks
 import hypermake.util.printing._
 
+/** Entrypoint of Hypermake. */
 object Main extends App {
 
   val version = "0.1.0"
@@ -105,7 +106,7 @@ object Main extends App {
                   s <- {
                     val g = Graph.explore[PointedTaskTensor](
                       ctx.root.tasks.values,
-                      _.dependentTaskCubes(ctx)
+                      _.dependentTaskTensors(ctx)
                     )
                     g.toStringIfAcyclic(t => ZIO.succeed(showTaskCube(t)), indent = 2)
                   }

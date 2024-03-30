@@ -5,6 +5,10 @@ import scala.collection._
 import hypermake.exception._
 import hypermake.util._
 
+/**
+ * Represents a directed graph.
+ * @tparam A The type of nodes
+ */
 trait Graph[A] {
   self =>
 
@@ -24,6 +28,7 @@ trait Graph[A] {
 
   def incomingNodes(a: A): Set[A] = revAdjMap(a)
 
+  /** Lazily traverses the nodes of this graph in topological order. */
   def topologicalSort: Iterable[A] = new Iterable[A] {
     def iterator: Iterator[A] = new Iterator[A] {
       private[this] val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
@@ -46,7 +51,8 @@ trait Graph[A] {
     }
   }
 
-  def traverseBothDirections(start: A): Iterable[A] = new Iterable[A] {
+  /** Breadth-first traverse this graph as if it is an undirected graph. */
+  def traverseAsIfUndirected(start: A): Iterable[A] = new Iterable[A] {
     def iterator: Iterator[A] = new Iterator[A] {
       private[this] val visited = mutable.HashSet.empty[A]
       private[this] val queue = mutable.Queue[A](start)
@@ -62,6 +68,7 @@ trait Graph[A] {
     }
   }
 
+  /** Returns a subgraph view where only the nodes in the given set are included. */
   def subgraph(subgraphNodes: Set[A]): Graph[A] = new Graph[A] {
     def adjMap = self.adjMap.filterKeysL(subgraphNodes).mapValuesL(_ & subgraphNodes)
 
@@ -70,6 +77,7 @@ trait Graph[A] {
     def nodes = self.nodes & subgraphNodes
   }
 
+  /** Returns an iterable of weakly connected components of this graph. */
   def weaklyConnectedComponents: Iterable[Graph[A]] = new Iterable[Graph[A]] {
     def iterator: Iterator[Graph[A]] = new Iterator[Graph[A]] {
       private[this] val visited = mutable.HashSet[A]()
@@ -81,7 +89,7 @@ trait Graph[A] {
         while (nodeIter.hasNext) {
           val a = nodeIter.next
           if (!visited.contains(a)) {
-            val subgraphNodes = traverseBothDirections(a).toSet
+            val subgraphNodes = traverseAsIfUndirected(a).toSet
             visited ++= subgraphNodes
             return subgraph(subgraphNodes)
           }
@@ -170,13 +178,11 @@ class MutableGraph[A](
 
 object Graph {
 
-  /** Performs a traversal to resolve all dependent tasks of the given targets.
-    *
-    * @param sources
-    *   A collection of target tasks
-    * @return
-    *   The task dependency DAG
-    */
+  /**
+   * Performs a traversal to resolve all dependent tasks of the given targets.
+   * @param sources A collection of target tasks
+   * @return The task dependency DAG
+   */
   def explore[A](sources: Iterable[A], prev: A => Iterable[A]): Graph[A] = {
     val g = Graph[A]()
     val s = mutable.HashSet[A]()

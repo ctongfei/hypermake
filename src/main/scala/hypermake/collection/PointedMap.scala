@@ -2,14 +2,14 @@ package hypermake.collection
 
 import scala.collection._
 
-/** A map with a default key.
-  */
+/** A map with a default key. */
 trait PointedMap[K, +V] extends Map[K, V] {
   self =>
 
-  override def keySet: PointedSet[K] = PointedSet(super.keySet, defaultKey)
-
+  /** The default key in this map. */
   def defaultKey: K
+
+  override def keySet: PointedSet[K] = PointedSet(super.keySet, defaultKey)
 
   def defaultPair: (K, V) = (defaultKey, this(defaultKey))
 

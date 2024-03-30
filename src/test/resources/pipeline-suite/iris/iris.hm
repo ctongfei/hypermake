@@ -16,7 +16,7 @@ object iris:
 
 
   @conda.activate(environment=$env)
-  @std.Interpreter(interpreter="python")
+  @std.run(interpreter="python")
   task train(data=$download.data, classifier=$) -> (model="model.pkl.z"):
      import os
      import joblib
@@ -35,8 +35,9 @@ object iris:
      clf.fit(X, y)
      joblib.dump(clf, os.environ["model"], compress=True)
 
+
   @conda.activate(environment=$env)
-  @std.Interpreter(interpreter="python")
+  @std.run(interpreter="python")
   task test(data=$download.data, model=$train.model, classifier=$) -> (res="results.txt"):
      import os
      import joblib
@@ -50,12 +51,13 @@ object iris:
      with open(os.environ["res"], "w") as f:
        print(acc, file=f)
 
+
   task model_selection(
     res=$test[Classifier:*].res,
     model=$train[Classifier:*].model
   ) -> (best="best_model.pkl.z"):
     best_id=$(
-      for f in $(ls $res); do echo $f $(cat $f); done \
+      for f in $(ls $res); do echo $f $(cat $res/$f); done \
       | sort -k2gr \
       | head -n1 \
       | cut -d' ' -f1

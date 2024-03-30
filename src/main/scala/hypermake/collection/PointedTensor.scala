@@ -6,12 +6,11 @@ import cats._
 
 import hypermake.util._
 
-/** A [[Tensor]] but with default value for each axis. As a result, each `PointedTensor[A]` value
-  * has a single default value `A`, similar to a pointed set.
-  *
-  * @tparam A
-  *   Element type
-  */
+/**
+ * A [[Tensor]] but with default value for each axis.
+ * As a result, each `PointedTensor[A]` value has a single default value `A`, similar to a pointed set.
+ * @tparam A Element type
+ */
 trait PointedTensor[+A] extends Tensor[A] {
   self =>
 
@@ -86,8 +85,7 @@ trait PointedTensor[+A] extends Tensor[A] {
       .mkString("\n")
   }
 
-  /** Gets the default element of a cube.
-    */
+  /** Gets the default element of a tensor. */
   def default: A = get(shape.default).get
 
 }
@@ -97,14 +95,10 @@ object PointedTensor {
   def of[A](a: String, outerCase: (String, PointedTensor[A])*) =
     OfNestedMap(Axis(a), outerCase.toMap.pointed(outerCase.head._1))
 
-  /** The `pure` operation of the PointedCube monad: construct a single value without
-    * parameterization.
-    */
+  /** The `pure` operation of the PointedTensor monad: construct a single value without parameterization. */
   case class Singleton[A](x: A) extends PointedTensor[A] {
     def shape = PointedShape(Map()) // single case
-
     def get(c: Case) = Some(x)
-
     override def default = x
   }
 
@@ -117,8 +111,7 @@ object PointedTensor {
     } yield a
   }
 
-  case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedTensor[A]])
-      extends PointedTensor[A] {
+  case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedTensor[A]]) extends PointedTensor[A] {
     val innerCases = outerCase.head._2.shape
     val innerAxes = innerCases.vars
     assert(outerCase.forall { case (_, c) =>
@@ -137,24 +130,17 @@ object PointedTensor {
     (a.shape equals b.shape) && a.shape.all.forall(c => a.get(c) == b.get(c))
   }
 
-  /** `PointedCube` forms a commutative monad.
-    */
+  /** `PointedTensor` forms a commutative monad. */
+  // TODO: not actually stack-safe
   implicit object Monad extends StackSafeMonad[PointedTensor] with CommutativeMonad[PointedTensor] {
-    // TODO: not actually stack-safe
-
     def pure[A](x: A) = Singleton(x)
-
     def flatMap[A, B](fa: PointedTensor[A])(f: A => PointedTensor[B]) = fa flatMap f
-
     override def map[A, B](fa: PointedTensor[A])(f: A => B) = fa map f
-
     override def product[A, B](fa: PointedTensor[A], fb: PointedTensor[B]) = fa product fb
 
   }
 
-  class Mapped[A, B](self: PointedTensor[A], f: A => B)
-      extends Tensor.Mapped[A, B](self, f)
-      with PointedTensor[B] {
+  class Mapped[A, B](self: PointedTensor[A], f: A => B) extends Tensor.Mapped[A, B](self, f) with PointedTensor[B] {
     override def shape = self.shape
   }
 

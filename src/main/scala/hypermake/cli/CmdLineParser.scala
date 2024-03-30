@@ -6,8 +6,9 @@ import hypermake.exception._
 import hypermake.syntax.Lexical.identifier
 import hypermake.syntax._
 
-/** Command line parser of Hypermake.
-  */
+/**
+ * Command line parser of Hypermake.
+ */
 object CmdLineParser {
 
   import hypermake.cli.CmdLineAST._

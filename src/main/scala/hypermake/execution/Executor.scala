@@ -39,8 +39,7 @@ object Executor {
     } yield u
   }
 
-  /** Runs an action over all jobs specified in the given acyclic directed graph.
-    */
+  /** Runs an action over all jobs specified in the given acyclic directed graph. */
   def runDAG(jobs: Graph[Job], cli: CLI.Service)(implicit runtime: RuntimeConfig): HIO[Unit] = {
     val sortedJobs = jobs.topologicalSort.toIndexedSeq // may throw CyclicWorkflowException
     val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()

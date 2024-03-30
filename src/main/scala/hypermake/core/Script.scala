@@ -10,8 +10,7 @@ import zio.process._
 import hypermake.execution._
 import hypermake.util._
 
-/** Encapsulates a script together with its external arguments.
-  */
+/** Encapsulates a script together with its external arguments (passed in as environment variables). */
 case class Script(
     script: String,
     args: Map[String, Value] = Map(),
@@ -27,11 +26,10 @@ case class Script(
     args.map { case (k, v) => k -> v.value }
   }
 
-  /** Writes this script as a local temporary file and executes it with its arguments.
-    *
-    * @param workDir
-    *   The working directory to run this temporary script.
-    */
+  /**
+   * Writes this script as a local temporary file and executes it with its arguments.
+   * @param workDir The working directory to run this temporary script.
+   */
   def executeLocally(
       workDir: String
   )(implicit runtime: RuntimeConfig, std: StdSinks): HIO[Process] = {
@@ -40,9 +38,7 @@ case class Script(
     // TODO: proper handling of bash quotes
     val command = s"${runtime.shell} $tempScriptFile".split(' ')
     for {
-      _ <- IO {
-        File(tempScriptFile).write(script)
-      }
+      _ <- IO { File(tempScriptFile).write(script) }
       process <- Command(command.head, command.tail: _*)
         .workingDirectory(new JFile(workDir))
         .env(runtime.envVars ++ strArgs.toMap) // Hypermake args are injected as environment vars;

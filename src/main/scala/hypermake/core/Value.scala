@@ -6,8 +6,7 @@ import hypermake.collection._
 import hypermake.exception.ValueNotPureException
 import hypermake.execution._
 
-/** This is essentially a string potentially paired with multiple dependent tasks.
-  */
+/** This is essentially a string potentially paired with its dependent tasks. */
 sealed trait Value {
   def value: String
 
@@ -69,12 +68,11 @@ object Value {
     def dependencies = Set(job)
   }
 
-  case class Multiple(cases: Tensor[Value], fileSys: FileSys)(implicit runtime: RuntimeConfig)
-      extends FileSysDependent {
-    override def value = cases.map(_.value).allElements.mkString(runtime.IFS_CHAR)
+  case class Multiple(cases: Tensor[Value], fileSys: FileSys)(implicit runtime: RuntimeConfig) extends FileSysDependent {
+    override def value = cases.map(_.value).allElements.mkString(" ")
 
     def absValue(implicit runtime: RuntimeConfig) =
-      cases.map(_.absValue).allElements.mkString(runtime.IFS_CHAR)
+      cases.map(_.absValue).allElements.mkString(" ")
 
     override def dependencies = cases.map(_.dependencies).allElements.reduce(_ union _)
   }

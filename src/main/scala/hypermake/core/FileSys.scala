@@ -13,57 +13,55 @@ import hypermake.semantics.Context
 import hypermake.util.Escaper.Shell
 import hypermake.util._
 
-/** Encapsulates a file system that could be local, or some remote grid. Such a file system must
-  * possess a basic file system, as well as the capability to run arbitrary shell script.
-  */
+/**
+ * Encapsulates a file system that could be local, or some remote grid (e.g. SFTP, or AWS S3).
+ * Such a file system must possess the capabilities of a basic file system.
+ * Optionally it can be equipped with methods to run arbitrary shell scripts.
+ */
 trait FileSys {
 
-  /** Identifier of this file system.
-    */
+  /** Identifier of this file system. */
   def name: String
 
-  /** Separator character used to separate path components. By default this is '/'.
-    */
+  /** Separator character used to separate path components. By default this is '/'. */
   def separator: Char
 
-  /** Separator character used to separate a list of paths. By default this is ':'.
-    */
+  /** Separator character used to separate a list of paths. By default this is ':'. */
   def pathSeparator: Char
 
   def / = separator
 
-  /** Output root on this file system. Intermediate results will be stored in this directory.
-    */
+  /** Output root on this file system. Intermediate results will be stored in this directory. */
   def root: String
 
   def refreshInterval: Duration
 
-  /** Resolves a path relative to the given root directory.
-    */
+  /** Resolves a path relative to the given root directory. */
   def resolvePath(s: String, r: String = root) = {
     val p = s.trim
     if (p startsWith separator.toString) p
     else r + separator + p
   }
 
-  /** Reads the content of a file as a string.
-    */
+  /** Reads the content of a file as a string. */
   def read(f: String)(implicit std: StdSinks): HIO[String]
 
+  /** Writes a string to a given file. */
   def write(f: String, content: String)(implicit std: StdSinks): HIO[Unit]
 
+  /**
+   * Creates an empty directory at the given path.
+   *  If on a blob storage (e.g. AWS S3), this can always return true.
+   */
   def mkdir(f: String)(implicit std: StdSinks): HIO[Unit]
 
-  /** Checks if a file exists on this file system.
-    */
+  /** Checks if a file exists on this file system. */
   def exists(f: String)(implicit std: StdSinks): HIO[Boolean]
 
-  /** Creates a symbolic link from [[src]] to [[dst]].
-    */
+  /** Creates a symbolic link from `src` to `dst`. */
   def link(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
-  /** Creates an empty file at the given path.
-    */
+  /** Creates an empty file at the given path. */
   def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
   def delete(f: String)(implicit std: StdSinks): HIO[Unit]
@@ -72,10 +70,7 @@ trait FileSys {
 
   def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
-  def copyFrom(src: String, srcFs: FileSys, dst: String)(implicit
-      ctx: Context,
-      std: StdSinks
-  ): HIO[Unit] = {
+  def copyFrom(src: String, srcFs: FileSys, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Unit] = {
     if (srcFs == this)
       link(src, dst)
     else if (srcFs == ctx.local)
@@ -102,10 +97,7 @@ trait FileSys {
     u <- if (isLocked) delete(s"$f${/}.lock") else ZIO.succeed(())
   } yield u
 
-  def linkValue(x: Value, dst: String)(implicit
-      ctx: Context,
-      std: StdSinks
-  ): HIO[Option[String]] = {
+  def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] = {
     x match {
       case Value.Pure(_) => ZIO.none // do nothing
       case Value.Input(path, fs) =>
@@ -128,7 +120,7 @@ trait FileSys {
             val argsString = ctx.percentEncodedCaseStringPath(c)
             linkValue(v, s"$dst${/}$argsString") as s"$dst${/}$argsString"
           }
-        } yield Some(r.mkString(ctx.runtime.IFS_CHAR))
+        } yield Some(r.mkString(" "))
     }
   }
 
@@ -169,6 +161,7 @@ object FileSys {
 
   def local(implicit ctx: Context) = ctx.local
 
+  /** The local file system (where HyperMake runs). */
   class Local(implicit ctx: Context) extends FileSys {
 
     final val name = "local"
@@ -239,6 +232,7 @@ object FileSys {
 
   }
 
+  /** A custom file system from an object definition. */
   class Custom(val name: String)(implicit ctx: Context) extends FileSys {
 
     import ctx._
@@ -325,9 +319,7 @@ object FileSys {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(
-        implicit std: StdSinks
-    ) = for {
+    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) = for {
       process <- getScriptByName(s"${name}.execute")
         .withArgs(
           "command" ->

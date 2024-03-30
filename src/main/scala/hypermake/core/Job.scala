@@ -14,16 +14,13 @@ import hypermake.semantics.Context
 import hypermake.util.Escaper._
 import hypermake.util._
 
-/** A job is any block of shell script that is executed by HyperMake. A job can either be a task, a
-  * package, or a service.
-  *
-  * @param ctx
-  *   Parsing context that yielded this job
-  */
+/**
+ * A job is the atomic unit of scripts that is executed by HyperMake.
+ * A job can either be a task, a package, or a service.
+ */
 abstract class Job(implicit ctx: Context) {
 
   import ctx._
-
   implicit val runtime: RuntimeConfig = ctx.runtime
 
   def name: String
@@ -34,8 +31,10 @@ abstract class Job(implicit ctx: Context) {
 
   def inputs: Map[String, Value] // may contain both arguments and input files
 
-  // Specifies the file systems that the inputs should be on before starting the job.
-  // these input files may be on different file systems as specified in `inputs`.
+  /**
+   * Specifies the file systems that the inputs should be on before starting the job.
+   * These input files may be on different file systems as specified in `inputs`.
+   */
   def inputFs: Map[String, FileSys]
 
   def outputs: Map[String, Value.Output]
@@ -44,12 +43,12 @@ abstract class Job(implicit ctx: Context) {
 
   def rawScript: Script
 
-  /** Hypermake environment variables provided to each job. */
+  /** HyperMake environment variables provided to each job. */
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
-    "HYPERMAKE_JOB_PATH" -> path
+    "HYPERMAKE_JOB_WD" -> path
   )
 
   /** Path relative to the output root of the job file system. */
@@ -58,16 +57,17 @@ abstract class Job(implicit ctx: Context) {
 
   lazy val absolutePath = fileSys.resolvePath(path)
 
-  /** The canonical string identifier for this task, in the percent-encoded URL format. Potentially
-    * this serves as the entry point in a web server.
-    */
+  /**
+   * The canonical string identifier for this task, in the percent-encoded URL format.
+   * Potentially this serves as the entry point in a web server.
+   */
   lazy val id = {
     val taskStr = s"${name.replace('.', '/')}"
     val argsStr = percentEncodedCaseStringUrl
     if (argsStr.isEmpty) taskStr else s"$taskStr?$argsStr"
   }
 
-  /** Set of dependent jobs. */
+  /** Set of dependent jobs that this job depends on. */
   lazy val dependentJobs: Set[Job] =
     (inputs ++ decorators.flatMap(_.script.args)).values.flatMap(_.dependencies).toSet
 
@@ -76,9 +76,7 @@ abstract class Job(implicit ctx: Context) {
   lazy val outputAbsolutePaths =
     outputs.keySet.makeMap { x => fileSys.resolvePath(outputs(x).value, absolutePath) }
 
-  /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs
-    * existed.
-    */
+  /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
   def isDone(implicit std: StdSinks): HIO[Boolean] = for {
     exitCode <- fileSys
       .read(fileSys.resolvePath("exitcode", absolutePath))
@@ -105,9 +103,7 @@ abstract class Job(implicit ctx: Context) {
   def checkOutputs(implicit std: StdSinks): HIO[Boolean] = {
     ZIO
       .collectAll {
-        for (
-          (_, (outputPath, outputFs)) <- outputAbsolutePaths zipByKey outputs.mapValuesE(_.fileSys)
-        )
+        for ((_, (outputPath, outputFs)) <- outputAbsolutePaths zipByKey outputs.mapValuesE(_.fileSys))
           yield outputFs.exists(outputPath)
       }
       .map(_.forall(identity))
@@ -124,7 +120,7 @@ abstract class Job(implicit ctx: Context) {
           .write(f"$absolutePath${fileSys./}script.${scr.nestingLevel}", scr.script)
           .as(dec(scr, fileSys))
       } // wraps the script with decorator calls sequentially
-      _ <- fileSys.write(absolutePath / "script.sh", finalScript.script)
+      _ <- fileSys.write(absolutePath / "script", finalScript.script)
 
       // Linked args are of the highest precedence since they are resolved from envs
       jobArgs = finalScript.strArgs(runtime) ++ linkedArgs
@@ -146,7 +142,7 @@ abstract class Job(implicit ctx: Context) {
       linkedArgs <- linkInputs
       args <- writeScript(linkedArgs)
       _ <- cli.update(this, Status.Running)
-      exitCode <- fileSys.execute(path, runtime.shell, Seq("script.sh"), args)
+      exitCode <- fileSys.execute(path, runtime.shell, Seq("script"), args)
       hasOutputs <- checkOutputs
     } yield (exitCode.code == 0) && hasOutputs
     val potentiallyAbsolvedEffect =

@@ -6,13 +6,11 @@ trait ContextualDenotation[C, S, +D] {
   def denotation(form: S, ctx: C = defaultContext): D
 }
 
-/** The syntax-semantics interface.
-  *
-  * @tparam S
-  *   Surface form
-  * @tparam D
-  *   Denotation
-  */
+/**
+ * The syntax-semantics interface.
+ * @tparam S Surface form
+ * @tparam D Denotation
+ */
 trait Denotation[S, +D] {
   def denotation(form: S): D
 }

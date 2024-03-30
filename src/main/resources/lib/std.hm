@@ -3,6 +3,6 @@ def link_from_path(path) -> out:
   ln -s $path $out
 
 ## Execute the script with the given interpreter.
-class Interpreter(interpreter):
+class run(interpreter):
   def run(_interal_interpreter_script):
     $interpreter $_interal_interpreter_script

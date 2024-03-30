@@ -12,16 +12,14 @@ trait Escaper {
 
 object Escaper {
 
-  /** Escapes strings using Percent encoding (a.k.a. URL encoding).
-    */
+  /** Escapes strings using Percent encoding (a.k.a. URL encoding). */
   object Percent extends Escaper {
     def escape(s: String) = URLEncoder.encode(s, "UTF-8")
 
     def unescape(s: String) = URLDecoder.decode(s, "UTF-8")
   }
 
-  /** Escapes strings using C/C++ standard.
-    */
+  /** Escapes strings using C/C++ standard. */
   object C extends Escaper {
     private val escapedChars: Map[Char, Char] = Map(
       '\b' -> 'b',
@@ -44,8 +42,7 @@ object Escaper {
     def unescape(s: String) = StringContext.processEscapes(s)
   }
 
-  /** Escapes a string for shell scripts (e.g. Bash).
-    */
+  /** Escapes a string for shell scripts (e.g. Bash). */
   object Shell extends Escaper {
     // Credit to https://stackoverflow.com/a/33949338/2990673
     def escape(s: String) = "'" + s.replace("'", "'\\''") + "'"

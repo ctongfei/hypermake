@@ -6,8 +6,8 @@ import cats.kernel._
 
 import hypermake.util._
 
-class PointedShape(override val underlying: Map[Axis, PointedSet[String]])
-    extends Shape(underlying) {
+/** A shape where each axis has a default value. */
+class PointedShape(override val underlying: Map[Axis, PointedSet[String]]) extends Shape(underlying) {
   self =>
 
   def default: Case = Case(underlying.view.mapValues(_.default).toMap)

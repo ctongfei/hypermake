@@ -2,12 +2,14 @@ package hypermake.core
 
 import scala.collection._
 
-import cats.instances.map._
+import cats.implicits.catsStdInstancesForMap
 import cats.syntax.unorderedTraverse._
 
 import hypermake.collection._
 import hypermake.exception.ParametersUnboundException
 
+// TODO: enable default parameters
+/** Encapsulates a reusable snippet of code across tasks. */
 case class Func(
     name: String,
     params: Set[String],
@@ -15,8 +17,7 @@ case class Func(
     impl: Script
 ) {
 
-  /** Constructs the complete script with the unbound variables assigned.
-    */
+  /** Constructs the complete script with the unbound variables assigned. */
   def reify(args: Map[String, Value]): Script = {
     val reified = withNewArgs(args)
     if (reified.params.nonEmpty)
@@ -24,8 +25,7 @@ case class Func(
     reified.impl
   }
 
-  /** Fills in some of the parameters of this function (partial application).
-    */
+  /** Fills in some of the parameters of this function (partial application). */
   def withNewArgs(args: Map[String, Value]): Func = {
     val unboundParams = params.filter(a => !args.contains(a))
     val unboundOutputs = outputs.filter(a => !args.contains(a))

@@ -10,8 +10,7 @@ import hypermake.exception._
 import hypermake.execution.RuntimeConfig
 import hypermake.util.Escaper._
 
-/** Contexts kept for each parsing run.
-  */
+/** Contexts kept for each parsing run. */
 class Context(implicit val runtime: RuntimeConfig) {
 
   private[hypermake] val root: Obj = new Obj(Path.root)
@@ -54,9 +53,7 @@ class Context(implicit val runtime: RuntimeConfig) {
     clauses
   }
 
-  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in
-    * the file system.
-    */
+  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in the file system. */
   def percentEncodedCaseStringPath(args: Case) = {
     val clauses = percentEncodedClauses(args)
     if (clauses.isEmpty) "default" else clauses.mkString("&") // URL style ID

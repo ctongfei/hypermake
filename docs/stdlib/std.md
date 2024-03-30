@@ -2,7 +2,7 @@
 
 Contains some miscellaneous utilities for HyperMake.
 
-## `std.Interpreter`
+## Class `std.run`
 
 Enables a task in HyperMake to run in a custom interpreter (e.g. Python, Perl, etc.).
 
@@ -12,7 +12,7 @@ import std
 
 sender = {Sender: Alice Bob}
 
-@std.Interpreter(interpreter="python3")
+@std.run(interpreter="python3")
 task hello_world(sender=$):
     import os
     print(f"Hello, world from {os.environ["sender"]}!")

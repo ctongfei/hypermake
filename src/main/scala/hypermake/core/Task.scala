@@ -8,9 +8,7 @@ import hypermake.collection._
 import hypermake.semantics.Context
 import hypermake.util._
 
-/** A task is a job that is declared by the `task` definition. It is a job that is specific to a
-  * running environment.
-  */
+/** A task is the atomic unit of scripts that is executed by HyperMake. */
 class Task(
     val name: String,
     val fileSys: FileSys,
@@ -54,7 +52,7 @@ class PointedTaskTensor(
     } else None
   }
 
-  def dependentTaskCubes(implicit ctx: Context) = {
+  def dependentTaskTensors(implicit ctx: Context) = {
     val allTaskNames = inputs.values.flatMap { pcv =>
       pcv.allElements.flatMap(_.dependencies.map(_.name).toSet)
     }

@@ -10,13 +10,11 @@ import hypermake.cli.CmdLineAST
 import hypermake.cli.CmdLineAST._
 import hypermake.util.printing._
 
-/** Encapsulates the runtime environment of a Hypermake run.
-  *
-  * @param workDir
-  *   Working directory
-  * @param envVars
-  *   Inherited environment variables from the parent process
-  */
+/**
+ * Encapsulates the runtime environment of a Hypermake run.
+ * @param workDir Working directory
+ * @param envVars Inherited environment variables from the parent process
+ */
 class RuntimeConfig private (
     val workDir: String,
     val shell: String,
@@ -29,17 +27,8 @@ class RuntimeConfig private (
     val yes: Boolean
 ) {
 
-  /** Environment variable containing paths where HyperMake resolves import statements; akin to C's
-    * `CPATH` or Python's `PYTHONPATH`.
-    */
+  /** Environment variable containing paths where HyperMake resolves import statements; akin to C's `CPATH` or Python's `PYTHONPATH`. */
   final val HYPERMAKE_PATH = "HYPERMAKE_PATH"
-
-  /** Element separator for sequences of variables in a single shell string.
-    */
-  // TODO: do we really want to inherit IFS from outside shell?
-  final val IFS = envVars.getOrElse("IFS", " \t\n") // Space&tab&newline is default for bash
-
-  final val IFS_CHAR = IFS.head.toString
 
   lazy val paths =
     envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
@@ -61,13 +50,11 @@ class RuntimeConfig private (
   def newTempFile(prefix: String = "", suffix: String = "") =
     JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
-  /** Resolves a script file from `HYPERMAKE_PATH`.
-    *
-    * @param fn
-    *   File name to resolve
-    * @return
-    *   The file
-    */
+  /**
+   * Resolves a script file from `HYPERMAKE_PATH`.
+   * @param fn File name to resolve
+   * @return The file
+   */
   def resolveFile(fn: String): File = {
     resolutionPaths.collectFirst {
       case path if File(path, fn).exists => File(path, fn)
@@ -101,7 +88,7 @@ class RuntimeConfig private (
 
 object RuntimeConfig {
 
-  private val defaultShell = "bash -eux"
+  private val defaultShell = "bash -e"
 
   def create(
       definedVars: Map[String, String] = Map(),

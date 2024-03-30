@@ -6,23 +6,21 @@ import hypermake.util._
 
 object ast {
 
-  /** Supertype of all node types in the Forge AST.
-    */
+  /** Supertype of all node types in the HyperMake AST. */
   sealed trait Node {
     self =>
 
-    /** A canonical string representation of this AST node, without any syntactic sugar. This string
-      * should be parsed back to an identical AST object, and serves as the `toString()`
-      * implementation.
-      */
+    /**
+     * A canonical string representation of this AST node, without any syntactic sugar.
+     * This string should be parsed back to an identical AST object, and serves
+     * as the `toString()` implementation.
+     */
     def str: String
 
-    /** Iterates over all of its immediate child nodes.
-      */
+    /** Iterates over all of its immediate child nodes. */
     def children: Iterable[Node]
 
-    /** Iterates over all of its recursive child nodes.
-      */
+    /** Iterates over all of its recursive child nodes. */
     def recursiveChildren: Iterable[Node] = new Iterable[Node] {
       def iterator: Iterator[Node] = new Iterator[Node] { // DFS
         private[this] val stack = mutable.Stack(self)
@@ -40,9 +38,10 @@ object ast {
     override def toString = str
   }
 
-  /** Represents any (potentially parameterized) String value. An [[Expr]] can be either a
-    * [[Literal]] or a [[ValRef]].
-    */
+  /**
+   * Represents any (potentially parameterized) String value.
+   * An [[Expr]] can be either a [[Literal]] or a [[ValRef]].
+   */
   sealed trait Expr extends Node
 
   case class Identifier(name: String) extends Node {
@@ -90,8 +89,7 @@ object ast {
 
     def children = Nil
 
-    /** Executes this inline command while being parsed.
-      */
+    /** Executes this inline command while being parsed. */
     def result() = {
       import scala.sys.process._
       command.!!.split(" ") // TODO: conform to IFS?
@@ -104,13 +102,13 @@ object ast {
     def children = Nil
   }
 
-  /** Represents a literal. A literal can be either a String singleton ([[StringLiteral]]) or a
-    * nested dict literal ([[DictLiteral]]).
-    */
+  /**
+   * Represents a literal.
+   *  A literal can be either a String singleton ([[StringLiteral]]) or a nested dict literal ([[DictLiteral]]).
+   */
   sealed trait Literal extends Expr
 
-  case class StringLiteral(value: String, fsModifier: FileSysModifier = FileSysModifier(None))
-      extends Literal {
+  case class StringLiteral(value: String, fsModifier: FileSysModifier = FileSysModifier(None)) extends Literal {
     def str = s"${Escaper.Shell.escape(value)}$fsModifier"
 
     def children = fsModifier :: Nil
@@ -161,8 +159,7 @@ object ast {
     def children = Nil
   }
 
-  case class ValRef(name: IdentifierPath, indices: AxisIndices, output: Option[OutputRef])
-      extends Expr {
+  case class ValRef(name: IdentifierPath, indices: AxisIndices, output: Option[OutputRef]) extends Expr {
     def str = s"$$$name$indices${output.fold("")(_.str)}"
 
     def children = Iterable(name) ++ indices.flatMap { case (k, v) => Iterable(k, v) }
@@ -194,9 +191,7 @@ object ast {
     def children = Iterable(param)
   }
 
-  case class Assignments(assignments: Seq[Assignment])
-      extends MapWrapper[Identifier, (FileSysModifier, Expr)]
-      with Node {
+  case class Assignments(assignments: Seq[Assignment]) extends MapWrapper[Identifier, (FileSysModifier, Expr)] with Node {
     def str = assignments.mkString(", ")
 
     def children = assignments
@@ -306,8 +301,7 @@ object ast {
     def children = decorators.calls ++ Iterable(name, inputs) ++ output.toList ++ Iterable(impl)
   }
 
-  case class FuncDef(name: Identifier, params: Assignments, outputs: Assignments, impl: TaskImpl)
-      extends Def {
+  case class FuncDef(name: Identifier, params: Assignments, outputs: Assignments, impl: TaskImpl) extends Def {
     def str = s"""def $name($params) -> ($outputs)$impl"""
 
     def children = Iterable(name, params, impl)
@@ -340,8 +334,7 @@ object ast {
     def children = moduleName.toList
   }
 
-  case class ImportObject(modulePath: IdentifierPath, moduleName: Option[Identifier])
-      extends Statement {
+  case class ImportObject(modulePath: IdentifierPath, moduleName: Option[Identifier]) extends Statement {
     def str = moduleName match {
       case Some(m) => s"import $modulePath as $m"
       case None    => s"import $modulePath as $modulePath"

@@ -8,8 +8,7 @@ import cats.syntax.hash._
 
 import hypermake.exception.AxesDefaultKeyMismatchException
 
-/** A set with a default element.
-  */
+/** A set with a default element. */
 trait PointedSet[A] extends Set[A] {
 
   /** The default element in this set. */

@@ -47,19 +47,20 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     if (runtime.silent)
       StdSinks(ZSink.drain.map(_ => 0), ZSink.drain.map(_ => 0))
     else {
-      val os = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.out, style.render0))
-      val es = ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render0))
+      val os = ZSink.fromOutputStream(new PrefixedOutputStream(StdStreams.out, style.render0))
+      val es = ZSink.fromOutputStream(new PrefixedOutputStream(StdStreams.err, style.render0))
       StdSinks(os, es)
     }
   }
 
-  /** Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
-    */
+  /**
+   * Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
+   */
   def sinks(job: Job) = {
     val os =
-      ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.out, style.render(job)))
+      ZSink.fromOutputStream(new PrefixedOutputStream(StdStreams.out, style.render(job)))
     val es =
-      ZSink.fromOutputStream(new PrefixedOutputStream(StandardStreams.err, style.render(job)))
+      ZSink.fromOutputStream(new PrefixedOutputStream(StdStreams.err, style.render(job)))
     if (!File(job.absolutePath).exists)
       File(job.absolutePath).createDirectories() // mkdir -p ${job.absolutePath}
     val ofs = ZSink.fromFile(Paths.get(job.absolutePath, "stdout"))

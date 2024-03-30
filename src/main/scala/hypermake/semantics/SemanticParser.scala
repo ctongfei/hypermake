@@ -15,11 +15,10 @@ import hypermake.syntax._
 import hypermake.syntax.ast._
 import hypermake.util._
 
-/** A semantic parsing run.
-  *
-  * @param ctx
-  *   Global context
-  */
+/**
+ * A semantic parsing run in a specific module/scope.
+ * @param ctx Global context
+ */
 class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
   import ctx._
@@ -348,13 +347,12 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     case od: ObjectDef  => od.!
   }
 
-  /** From definitions, deduces all declared axes.
-    *
-    * @param stmts
-    *   All definitions
-    * @return
-    *   All declared axes; fail if there is any axis mis-alignments.
-    */
+  /**
+   * From definitions, deduces all declared axes.
+   *
+   * @param stmts All definitions
+   * @return All declared axes; fail if there is any axis mis-alignments.
+   */
   def getAllCases(stmts: Iterable[Statement]): PointedShape = {
     val axesOccurrences: Iterable[(Axis, Iterable[String])] =
       stmts.view.flatMap(_.recursiveChildren).collect { case DictLiteral(axisName, assignments) =>
@@ -400,18 +398,18 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
   def addDefs(defs: Iterable[Definition[_]]): Unit =
     defs foreach scope.addDef
 
-  /** Reads a Hypermake script while expanding all import statements. This function processes `import` statements.
-    *
-    * @param f
-    *   Script file to be read
-    * @return
-    *   A sequence of top-level definitions
-    */
+  /**
+   * Reads a Hypermake script while expanding all import statements. This function processes `import` statements.
+   *
+   * @param f
+   *   Script file to be read
+   * @return
+   *   A sequence of top-level definitions
+   */
   def readFileToStmts(f: File): Seq[Statement] =
     readLinesToStmts(f.lines)
 
-  /** Reads a stream of Hypermake script lines and parses them to statements.
-    */
+  /** Reads a stream of Hypermake script lines and parses them to statements. */
   def readLinesToStmts(lines: Iterable[String]): Seq[Statement] = {
     val content = lines
       .filterNot(_.trim == "")
@@ -430,7 +428,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     } catch {
       case e: Exception => None
     }
-  } // TODO: make sure that there is only 1 in the cube
+  } // TODO: make sure that there is only 1 in the tensor
 
   def parseTarget(tr: TaskRef) =
     root.plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!.map(_.default)))

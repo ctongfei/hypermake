@@ -2,6 +2,10 @@ package hypermake.collection
 
 import scala.collection._
 
+/**
+ * Represents the _shape_ of a tensor.
+ *  A [[Tensor]][A] of [[Shape]] `S`, is basically a function from `S` to `A`.
+ */
 class Shape(val underlying: Map[Axis, Set[String]]) {
   self =>
 
@@ -19,16 +23,14 @@ class Shape(val underlying: Map[Axis, Set[String]]) {
 
   def vars = underlying.keySet
 
-  /** Selects the subcube of cases once variables are bound by the given case.
-    */
+  /** Selects the sub-tensor of cases once variables are bound by the given case. */
   def select(c: Case) = filterVars(a => !c.contains(a))
 
   def filterVars(p: Axis => Boolean) = Shape {
     underlying.view.filterKeys(p).toMap
   }
 
-  /** Selects the subcube of cases given variables take the given values in the specified case cube.
-    */
+  /** Selects the sub-tensor of cases given variables take the given values in the specified case tensor. */
   def selectMany(cc: Shape) = Shape {
     self.underlying.map { case (a, ks) =>
       if (cc containsAxis a)
@@ -104,6 +106,8 @@ class Shape(val underlying: Map[Axis, Set[String]]) {
 }
 
 object Shape {
+
+  def singleton = new Shape(Map())
 
   def apply(underlying: Map[Axis, Set[String]]) = new Shape(underlying)
 

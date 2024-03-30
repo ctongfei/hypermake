@@ -8,6 +8,11 @@ import hypermake.collection._
 import hypermake.semantics.Context
 import hypermake.util._
 
+/**
+ * Represents a package.
+ * A package differs from a normal task in that it is filesystem-dependent:
+ * It should be built once for each filesystem.
+ */
 class Package(
     val name: String,
     val `case`: Case,
@@ -34,8 +39,7 @@ class Package(
   def output: Value.PackageOutput = Value.PackageOutput(this)
 }
 
-/** A package can be realized on multiple environments, and cannot be dependent on any other task.
-  */
+/** A package can be realized on multiple environments, and cannot be dependent on any other task. */
 case class PointedPackageTensor(
     name: String,
     shape: PointedShape,
@@ -61,8 +65,7 @@ case class PointedPackageTensor(
     } else None
   }
 
-  /** Returns a task that builds this package on a specific environment.
-    */
+  /** Returns a task that builds this package on a specific environment. */
   def on(fs: FileSys)(implicit ctx: Context) = new PointedTaskTensor(
     s"$name@${fs.name}", // package@ec2
     fs,
