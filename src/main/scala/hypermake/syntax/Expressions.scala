@@ -30,11 +30,11 @@ object Expressions {
   }
 
   def identifierPath[$: P] = P {
-    identifier.rep(min = 1, sep = ".")
+    identifier.repX(min = 1, sep = ".")
   }.map(IdentifierPath)
 
   def fsModifier[$: P] = P {
-    ("@" ~ identifierPath).?
+    ("@" ~~ identifierPath).?
   } map FileSysModifier
 
   def stringLiteral[$: P]: P[StringLiteral] = P {
@@ -84,15 +84,17 @@ object Expressions {
   } map { case (id, indices) => TaskRef(id, indices) }
 
   def outputRef[$: P]: P[OutputRef] = P {
-    "." ~ identifier
+    "." ~~ identifier
   } map OutputRef
 
-  def valRef[$: P]: P[ValRef] = P {
-    "$" ~ identifierPath ~ (indices ~ outputRef).?
+  def valRef0[$: P]: P[ValRef] = P {
+    identifierPath ~ (indices ~ outputRef).?
   } map {
     case (id, Some((indices, oor))) => ValRef(id, indices, Some(oor))
     case (id, None)                 => ValRef(id, AxisIndices(Seq()), None)
   }
+
+  def valRef[$: P]: P[ValRef] = P { "$" ~~ valRef0 }
 
   def expr[$: P]: P[Expr] = literal | valRef
 

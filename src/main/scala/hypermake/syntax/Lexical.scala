@@ -1,6 +1,7 @@
 package hypermake.syntax
 
 import hypermake.syntax.ast._
+import hypermake.util.Escaper
 
 /**
  * The lexical part of the grammar of Hypermake.
@@ -39,9 +40,7 @@ object Lexical {
 //    "\"\"\"" ~ (!"\"\"\"" ~ AnyChar).rep.! ~ "\"\"\""
 //  } map DocString
 
-  def lowercase[$: P] = P(CharIn("a-z"))
-  def uppercase[$: P] = P(CharIn("A-Z"))
-  def letter[$: P] = P(lowercase | uppercase)
+  def letter[$: P] = P(CharPred(_.isLetter))
   def digit[$: P] = P(CharIn("0-9"))
 
   def specialChars[$: P] = P {
@@ -70,7 +69,7 @@ object Lexical {
 
   def string0[$: P](quote: Char) = P {
     quote.toString ~ stringItem(quote).rep.! ~ quote.toString
-  }
+  } map Escaper.Shell.unescape
 
   def quotedString[$: P] = P {
     string0('\'') | string0('\"')

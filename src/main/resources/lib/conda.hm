@@ -1,12 +1,12 @@
-# Builds a Conda environment from a YAML file.
-def create_env(file) -> out:
+## Builds a Conda environment from a YAML file.
+def env_create(file) -> out:
   mkdir -p $out
   conda env create \
     --file $file \
     --prefix $out
 
 
-# Wraps the given script in a Conda environment.
+## Executes the given script in a specific Conda environment.
 class activate(environment):
 
   def run(_internal_conda_script):

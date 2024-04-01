@@ -27,12 +27,17 @@ class RuntimeConfig private (
     val yes: Boolean
 ) {
 
-  /** Environment variable containing paths where HyperMake resolves import statements; akin to C's `CPATH` or Python's `PYTHONPATH`. */
+  /**
+   * Environment variable containing paths where HyperMake resolves import statements;
+   * akin to C's `CPATH` or Python's `PYTHONPATH`.
+   */
   final val HYPERMAKE_PATH = "HYPERMAKE_PATH"
 
   lazy val paths =
     envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
+  // TODO: This should probably be installed somewhere else, like /usr/share/hypermake/lib
+  // TODO: when we are doing a system-wide installation.
   lazy val bundledStdLibPath = this.getClass.getClassLoader.getResource("lib").getPath
 
   lazy val resolutionPaths = workDir +: paths :+ bundledStdLibPath

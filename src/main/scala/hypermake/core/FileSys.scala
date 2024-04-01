@@ -110,8 +110,8 @@ trait FileSys {
         link(p, dst) as Some(dst)
       case Value.Output(path, fs, job) =>
         val e =
-          if (fs == this) link(resolvePath(path, job.absolutePath), dst)
-          else copyFrom(fs.resolvePath(path, job.absolutePath), fs, dst)
+          if (fs == this) link(f"${job.path}${/}$path", dst)
+          else copyFrom(f"${job.path}${/}$path", fs, dst)
         e as Some(dst)
       case Value.Multiple(values, _) =>
         for {
@@ -172,32 +172,32 @@ object FileSys {
     def refreshInterval = 100.milliseconds
 
     def read(f: String)(implicit std: StdSinks) = IO {
-      File(f).contentAsString
+      File(resolvePath(f)).contentAsString
     }
 
     def write(f: String, content: String)(implicit std: StdSinks) = IO {
-      File(f).writeText(content)
+      File(resolvePath(f)).writeText(content)
     }
 
     def mkdir(f: String)(implicit std: StdSinks) = IO {
-      File(f).createDirectoryIfNotExists(createParents = true)
+      File(resolvePath(f)).createDirectoryIfNotExists(createParents = true)
     }
 
     def exists(f: String)(implicit std: StdSinks) = IO {
-      File(f).exists
+      File(resolvePath(f)).exists
     }
 
     def touch(f: String)(implicit std: StdSinks) = IO {
-      File(f).touch()
+      File(resolvePath(f)).touch()
     }
 
     def delete(f: String)(implicit std: StdSinks) = IO {
-      File(f).delete(swallowIOExceptions = true)
+      File(resolvePath(f)).delete(swallowIOExceptions = true)
     }
 
     def link(src: String, dst: String)(implicit std: StdSinks) = IO {
-      val dstPath = Paths.get(dst)
-      val relativePath = dstPath.getParent.relativize(Paths.get(src))
+      val dstPath = Paths.get(resolvePath(dst))
+      val relativePath = dstPath.getParent.relativize(Paths.get(resolvePath(src)))
       JFiles.deleteIfExists(dstPath)
       JFiles.createSymbolicLink(dstPath, relativePath)
     }
@@ -226,7 +226,7 @@ object FileSys {
         process <- pb.run
         _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
         exitCode <- process.exitCode
-        _ <- write(s"$resolvedWd${/}exitcode", exitCode.code.toString)
+        _ <- write(s"$wd${/}exitcode", exitCode.code.toString)
       } yield exitCode
     }
 

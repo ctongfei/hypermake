@@ -2,13 +2,13 @@
 ## Behind the scenes it uses the `az storage blob` command group.
 ## Use as follows:
 ## import az
-## object my_storage = az.BlobStorage(container="my_container", extra_args="")
-class BlobStorage(container, extra_args):
+## object my_storage = az.storage_blob(container="my_container", root="", extra_args="")
+class storage_blob(container, root="", extra_args=""):
 
   def read(file):
     az storage blob download \
       --container-name $container \
-      --name $file \
+      --name $root/$file \
       $extra_args
 
   def mkdir(dir):
@@ -17,13 +17,13 @@ class BlobStorage(container, extra_args):
   def exists(file):
     az storage blob exists \
       --container-name $container \
-      --name $file \
+      --name $root/$file \
       $extra_args
 
   def link(src, dst):
     az storage blob copy start \
-      --source-blob $src \
-      --destination-blob $dst \
+      --source-blob $root/$src \
+      --destination-blob $root/$dst \
       --source-container $container \
       --destination-container $container \
       --requires-sync \
@@ -33,28 +33,26 @@ class BlobStorage(container, extra_args):
     az storage blob upload \
       --data "" \
       --container-name $container \
-      --name $file \
+      --name $root/$file \
       $extra_args
 
   def delete(file):
     az storage blob delete \
       --container-name $container \
-      --name $file \
+      --name $root/$file \
       $extra_args
 
   def upload(src, dst):
     az storage blob upload \
       --file $src \
       --container-name $container \
-      --name $dst \
+      --name $root/$dst \
       $extra_args
 
   def download(src, dst):
     az storage blob download \
       --container-name $container \
-      --name $src \
+      --name $root/$src \
       --file $dst \
       $extra_args
 
-
-#class DataLakeStorageGen2(container, extra_args):

@@ -2,7 +2,7 @@ import std
 
 local.root = "./test-out"
 
-@std.Interpreter(interpreter="python")
+@std.run(interpreter="python")
 task test_interpreter:
   print("Hello, world!")
 

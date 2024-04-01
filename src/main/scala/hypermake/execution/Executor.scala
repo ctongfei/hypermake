@@ -23,7 +23,7 @@ object Executor {
       dateTimeFormatter.format(Instant.now.atZone(ZoneId.systemDefault()).toLocalDateTime)
     val fs = ctx.local
     import fs._
-    val logPath = s"$root${/}.runs${/}$nowStr"
+    val logPath = s".runs${/}$nowStr"
     for {
       _ <- mkdir(logPath)
       u <- write(s"$logPath${/}jobs", jobs.map(_.toString).mkString("\n"))

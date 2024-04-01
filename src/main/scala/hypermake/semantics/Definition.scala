@@ -6,6 +6,7 @@ case class Definition[+T](name: Path, value: T)
 
 object Definition {
 
-  def apply[T](name: String, value: T): Definition[T] = Definition(Path(List(name)), value)
+  def apply[T](name: String, value: T): Definition[T] =
+    new Definition(Path(name.split('.').toList), value)
 
 }

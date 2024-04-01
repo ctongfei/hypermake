@@ -3,7 +3,7 @@ import conda
 
 local.root = "test-out"
 
-package env = conda.create_env(file="/home/tongfei/proj/hypermake/src/test/resources/pipeline-suite/iris/environment.yaml"@local)
+package env = conda.env_create(file="/home/tongfei/proj/hypermake/src/test/resources/pipeline-suite/iris/environment.yaml"@local)
 
 classifier = {Classifier: knn svc maxent}
 
