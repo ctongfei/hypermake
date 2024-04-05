@@ -1,29 +1,37 @@
-class Server(host, root="/"):
+class server(host, root):
 
-  def read(file):
-    ssh $host "cat $file"
+  ephemeral task setup() -> pid:
+    mkdir -p .ssh-server
+    ssh -fNM -S ".ssh-server/$host.sock" $host
+    echo $! > $pid
+    sleep 2
+
+  ephemeral task teardown(pid=$setup.pid):
+    kill -9 $(cat $pid)
+
+  def read(file, sock=$setup.dir):
+    ssh -S ".ssh-server/$host.sock" $host "cat $root/$file"
 
   def exists(file):
-    ssh $host "test -e $file"
+    ssh -S ".ssh-server/$host.sock" $host "test -e $root/$file"
 
   def execute(command):
-    ssh $host "$command"
+    ssh -S ".ssh-server/$host.sock" $host "cd $root; $command"
 
   def mkdir(dir):
-    ssh $host "mkdir -p $dir"
+    ssh -S ".ssh-server/$host.sock" $host "mkdir -p $root/$dir"
 
   def link(src, dst):
-    ssh $host "ln -s $src $dst"
+    ssh -S ".ssh-server/$host.sock" $host "ln -sf $root/$src $root/$dst"
 
   def touch(file):
-    ssh $host "touch $file"
+    ssh -S ".ssh-server/$host.sock" $host "touch $root/$file"
 
   def delete(file):
-    ssh $host "rm -r $file"
+    ssh -S ".ssh-server/$host.sock" $host "rm -rf $root/$file"
 
   def upload(src, dst):
-    scp -r $src $host:$dst
+    scp -r -o "ControlPath=.ssh-server/$host.sock" $src $host:$root/$dst
 
   def download(src, dst):
-    scp -r $host:$src $dst
-
+    scp -r -o "ControlPath=.ssh-server/$host.sock" $host:$root/$src $dst

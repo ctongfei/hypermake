@@ -16,7 +16,7 @@ import hypermake.util._
 class Package(
     val name: String,
     val `case`: Case,
-    val inputs: Map[String, Value],
+    val inputs: Args[Value],
     val outputFileName: (String, Value.Pure),
     val decorators: Seq[Decorator],
     val rawScript: Script
@@ -30,7 +30,7 @@ class Package(
       case _: Value.Pure          => FileSys("")
       case _: Value.PackageOutput => fs
     },
-    outputFileNames = Map(outputFileName),
+    outputFileNames = Args(Map(outputFileName)),
     outputFs = Map(outputFileName._1 -> fs),
     decorators = decorators, // TODO: what if decorators refer to env-dependent values?
     rawScript = rawScript
@@ -43,12 +43,13 @@ class Package(
 case class PointedPackageTensor(
     name: String,
     shape: PointedShape,
-    inputs: Map[String, PointedTensor[Value]],
+    inputs: PointedArgsTensor[Value],
     outputFileName: (String, PointedTensor[Value.Pure]),
     decorators: Seq[PointedDecoratorTensor],
     rawScript: PointedTensor[Script]
 )(implicit ctx: Context)
-    extends PointedTensor[Package] {
+    extends PointedTensor[Package]
+    with Partial[PointedPackageTensor] {
 
   def get(c: Case): Option[Package] = {
     if (shape containsCase c) {
@@ -56,30 +57,30 @@ case class PointedPackageTensor(
         new Package(
           name = name,
           `case` = shape.normalizeCase(c),
-          inputs = inputs.mapValuesE(_.select(c).default),
-          outputFileName = outputFileName._1 -> outputFileName._2.select(c).default,
-          decorators = decorators.map(_.select(c).default),
-          rawScript = rawScript.select(c).default
+          inputs = inputs(c),
+          outputFileName = outputFileName._1 -> outputFileName._2(c),
+          decorators = decorators.map(_(c)),
+          rawScript = rawScript(c)
         )
       )
     } else None
   }
 
-  /** Returns a task that builds this package on a specific environment. */
+  /** Returns a task that builds this package on a specific file system. */
   def on(fs: FileSys)(implicit ctx: Context) = new PointedTaskTensor(
     s"$name@${fs.name}", // package@ec2
     fs,
     shape,
     inputs,
     Map(),
-    Map(outputFileName),
+    PointedArgsTensor(Map(outputFileName)),
     Map(outputFileName._1 -> fs),
     decorators,
     rawScript
   )
 
-  def withNewArgs(args: Map[String, PointedTensor[Value]]): PointedPackageTensor = {
-    val outScript = rawScript.productWith(args.toMap.unorderedSequence)(_ withNewArgs _)
+  def partial(args: PointedArgsTensor[Value]): PointedPackageTensor = {
+    val outScript = rawScript.productWith(args)(_ withNewArgs _)
     PointedPackageTensor(name, shape, inputs, outputFileName, decorators, outScript)
   }
 

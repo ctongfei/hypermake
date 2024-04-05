@@ -23,6 +23,8 @@ trait Tensor[+A] {
 
   def get(indices: Case): Option[A]
 
+  def apply(indices: Case): A = get(indices).get
+
   def apply(indices: (Axis, String)*): A = get(Case.from(indices: _*)).get
 
   /** Selects a sub-tensor based on the given indices. All indexed axes disappear in the returning tensor. */

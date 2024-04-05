@@ -17,25 +17,25 @@ import hypermake.util._
  */
 case class Cls(
     name: String,
-    params: Map[String, PointedTensor[Value]],
+    params: Params[Value],
     obj: Obj,
-    inheritedArgs: Map[String, PointedTensor[Value]] = Map()
-) {
-  def withNewArgs(args: Map[String, PointedTensor[Value]]): Cls = {
-    val newArgs = inheritedArgs ++ args
+    inheritedArgs: PointedArgsTensor[Value] = PointedArgsTensor(Map())
+) extends Partial[Cls] {
+  def partial(args: PointedArgsTensor[Value]): Cls = {
+    val newArgs = PointedArgsTensor(inheritedArgs.args ++ args.args)
     val newObj = Obj.fromDefs(
       obj.prefix,
       obj.defs.map {
         case Definition(name, pct: PointedTaskTensor) =>
-          Definition(name, pct.withNewArgs(args))
+          Definition(name, pct.partial(args))
         case Definition(name, pcp: PointedPackageTensor) =>
-          Definition(name, pcp.withNewArgs(args))
-        case Definition(name, pft: PointedFuncTensor) =>
-          Definition(name, pft.withNewArgs(args))
+          Definition(name, pcp.partial(args))
+        case Definition(name, pft: Func) =>
+          Definition(name, pft.partial(args))
         case Definition(name, value: Cls) =>
-          Definition(name, value.withNewArgs(args))
+          Definition(name, value.partial(args))
         case d: Definition[_] => d // values and objects
-      } ++ newArgs.map { case (k, v) => Definition(k, v) }
+      } ++ newArgs.args.map { case (k, v) => Definition(k, v) }
     )
     Cls(name, params, newObj, newArgs)
   }
@@ -45,11 +45,12 @@ case class Cls(
    * @param args Arguments passed to the constructor of this class
    * @return The instantiated object
    */
-  def instantiate(args: Map[String, PointedTensor[Value]]): Obj = {
-    val unboundParams = params.filterKeysE(a => !args.contains(a)).keySet
-    if (unboundParams.nonEmpty)
-      throw new ParametersUnboundException(unboundParams, name)
-    withNewArgs(args).obj
+  // TODO: name of the object
+  def instantiate(args: PointedArgsTensor[Value]): Obj = {
+    val newCls = partial(args)
+    if (newCls.params.hasUnboundVars)
+      throw new ParametersUnboundException(newCls.params.unboundVars, Some(name))
+    newCls.obj
   }
 
 }

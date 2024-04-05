@@ -180,24 +180,36 @@ object Graph {
 
   /**
    * Performs a traversal to resolve all dependent tasks of the given targets.
-   * @param sources A collection of target tasks
+   * @param targets A collection of target tasks
    * @return The task dependency DAG
    */
-  def explore[A](sources: Iterable[A], prev: A => Iterable[A]): Graph[A] = {
+  def explore[A](targets: Iterable[A], prev: A => Iterable[A]): Graph[A] =
+    exploreBidirectionally(targets, prev, _ => Nil)
+
+  def exploreBidirectionally[A](
+      targets: Iterable[A],
+      prev: A => Iterable[A],
+      next: A => Iterable[A]
+  ): Graph[A] = {
     val g = Graph[A]()
     val s = mutable.HashSet[A]()
-    val q = mutable.Queue.from(sources)
+    val q = mutable.Queue.from(targets)
 
     while (q.nonEmpty) {
       val c = q.dequeue()
       if (!s.contains(c)) {
         g.addNode(c)
         s.add(c)
-        for (d <- prev(c)) {
-          g.addNode(d)
-          g.addArc(d, c)
-          q.enqueue(d)
-        }
+      }
+      for (d <- prev(c)) {
+        g.addNode(d)
+        g.addArc(d, c)
+        q.enqueue(d)
+      }
+      for (d <- next(c)) {
+        g.addNode(d)
+        g.addArc(c, d)
+        q.enqueue(d)
       }
     }
     g

@@ -119,7 +119,11 @@ object Main extends App {
                 } yield u
 
               case Subcommand.Run =>
-                val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
+                val jobGraph = Graph.exploreBidirectionally[Job](
+                  jobs,
+                  prev = j => j.dependentJobs ++ j.services.map(_.setup),
+                  next = j => j.services.map(_.teardown)
+                )
                 val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
                 for {
                   _ <- putStrLn(headerMessage)
@@ -137,7 +141,11 @@ object Main extends App {
                 } yield u
 
               case Subcommand.DryRun =>
-                val jobGraph = Graph.explore[Job](jobs, _.dependentJobs)
+                val jobGraph = Graph.exploreBidirectionally[Job](
+                  jobs,
+                  prev = j => j.dependentJobs ++ j.services.map(_.setup),
+                  next = j => j.services.map(_.teardown)
+                )
                 for {
                   _ <- putStrLn(headerMessage)
                   _ <- putStrLn(

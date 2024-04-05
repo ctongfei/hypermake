@@ -5,9 +5,7 @@ import scala.collection._
 import ast._
 import fastparse._
 
-/**
- * The statement grammar of Hypermake. These are sensitive to newlines and indentations, following the Python format.
- */
+/** The statement grammar of Hypermake. These are sensitive to newlines and indentations, following the Python format. */
 class Statements(indent: Int) {
 
   import Expressions.{whitespace => _, _}
@@ -28,12 +26,13 @@ class Statements(indent: Int) {
 
   def taskDef[$: P] = P {
     decoratorCalls ~
-      Lexical.token(
-        "task"
-      ) ~/ identifier ~ fsModifier ~ assignments.? ~ ("->" ~ outputAssignments).? ~ impl
-  } map { case (decorators, name, fsModifier, inputs, outputs, impl) =>
+      Lexical.token("ephemeral").!.? ~
+      Lexical.token("task") ~/
+      identifier ~ fsModifier ~ assignments.? ~ ("->" ~ outputAssignments).? ~ impl
+  } map { case (decorators, ephemeral, name, fsModifier, inputs, outputs, impl) =>
     TaskDef(
       decorators,
+      ephemeral.isDefined,
       name,
       fsModifier,
       inputs.getOrElse(Assignments(Seq())),

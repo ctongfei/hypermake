@@ -4,10 +4,13 @@ import java.nio.file.{Files => JFiles, Paths}
 import scala.collection._
 
 import better.files._
-import zio._
 import zio.duration._
 import zio.process._
+import zio.stream.ZSink
+import zio.{Task => _, _}
 
+import hypermake.collection.Case
+import hypermake.core._
 import hypermake.exception.DataTransferFailedException
 import hypermake.semantics.Context
 import hypermake.util.Escaper.Shell
@@ -108,7 +111,7 @@ trait FileSys {
       case Value.PackageOutput(pack) =>
         val p = pack.output.on(this).value
         link(p, dst) as Some(dst)
-      case Value.Output(path, fs, job) =>
+      case Value.Output(path, fs, job, _) =>
         val e =
           if (fs == this) link(f"${job.path}${/}$path", dst)
           else copyFrom(f"${job.path}${/}$path", fs, dst)
@@ -141,6 +144,8 @@ object FileSys {
     ctx.root.values.get(name).map(_.default.value)
 
   def getScriptByName(name: String)(implicit ctx: Context) = ctx.root.functions(name).impl.default
+
+  def getTaskByName(name: String)(implicit ctx: Context) = ctx.root.tasks(name).default
 
   def getScriptByNames(names: String*)(implicit ctx: Context) =
     names.foldLeft[Option[Script]](None) { (acc, name) =>
@@ -253,18 +258,24 @@ object FileSys {
         .getOrElse(5)
         .seconds // by default, 5s
 
-    def read(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.read")
-        .withArgs("file" -> f)
-        .executeLocally(ctx.runtime.workDir)
-      stdout <- process.stdout.string
-    } yield stdout
+    def read(f: String)(implicit std: StdSinks) = {
+      val baos = new java.io.ByteArrayOutputStream()
+      val sinks = std.copy(
+        out = ZSink.fromOutputStream(baos),
+        err = std.err
+      )
+      for {
+        process <- getScriptByName(s"${name}.read")
+          .withArgs("file" -> f)
+          .executeLocally(ctx.runtime.workDir)(ctx.runtime, sinks)
+      } yield baos.toString()
+    }
 
     def write(f: String, content: String)(implicit std: StdSinks) = {
       val tempScriptFile = runtime.newTempFile()
       for {
         _ <- IO {
-          File(tempScriptFile).write(content)
+          File(tempScriptFile).writeText(content)
         }
         u <- upload(tempScriptFile, f)
       } yield u
@@ -332,6 +343,8 @@ object FileSys {
       _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
       exitCode <- process.exitCode
     } yield exitCode
+
+    def asService: Service = Service(getTaskByName(s"${name}.setup"), getTaskByName(s"${name}.teardown"))
 
   }
 

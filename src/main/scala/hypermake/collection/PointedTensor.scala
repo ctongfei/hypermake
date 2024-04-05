@@ -136,8 +136,11 @@ object PointedTensor {
     def pure[A](x: A) = Singleton(x)
     def flatMap[A, B](fa: PointedTensor[A])(f: A => PointedTensor[B]) = fa flatMap f
     override def map[A, B](fa: PointedTensor[A])(f: A => B) = fa map f
+    override def map2[A, B, C](fa: PointedTensor[A], fb: PointedTensor[B])(f: (A, B) => C) =
+      (fa productWith fb)(f)
+    override def map2Eval[A, B, C](fa: PointedTensor[A], fb: Eval[PointedTensor[B]])(f: (A, B) => C): Eval[PointedTensor[C]] =
+      fb.map(fb => map2(fa, fb)(f))
     override def product[A, B](fa: PointedTensor[A], fb: PointedTensor[B]) = fa product fb
-
   }
 
   class Mapped[A, B](self: PointedTensor[A], f: A => B) extends Tensor.Mapped[A, B](self, f) with PointedTensor[B] {

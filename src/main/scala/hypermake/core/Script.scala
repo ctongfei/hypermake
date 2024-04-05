@@ -13,18 +13,14 @@ import hypermake.util._
 /** Encapsulates a script together with its external arguments (passed in as environment variables). */
 case class Script(
     script: String,
-    args: Map[String, Value] = Map(),
+    args: Args[Value] = Args(Map()),
     nestingLevel: Int = 0
 ) {
 
-  def withNewArgs(newArgs: Map[String, Value]) = Script(script, args ++ newArgs, nestingLevel)
+  def withNewArgs(newArgs: Args[Value]) = Script(script, args ++ newArgs, nestingLevel)
 
   def withArgs(newArgs: (String, String)*) =
-    withNewArgs(newArgs.toMap.mapValuesE(Value.Pure))
-
-  def strArgs(implicit runtime: RuntimeConfig): Map[String, String] = {
-    args.map { case (k, v) => k -> v.value }
-  }
+    withNewArgs(Args(newArgs.toMap.mapValuesE(Value.Pure)))
 
   /**
    * Writes this script as a local temporary file and executes it with its arguments.
@@ -41,7 +37,7 @@ case class Script(
       _ <- IO { File(tempScriptFile).write(script) }
       process <- Command(command.head, command.tail: _*)
         .workingDirectory(new JFile(workDir))
-        .env(runtime.envVars ++ strArgs.toMap) // Hypermake args are injected as environment vars;
+        .env(runtime.envVars ++ args.toStrMap) // Hypermake args are injected as environment vars;
         .stderr(ProcessOutput.Pipe)
         .stdout(ProcessOutput.Pipe)
         .run

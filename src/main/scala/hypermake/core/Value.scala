@@ -62,7 +62,7 @@ object Value {
     def dependencies = Set()
   }
 
-  case class Output(value: String, fileSys: FileSys, job: Job) extends FileSysDependent {
+  case class Output(value: String, fileSys: FileSys, job: Job, service: Option[Service] = None) extends FileSysDependent {
     def absValue(implicit runtime: RuntimeConfig) = s"${job.absolutePath}${fileSys.separator}$value"
 
     def dependencies = Set(job)

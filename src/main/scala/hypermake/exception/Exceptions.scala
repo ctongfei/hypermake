@@ -6,6 +6,7 @@ import fastparse._
 
 import hypermake.collection._
 import hypermake.core._
+import hypermake.syntax.ast.ValRef
 
 case class ParsingException(failure: Parsed.Failure) extends Exception(s"Parsing error: \n${failure.trace().longMsg}")
 
@@ -21,9 +22,12 @@ case class AxisKeyNotFoundException(axis: Axis, key: String) extends Exception(s
 
 case class DuplicateDefinitionException(kind: String, name: String) extends Exception(s"$kind “$name” cannot be defined twice.")
 
-case class ParametersUnboundException(names: Set[String], func: String) extends Exception(s"Parameters {${names.mkString(", ")}} unbound in “$func”.")
+case class ParametersUnboundException(names: Set[String], func: Option[String] = None)
+    extends Exception(s"Parameters {${names.mkString(", ")}} are unbound${func.fold("")(fn => s" in “$fn”")}.")
 
 case class UndefinedException(kind: String, name: String) extends Exception(s"$kind “$name” not defined.")
+
+case class ReferenceResolutionException(ref: ValRef) extends Exception(s"Failed to resolve reference “$ref”.")
 
 case class OutputNotDefinedException(name: String, task: Task) extends Exception(s"Output “$name” not defined in task “$task”.")
 
@@ -39,5 +43,8 @@ case class DataTransferFailedException(src: String, name: String) extends Except
 case class ObjectIsNotDecoratorException(obj: Obj)
     extends Exception(s"Object “$obj” cannot be used as a decorator since it does not have a unary member function “run”.")
 // TODO: should be obj.name
+
+case class ObjectIsNotServiceException(obj: Obj)
+    extends Exception(s"Object “$obj” cannot be used as a service since it does not have member tasks “setup” and “teardown”.")
 
 case class PackageOutputException(n: String) extends Exception(s"Package “$n” can only have exactly 1 output.")

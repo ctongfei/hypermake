@@ -19,8 +19,10 @@ case class Decorator(
   def apply(input: Script, fs: FileSys): Script =
     Script(
       script.script,
-      input.args ++ script.args ++ Map(
-        innerFileArg -> Value.Input(s"script.${input.nestingLevel}", fs)
+      input.args ++ script.args ++ Args(
+        Map(
+          innerFileArg -> Value.Input(s"script.${input.nestingLevel}", fs)
+        )
       ),
       input.nestingLevel + 1
     )
@@ -54,7 +56,7 @@ case class PointedDecoratorTensor(
     (script productWith input) { case (scr, inp) =>
       Script(
         scr.script,
-        inp.args ++ scr.args ++ Map(innerFileArg -> Value.Input(f"script.${inp.nestingLevel}", fs)),
+        inp.args ++ scr.args ++ Args(Map(innerFileArg -> Value.Input(f"script.${inp.nestingLevel}", fs))),
         inp.nestingLevel + 1
       )
     }
@@ -64,7 +66,7 @@ case class PointedDecoratorTensor(
 object PointedDecoratorTensor {
   def fromObj(obj: Obj): PointedDecoratorTensor = {
     val runFunc = obj.funcTable.getOrElse("run", throw ObjectIsNotDecoratorException(obj))
-    if (runFunc.params.size != 1) throw ObjectIsNotDecoratorException(obj)
+    if (runFunc.inputs.params.size != 1) throw ObjectIsNotDecoratorException(obj)
 
     // TODO: alive
 //    val aliveFunc = obj.funcTable.get("alive")
@@ -72,7 +74,7 @@ object PointedDecoratorTensor {
 //      throw ObjectIsNotDecoratorException(obj)
 
     PointedDecoratorTensor(
-      runFunc.params.head,
+      runFunc.inputs.params.head._1,
       runFunc.impl
       // aliveFunc.map(_.impl)
     )

@@ -8,10 +8,10 @@ import hypermake.semantics._
 import hypermake.util.DefaultMapBase
 
 /** An object (a.k.a. module) that organizes definitions. */
-class Obj(val prefix: Path) {
+class Obj(private[hypermake] var prefix: Path) {
 
   private[hypermake] val valueTable = mutable.HashMap[String, PointedTensor[Value]]()
-  private[hypermake] val funcTable = mutable.HashMap[String, PointedFuncTensor]()
+  private[hypermake] val funcTable = mutable.HashMap[String, Func]()
   private[hypermake] val taskTable = mutable.HashMap[String, PointedTaskTensor]()
   private[hypermake] val packageTable = mutable.HashMap[String, PointedPackageTensor]()
   private[hypermake] val planTable = mutable.HashMap[String, Plan]()
@@ -19,7 +19,7 @@ class Obj(val prefix: Path) {
   private[hypermake] val objTable = mutable.HashMap[String, Obj]()
 
   def values = PathMap[Obj, PointedTensor[Value]](this, _.objTable, _.valueTable)
-  def functions = PathMap[Obj, PointedFuncTensor](this, _.objTable, _.funcTable)
+  def functions = PathMap[Obj, Func](this, _.objTable, _.funcTable)
   def tasks = PathMap[Obj, PointedTaskTensor](this, _.objTable, _.taskTable)
   def plans = PathMap[Obj, Plan](this, _.objTable, _.planTable)
   def packages = PathMap[Obj, PointedPackageTensor](this, _.objTable, _.packageTable)
@@ -52,7 +52,7 @@ class Obj(val prefix: Path) {
       case value: PointedTaskTensor =>
         if (target.taskTable.contains(name)) throw DuplicateDefinitionException("Task", name)
         else target.taskTable += name -> value
-      case value: PointedFuncTensor =>
+      case value: Func =>
         if (target.funcTable.contains(name)) throw DuplicateDefinitionException("Function", name)
         else target.funcTable += name -> value
       case value: PointedPackageTensor =>
@@ -92,6 +92,10 @@ class Obj(val prefix: Path) {
       classTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq ++
       objTable.map { case (k, v) => Definition(Path(List(k)), v) }.toSeq
   }
+
+  def asDecorator: PointedDecoratorTensor = PointedDecoratorTensor.fromObj(this)
+
+  def asService: PointedServiceTensor = PointedServiceTensor.fromObj(this)
 
 }
 

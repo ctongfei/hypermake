@@ -16,7 +16,7 @@ import hypermake.util._
 
 /**
  * A job is the atomic unit of scripts that is executed by HyperMake.
- * A job can either be a task, a package, or a service.
+ * A job can either be a task, a package.
  */
 abstract class Job(implicit ctx: Context) {
 
@@ -29,7 +29,7 @@ abstract class Job(implicit ctx: Context) {
 
   def `case`: Case
 
-  def inputs: Map[String, Value] // may contain both arguments and input files
+  def inputs: Args[Value] // may contain both arguments and input files
 
   /**
    * Specifies the file systems that the inputs should be on before starting the job.
@@ -37,9 +37,16 @@ abstract class Job(implicit ctx: Context) {
    */
   def inputFs: Map[String, FileSys]
 
-  def outputs: Map[String, Value.Output]
+  def outputs: Args[Value.Output]
 
   def decorators: Seq[Decorator]
+
+  def services: Seq[Service] = {
+    val servicesReferredByInputs = inputs.values.collect { case Value.Output(_, _, _, Some(service)) => service }
+    val servicesFromFileSys = (inputFs.values ++ outputs.values.map(_.fileSys) ++ Seq(fileSys))
+      .collect { case fs: FileSys.Custom => fs.asService }
+    (servicesReferredByInputs ++ servicesFromFileSys).toSeq
+  }
 
   def rawScript: Script
 
@@ -88,7 +95,7 @@ abstract class Job(implicit ctx: Context) {
   /** An operation that links output of dependent jobs to the working directory of this job. */
   def linkInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
     val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, fileSys) }
-    for ((name, (input, fs)) <- (inputs zipByKey inputFs) ++ decoratorInputs)
+    for ((name, (input, fs)) <- (inputs.args zipByKey inputFs) ++ decoratorInputs)
       yield fs
         .linkValue(input, f"$path${fileSys./}$name")
         .map {
@@ -123,7 +130,7 @@ abstract class Job(implicit ctx: Context) {
       _ <- fileSys.write(f"$path${fileSys./}script", finalScript.script)
 
       // Linked args are of the highest precedence since they are resolved from envs
-      jobArgs = finalScript.strArgs(runtime) ++ linkedArgs
+      jobArgs = finalScript.args.toStrMap ++ linkedArgs
       _ <- fileSys.write(
         f"$path${fileSys./}args",
         (jobArgs.toArray.sortBy(_._1) ++ jobCaseArgs.toArray)

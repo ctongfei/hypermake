@@ -17,8 +17,8 @@ object Lexical {
     "import",
     "def",
     "task",
+    "ephemeral",
     "plan",
-    "service",
     "package",
     "class",
     "object"
