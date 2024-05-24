@@ -2,13 +2,14 @@ package hypermake.semantics
 
 import scala.collection._
 
-import io.circe.syntax._
+import io.circe.syntax.{KeyOps => _, _}
 
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception._
 import hypermake.execution.RuntimeConfig
 import hypermake.util.Escaper._
+import hypermake.util._
 
 /** Contexts kept for each parsing run. */
 class Context(implicit val runtime: RuntimeConfig) {

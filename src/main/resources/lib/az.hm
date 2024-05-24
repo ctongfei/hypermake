@@ -55,4 +55,3 @@ class storage_blob(container, root="", extra_args=""):
       --name $root/$src \
       --file $dst \
       $extra_args
-

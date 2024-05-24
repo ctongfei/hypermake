@@ -10,6 +10,7 @@ import zio.stream.ZSink
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.exception._
+import hypermake.semantics.Definition
 
 package object util {
 
@@ -51,5 +52,13 @@ package object util {
 
   def orderedMap[A, B](pairs: Iterable[(A, B)]): Map[A, B] =
     scala.collection.mutable.LinkedHashMap.from(pairs) // maintains order in the keys
+
+  implicit class StringToDef(val s: String) extends AnyVal {
+    def :=[T](v: T): Definition[T] = Definition(s, v)
+  }
+
+  implicit class PathToDef(val p: Path) extends AnyVal {
+    def :=[T](v: T): Definition[T] = Definition(p, v)
+  }
 
 }

@@ -1,37 +1,36 @@
 class server(host, root):
 
-  ephemeral task setup() -> pid:
+  ephemeral task setup() -> sock:
     mkdir -p .ssh-server
-    ssh -fNM -S ".ssh-server/$host.sock" $host
-    echo $! > $pid
+    ssh -fNM -S $sock $host
     sleep 2
 
-  ephemeral task teardown(pid=$setup.pid):
-    kill -9 $(cat $pid)
+  ephemeral task teardown(sock=$setup.sock):
+    ssh -S $sock -O exit $host
 
-  def read(file, sock=$setup.dir):
-    ssh -S ".ssh-server/$host.sock" $host "cat $root/$file"
+  def read(file, sock=$setup.sock):
+    ssh -S $sock $host "cat $root/$file"
 
-  def exists(file):
-    ssh -S ".ssh-server/$host.sock" $host "test -e $root/$file"
+  def exists(file, sock=$setup.sock):
+    ssh -S $sock $host "test -e $root/$file"
 
-  def execute(command):
-    ssh -S ".ssh-server/$host.sock" $host "cd $root; $command"
+  def execute(command, sock=$setup.sock):
+    ssh -S $sock $host "cd $root; $command"
 
-  def mkdir(dir):
-    ssh -S ".ssh-server/$host.sock" $host "mkdir -p $root/$dir"
+  def mkdir(dir, sock=$setup.sock):
+    ssh -S $sock $host "mkdir -p $root/$dir"
 
-  def link(src, dst):
-    ssh -S ".ssh-server/$host.sock" $host "ln -sf $root/$src $root/$dst"
+  def link(src, dst, sock=$setup.sock):
+    ssh -S $sock $host "ln -sf $root/$src $root/$dst"
 
-  def touch(file):
-    ssh -S ".ssh-server/$host.sock" $host "touch $root/$file"
+  def touch(file, sock=$setup.sock):
+    ssh -S $sock $host "touch $root/$file"
 
-  def delete(file):
-    ssh -S ".ssh-server/$host.sock" $host "rm -rf $root/$file"
+  def delete(file, sock=$setup.sock):
+    ssh -S $sock $host "rm -rf $root/$file"
 
-  def upload(src, dst):
-    scp -r -o "ControlPath=.ssh-server/$host.sock" $src $host:$root/$dst
+  def upload(src, dst, sock=$setup.sock):
+    scp -r -o "ControlPath=$sock" $src $host:$root/$dst
 
-  def download(src, dst):
-    scp -r -o "ControlPath=.ssh-server/$host.sock" $host:$root/$src $dst
+  def download(src, dst, sock=$setup.sock):
+    scp -r -o "ControlPath=$sock" $host:$root/$src $dst

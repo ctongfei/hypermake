@@ -1,11 +1,26 @@
-class S3(bucket):
+class s3(bucket, root):
 
   def read(file):
-    aws s3 cp s3://$bucket/$file -
+    aws s3 cp s3://$bucket/$root/$file -
 
   def mkdir(dir):
     true
 
+  def exists(file):
+    aws s3api head-object --bucket $bucket --key $root/$file > /dev/null 2>&1
+    [ $? != 254 ]
 
-class EFS:
-  ...
+  def link(src, dst):
+    aws s3 cp s3://$bucket/$root/$src s3://$bucket/$root/$dst
+
+  def touch(file):
+    echo "" | aws s3 cp - s3://$bucket/$root/$file
+
+  def delete(file):
+    aws s3 rm s3://$bucket/$root/$file
+
+  def upload(src, dst):
+    aws s3 cp $src s3://$bucket/$root/$dst
+
+  def download(src, dst):
+    aws s3 cp s3://$bucket/$root/$src $dst

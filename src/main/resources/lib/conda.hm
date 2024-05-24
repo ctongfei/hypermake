@@ -11,6 +11,11 @@ class activate(environment):
 
   def run(_internal_conda_script):
     eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-    conda activate ./$environment
+    if [ -f $environment ]
+    then  # local environment
+      conda activate ./$environment
+    else  # global environment
+      conda activate $environment
+    fi
     . $_internal_conda_script
     conda deactivate

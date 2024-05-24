@@ -1,0 +1,4 @@
+def install(path) -> out:
+  mkdir -p $out
+  # Builds the virtual environment at $out
+  POETRY_VIRTUALENVS_CREATE=true POETRY_VIRTUALENVS_PATH=$out poetry install --no-root

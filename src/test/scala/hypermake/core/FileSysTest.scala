@@ -48,43 +48,35 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
 
   def fileSys = new DefaultRuleSet(
     "fileSys",
-    None
-//    "[write >> read]" -> Prop.forAll { (path: JPath, content: String) =>
-//      val eff = for {
-//        _ <- fs.mkdir(path.getParent.toString)
-//        _ <- fs.write(path.toString, content)
-//        c <- fs.read(path.toString)
-//      } yield c == content
-//      Runtime.default.unsafeRun(eff)
-//    }
-//    "[touch >> exists]" -> Prop.forAll { path: JPath =>
-//      val eff = for {
-//        _ <- fs.mkdir(path.getParent.toString)
-//        _ <- fs.touch(path.toString)
-//        e <- fs.exists(path.toString)
-//      } yield e
-//      Runtime.default.unsafeRun(eff)
-//    },
-//    "[touch >> delete >> !exists]" -> Prop.forAll { path: JPath =>
-//      val eff = for {
-//        _ <- fs.mkdir(path.getParent.toString)
-//        _ <- fs.touch(path.toString)
-//        a <- fs.exists(path.toString)
-//        _ <- fs.delete(path.toString)
-//        b <- fs.exists(path.toString)
-//      } yield a && !b
-//      Runtime.default.unsafeRun(eff)
-//    },
-//    "[write >> link >> read]" -> Prop.forAll { (src: JPath, dst: JPath, content: String) =>
-//      val eff = for {
-//        _ <- fs.mkdir(src.getParent.toString)
-//        _ <- fs.write(src.toString, content)
-//        _ <- fs.mkdir(dst.getParent.toString)
-//        _ <- fs.link(src.toString, dst.toString)
-//        c <- fs.read(dst.toString)
-//      } yield c == content
-//      Runtime.default.unsafeRun(eff)
-//    }
+    None,
+    "[write >> read]" -> Prop.forAll { (path: JPath, content: String) =>
+      val eff = for {
+        _ <- fs.mkdir(path.getParent.toString)
+        _ <- fs.write(path.toString, content)
+        c <- fs.read(path.toString)
+      } yield c == content
+      Runtime.default.unsafeRun(eff)
+    },
+    "[touch >> delete >> !exists]" -> Prop.forAll { path: JPath =>
+      val eff = for {
+        _ <- fs.mkdir(path.getParent.toString)
+        _ <- fs.touch(path.toString)
+        a <- fs.exists(path.toString)
+        _ <- fs.delete(path.toString)
+        b <- fs.exists(path.toString)
+      } yield a && !b
+      Runtime.default.unsafeRun(eff)
+    },
+    "[write >> link >> read]" -> Prop.forAll { (src: JPath, dst: JPath, content: String) =>
+      val eff = for {
+        _ <- fs.mkdir(src.getParent.toString)
+        _ <- fs.write(src.toString, content)
+        _ <- fs.mkdir(dst.getParent.toString)
+        _ <- fs.link(src.toString, dst.toString)
+        c <- fs.read(dst.toString)
+      } yield c == content
+      Runtime.default.unsafeRun(eff)
+    }
   )
 
   def fileTransfer = new DefaultRuleSet(
@@ -118,26 +110,26 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
 
   val predef =
     f"""
-       |import ssh
        |local.root = "${tempDir.toString}"
-       |object ssh_server = ssh.server(host="login.clsp.jhu.edu", root="/home/tongfei/sandbox/hypermake")
+       |import aws
+       |object my_bucket = aws.s3(bucket="tongfeipersonal", root="hypermake")
        |""".stripMargin
 
   val parser = new SemanticParser(ctx.root)
   parser.semanticParse(parser.readLinesToStmts(predef.split("\n")))
   val local = FileSys.local
-  val ssh_server = FileSys("ssh_server")
+  val fs = FileSys("my_bucket")
   assert(local.root == tempDir.toString)
   implicit val stdSinks = StdSinks.default
 
-  override def beforeAll(): Unit = {
-    zio.Runtime.default.unsafeRun(
-      FileSys.getTaskByName("ssh_server.setup").script.executeLocally(workDir = runtime.workDir)
-    )
-  }
+//  override def beforeAll(): Unit = {
+//    zio.Runtime.default.unsafeRun(
+//      FileSys.getTaskByName("ssh_server.setup").script.executeLocally(workDir = runtime.workDir)
+//    )
+//  }
 
-  checkAll("FileSys laws", new FileSysLaws(local, ssh_server).fileSys)
-  checkAll("FileTransfer laws", new FileSysLaws(local, ssh_server).fileTransfer)
+  checkAll("FileSys laws", new FileSysLaws(local, fs).fileSys)
+  checkAll("FileTransfer laws", new FileSysLaws(local, fs).fileTransfer)
 
   override def afterAll(): Unit = {
     File(tempDir).delete(swallowIOExceptions = true)

@@ -3,6 +3,7 @@ package hypermake.core
 import hypermake.collection.{Case, PointedShape, PointedTensor}
 import hypermake.exception.ObjectIsNotServiceException
 import hypermake.semantics.Context
+import hypermake.util.StdSinks
 
 case class Service(rawSetup: Task, teardown: Task) {
   val setup: Task = new Service.ServiceEphemeralTask(rawSetup, this)(rawSetup.ctx)

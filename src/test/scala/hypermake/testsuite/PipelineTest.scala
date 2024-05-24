@@ -18,4 +18,9 @@ class PipelineTest extends AnyFunSuite {
     assert(File("test-out/test_interpreter/default/stdout").contentAsString == "Hello, world!\n")
   }
 
+  test("gcc") {
+    run("gcc.hm", "Run")
+    assert(File("test-out/print/default/stdout").contentAsString == "abcde\n")
+  }
+
 }

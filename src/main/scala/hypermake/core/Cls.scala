@@ -25,17 +25,13 @@ case class Cls(
     val newArgs = PointedArgsTensor(inheritedArgs.args ++ args.args)
     val newObj = Obj.fromDefs(
       obj.prefix,
-      obj.defs.map {
-        case Definition(name, pct: PointedTaskTensor) =>
-          Definition(name, pct.partial(args))
-        case Definition(name, pcp: PointedPackageTensor) =>
-          Definition(name, pcp.partial(args))
-        case Definition(name, pft: Func) =>
-          Definition(name, pft.partial(args))
-        case Definition(name, value: Cls) =>
-          Definition(name, value.partial(args))
-        case d: Definition[_] => d // values and objects
-      } ++ newArgs.args.map { case (k, v) => Definition(k, v) }
+      (obj.defs.map {
+        case Definition(name, p: Partial[_]) => name -> Definition(name, p.partial(args))
+        case d: Definition[_]                => d.name -> d // values and objects do not take arguments
+      }.toMap ++ newArgs.args.map { case (k, v) =>
+        val d = Definition(k, v)
+        d.name -> d
+      }.toMap).values
     )
     Cls(name, params, newObj, newArgs)
   }
@@ -45,9 +41,8 @@ case class Cls(
    * @param args Arguments passed to the constructor of this class
    * @return The instantiated object
    */
-  // TODO: name of the object
-  def instantiate(args: PointedArgsTensor[Value]): Obj = {
-    val newCls = partial(args)
+  def instantiate(args: PointedArgsTensor[Value], name: String): Obj = {
+    val newCls = partial(args).copy(name = name)
     if (newCls.params.hasUnboundVars)
       throw new ParametersUnboundException(newCls.params.unboundVars, Some(name))
     newCls.obj

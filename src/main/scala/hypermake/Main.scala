@@ -76,6 +76,7 @@ object Main extends App {
           parser.semanticParseFile(runtime.resolveFile(f), scope = ctx.root)
         }
         parser.semanticParseFile(File(scriptFile), scope = ctx.root)
+        parser.addFallbackLocalFsDefs()
 
         val jobs = targets flatMap parser.parseTarget flatMap { _.allElements }
 
@@ -125,6 +126,8 @@ object Main extends App {
                   next = j => j.services.map(_.teardown)
                 )
                 val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
+                val ephemeralJobs = sortedJobs.filter(_.ephemeral)
+
                 for {
                   _ <- putStrLn(headerMessage)
                   _ <- putStrLn(
@@ -138,6 +141,7 @@ object Main extends App {
                       Executor.recordJobsRun(sortedJobs, cli) *> Executor.runDAG(jobGraph, cli)
                     else ZIO.succeed(())
                   }
+                  _ <- ZIO.foreach_(ephemeralJobs)(_.removeOutputs)
                 } yield u
 
               case Subcommand.DryRun =>

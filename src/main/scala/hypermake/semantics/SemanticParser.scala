@@ -105,7 +105,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
           )
         }
       }
-
+      // TODO: refactor into some `resolve` functions
       val resolved = output match {
         case Some(o) => // a.b[x].o; output of a task
           for (task <- (scope.tasks ++ root.tasks).get(name))
@@ -226,7 +226,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
         PointedDecoratorTensor.fromObj(obj)
       case Some(args) =>
         val cls = root.classes(clsName.!)
-        val obj = cls.instantiate(args.!)
+        val obj = cls.instantiate(args.!, "<anon-obj>")
         PointedDecoratorTensor.fromObj(obj)
     }
   }
@@ -235,10 +235,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     val ps = Params.fromArgs(params.!)
     val os = Params.fromArgs(outputs.!)
     val implTensor = impl.!().impl
-    Definition(
-      name.!,
-      new Func((scope.prefix / name.!).toString, ps, os, implTensor)
-    )
+    name.! := new Func((scope.prefix / name.!).toString, ps, os, implTensor)
   }
 
   implicit def ParsePackageDef: Denotation[PackageDef, Definition[PointedPackageTensor]] = { case PackageDef(decorators, name, inputs, output, impl) =>
@@ -264,8 +261,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
       else throw PackageOutputException(name.name)
     }
 
-    Definition(
-      name.!,
+    name.! :=
       PointedPackageTensor(
         name = (scope.prefix / name.!).toString,
         shape = allCases.filterVars(axes),
@@ -274,7 +270,6 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
         decorators = decorators.calls.map(_.!),
         rawScript = script.impl
       )
-    )
   }
 
   implicit def ParseTaskDef: Denotation[TaskDef, Definition[PointedTaskTensor]] = { case TaskDef(decorators, ephemeral, name, fs, inputs, outputs, impl) =>
@@ -289,8 +284,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     val inputArgsAxes = inputArgs.args.values.map(_.shape.vars)
     val decoratorAxes = calls.map(_.script.shape.vars)
     val axes = (decoratorAxes ++ inputArgsAxes).fold(Set())(_ union _)
-    Definition(
-      name.!,
+    name.! :=
       new PointedTaskTensor(
         (scope.prefix / name.!).toString,
         taskFs,
@@ -303,7 +297,6 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
         script.impl,
         ephemeral
       )
-    )
   }
 
   implicit def ParseTaskRefN: Denotation[TaskRef, Tensor[PointedTensor[Task]]] = { case TaskRef(name, indices) =>
@@ -311,7 +304,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
   }
 
   implicit def ParseValDef: Denotation[ValDef, Definition[PointedTensor[Value]]] = { case ValDef(id, value) =>
-    Definition(id.!, value.!!)
+    id.! := value.!!
   }
 
   implicit object ParseMembersImpl extends ContextualDenotation[String, MembersImpl, Obj] {
@@ -327,29 +320,29 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     }
   }
 
-  implicit def ParseInstantiationImpl: Denotation[InstantiationImpl, Obj] = { impl =>
+  implicit def ParseInstantiationImpl: Denotation[InstantiationImpl, Cls] = { impl =>
     val cls = root.classes(impl.instantiation.name.!)
-    cls.instantiate(impl.instantiation.args.!)
+    cls.partial(impl.instantiation.args.!)
   }
 
   implicit def ParseObjectDef: Denotation[ObjectDef, Definition[Obj]] = { case ObjectDef(name, impl) =>
     val obj = impl match {
       case impl: MembersImpl       => impl.!(name.name)
-      case impl: InstantiationImpl => impl.!
+      case impl: InstantiationImpl => impl.!.instantiate(PointedArgsTensor(Map()), name.name)
     }
-    Definition[Obj](name.!, obj)
+    name.! := obj
   }
 
   implicit def ParseClassDef: Denotation[ClassDef, Definition[Cls]] = { case ClassDef(name, inputs, impl) =>
     val cls = impl match {
       case impl: MembersImpl       => impl.!(name.name)
-      case impl: InstantiationImpl => impl.!
+      case impl: InstantiationImpl => impl.!.instantiate(PointedArgsTensor(Map()), name.name)
     }
-    Definition[Cls](name.!, Cls(name.!, Params.fromArgs(inputs.!), cls))
+    name.! := Cls(name.!, Params.fromArgs(inputs.!), cls)
   }
 
   implicit def ParsePlanDef: Denotation[PlanDef, Definition[Plan]] = { case PlanDef(name, taskRefs) =>
-    Definition[Plan](name.!, new Plan(taskRefs.map(_.!.map(_.default))))
+    name.! := Plan(taskRefs.map(_.!.map(_.default)))
   }
 
   implicit def ParseDef: Denotation[Def, Definition[_]] = {
@@ -395,14 +388,14 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
       case ImportFile(fileName, moduleName) =>
         val obj = semanticParseFile(resolveFile(fileName), scope)
         moduleName match {
-          case Some(name) => scope.addDef(Definition(name.!, obj))
+          case Some(name) => scope.addDef(name.! := obj)
           case None       => scope.merge(obj)
         }
       case ImportObject(modulePath, moduleName) =>
         val obj = semanticParseFile(resolveModule(modulePath.!.toString))
         moduleName match {
-          case Some(name) => scope.addDef(Definition(name.!, obj))
-          case None       => scope.addDef(Definition(modulePath.!, obj))
+          case Some(name) => scope.addDef(name.! := obj)
+          case None       => scope.addDef(modulePath.! := obj)
         }
       case d: Def =>
         scope.addDef(d.!)
@@ -412,6 +405,25 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
   def addDefs(defs: Iterable[Definition[_]]): Unit =
     defs foreach scope.addDef
+
+  // TODO: unify Local with other FileSys
+  def addFallbackLocalFsDefs(): Unit = {
+    // Add some default file systems
+    val local =
+      if (!root.objects.contains(Path("local"))) {
+        val loc = Obj.fromDefs(
+          Path("local"),
+          Seq()
+        )
+        root.addDef("local" := loc)
+        loc
+      } else root.objects(Path("local"))
+
+    if (!local.values.contains(Path("root")))
+      local.addDef(
+        "root" := PointedTensor.Singleton(Value.Pure(".out"))
+      )
+  }
 
   /**
    * Reads a Hypermake script while expanding all import statements. This function processes `import` statements.

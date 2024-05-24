@@ -1,5 +1,5 @@
 ## Links the given path as a package.
-def link_from_path(path) -> out:
+def symlink(path) -> out:
   ln -s $path $out
 
 ## Execute the script with the given interpreter.

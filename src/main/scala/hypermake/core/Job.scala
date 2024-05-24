@@ -25,6 +25,8 @@ abstract class Job(implicit ctx: Context) {
 
   def name: String
 
+  def ephemeral: Boolean
+
   def fileSys: FileSys
 
   def `case`: Case
@@ -73,6 +75,8 @@ abstract class Job(implicit ctx: Context) {
     val argsStr = percentEncodedCaseStringUrl
     if (argsStr.isEmpty) taskStr else s"$taskStr?$argsStr"
   }
+
+  lazy val url = s"hypermake://${fileSys}/$id"
 
   /** Set of dependent jobs that this job depends on. */
   lazy val dependentJobs: Set[Job] =

@@ -12,12 +12,12 @@ task hello:
 
 Save this file as `hello.hm`. 
 
-We have created our first Hypermake script file that contains a single task.
+We have created our first HyperMake script file that contains a single task.
 Now let's run this task!
 
 Execute the following command in your shell:
 !!! info inline end ""
-    The basic command line usage is `hypermake <script file> <subtask> <target>`.
+    The basic command line usage is `hypermake $script $subtask $target`. Here the `$subtask` is simply `run`.
 ```shell
   hypermake hello.hm run hello 
 ```

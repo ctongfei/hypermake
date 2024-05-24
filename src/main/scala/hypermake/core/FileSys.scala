@@ -317,16 +317,22 @@ object FileSys {
     } yield u
 
     def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
-      process <- getScriptByName(s"${name}.upload")
-        .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally(ctx.runtime.workDir)
+      process <- ctx.root
+        .functions(s"${name}.upload")
+        .partial(Args.from("src" -> src, "dst" -> dst))
+        .reify
+        .default
+        .executeLocally(ctx.local.root)
       u <- process.successfulExitCode.unit
     } yield u
 
     def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
-      process <- getScriptByName(s"${name}.download")
-        .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally(ctx.runtime.workDir)
+      process <- ctx.root
+        .functions(s"${name}.download")
+        .partial(Args.from("src" -> src, "dst" -> dst))
+        .reify
+        .default
+        .executeLocally(ctx.local.root)
       u <- process.successfulExitCode.unit
     } yield u
 

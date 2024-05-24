@@ -1,0 +1,20 @@
+local.root = "./test-out"
+
+object gcc:
+  def run(_internal_c_script):
+    ln -s $_internal_c_script source.c
+    gcc source.c -o source.out
+    ./source.out
+
+
+@gcc
+task print(input="abcde"):
+  #include <stdio.h>
+  #include <stdlib.h>
+  int main() {
+    char* input = getenv("input");
+    printf("%s\n", input);
+    return 0;
+  }
+
+plan Run = { print }
