@@ -208,10 +208,10 @@ abstract class Job(implicit ctx: Context) {
     fileSys.forceUnlock(path)
 
   def removeOutputs(implicit std: StdSinks): HIO[Unit] =
-    fileSys.delete(path)
+    fileSys.remove(path)
 
   def invalidate(implicit std: StdSinks): HIO[Unit] =
-    fileSys.delete(f"$path${fileSys./}exitcode")
+    fileSys.remove(f"$path${fileSys./}exitcode")
 
   def canonicalCase = ctx.canonicalizeCase(`case`)
 

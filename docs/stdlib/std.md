@@ -2,6 +2,14 @@
 
 Contains some miscellaneous utilities for HyperMake.
 
+## Function `std.link`
+
+Creates a symbolic link as an output. This is particularly useful when referring to a local repository that is under development.
+```shell
+import std
+package my_repo = std.link(path="path/to/my/repo")
+```
+
 ## Class `std.run`
 
 Enables a task in HyperMake to run in a custom interpreter (e.g. Python, Perl, etc.).

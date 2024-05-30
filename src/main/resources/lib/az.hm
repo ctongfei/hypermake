@@ -18,7 +18,8 @@ class storage_blob(container, root="", extra_args=""):
     az storage blob exists \
       --container-name $container \
       --name $root/$file \
-      $extra_args
+      $extra_args \
+    | jq -e '.exists' > /dev/null
 
   def link(src, dst):
     az storage blob copy start \
@@ -26,27 +27,30 @@ class storage_blob(container, root="", extra_args=""):
       --destination-blob $root/$dst \
       --source-container $container \
       --destination-container $container \
-      --requires-sync \
+      --requires-sync true \
       $extra_args
 
   def touch(file):
+    tmp=$(mktemp)
     az storage blob upload \
-      --data "" \
+      --file $tmp \
       --container-name $container \
       --name $root/$file \
       $extra_args
+    rm $tmp
 
-  def delete(file):
+  def remove(file):
     az storage blob delete \
       --container-name $container \
       --name $root/$file \
       $extra_args
 
-  def upload(src, dst):
+  def upload(src, dst):  # TODO: upload folder
     az storage blob upload \
       --file $src \
       --container-name $container \
       --name $root/$dst \
+      --overwrite \
       $extra_args
 
   def download(src, dst):
@@ -54,4 +58,5 @@ class storage_blob(container, root="", extra_args=""):
       --container-name $container \
       --name $root/$src \
       --file $dst \
+      --overwrite \
       $extra_args

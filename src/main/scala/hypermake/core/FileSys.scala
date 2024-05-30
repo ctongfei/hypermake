@@ -9,8 +9,6 @@ import zio.process._
 import zio.stream.ZSink
 import zio.{Task => _, _}
 
-import hypermake.collection.Case
-import hypermake.core._
 import hypermake.exception.DataTransferFailedException
 import hypermake.semantics.Context
 import hypermake.util.Escaper.Shell
@@ -67,7 +65,7 @@ trait FileSys {
   /** Creates an empty file at the given path. */
   def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
-  def delete(f: String)(implicit std: StdSinks): HIO[Unit]
+  def remove(f: String)(implicit std: StdSinks): HIO[Unit]
 
   def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
@@ -93,11 +91,11 @@ trait FileSys {
     isLocked(f).delay(refreshInterval).repeatUntilEquals(false) *> touch(s"$f${/}.lock")
 
   def unlock(f: String)(implicit std: StdSinks): HIO[Unit] =
-    isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> delete(s"$f${/}.lock")
+    isLocked(f).delay(refreshInterval).repeatUntilEquals(true) *> remove(s"$f${/}.lock")
 
   def forceUnlock(f: String)(implicit std: StdSinks): HIO[Unit] = for {
     isLocked <- isLocked(f)
-    u <- if (isLocked) delete(s"$f${/}.lock") else ZIO.succeed(())
+    u <- if (isLocked) remove(s"$f${/}.lock") else ZIO.succeed(())
   } yield u
 
   def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] = {
@@ -196,7 +194,7 @@ object FileSys {
       File(resolvePath(f)).touch()
     }
 
-    def delete(f: String)(implicit std: StdSinks) = IO {
+    def remove(f: String)(implicit std: StdSinks) = IO {
       File(resolvePath(f)).delete(swallowIOExceptions = true)
     }
 
@@ -309,8 +307,8 @@ object FileSys {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def delete(f: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"$name.delete")
+    def remove(f: String)(implicit std: StdSinks) = for {
+      process <- getScriptByName(s"$name.remove")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
       u <- process.successfulExitCode.unit

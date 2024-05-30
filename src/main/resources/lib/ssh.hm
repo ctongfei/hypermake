@@ -26,7 +26,7 @@ class server(host, root):
   def touch(file, sock=$setup.sock):
     ssh -S $sock $host "touch $root/$file"
 
-  def delete(file, sock=$setup.sock):
+  def remove(file, sock=$setup.sock):
     ssh -S $sock $host "rm -rf $root/$file"
 
   def upload(src, dst, sock=$setup.sock):

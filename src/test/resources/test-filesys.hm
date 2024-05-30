@@ -1,0 +1,19 @@
+import aws
+import az
+import ssh
+
+object my_s3 = aws.s3(
+  bucket="tongfeipersonal",
+  root="hypermake"
+)
+
+object my_asb = az.storage_blob(
+  container="hypermake",
+  root="az-test",
+  extra_args="--account-name tongfeipersonal"
+)
+
+object my_sftp = ssh.server(
+  host="azureuser@20.120.216.182",
+  root="/home/azureuser/hypermake"
+)

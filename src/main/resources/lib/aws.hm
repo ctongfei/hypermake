@@ -1,26 +1,67 @@
+# Supports AWS S3 as a HyperMake file system.
+# Use as follows:
+# import aws
+# object my_s3 = aws.s3(bucket="my_bucket", root="")
 class s3(bucket, root):
 
   def read(file):
-    aws s3 cp s3://$bucket/$root/$file -
+    key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+    aws s3 cp s3://$bucket/$key -
 
   def mkdir(dir):
-    true
+    key=$([ -z ${root%/} ] && echo $dir || echo "${root%/}/$dir")
+    aws s3api put-object --bucket $bucket --key $key/
 
   def exists(file):
-    aws s3api head-object --bucket $bucket --key $root/$file > /dev/null 2>&1
-    [ $? != 254 ]
+    set +e
+    key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+    aws s3api head-object --bucket $bucket --key $key
+    if [ $? == 254 ]
+    then
+      aws s3api head-object --bucket $bucket --key $key/
+      [ $? != 254 ]
+    else
+      true
+    fi
 
   def link(src, dst):
-    aws s3 cp s3://$bucket/$root/$src s3://$bucket/$root/$dst
+    src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
+    dst_key=$([ -z ${root%/} ] && echo $dst || echo "${root%/}/$dst")
+    if aws s3api list-objects-v2 --bucket $bucket --prefix $src_key/ --query 'Contents[]' --max-items 0 | jq -e;
+    then
+      aws s3 cp s3://$bucket/$src_key/ s3://$bucket/$dst_key --recursive
+    else
+      aws s3 cp s3://$bucket/$src_key s3://$bucket/$dst_key
+    fi
 
   def touch(file):
-    echo "" | aws s3 cp - s3://$bucket/$root/$file
+    key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+    echo "" | aws s3 cp - s3://$bucket/$key
 
-  def delete(file):
-    aws s3 rm s3://$bucket/$root/$file
+  def remove(file):
+    set +e
+    key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+    if aws s3api list-objects-v2 --bucket $bucket --prefix $key/ --query 'Contents[]' --max-items 0 | jq -e
+    then
+      aws s3 rm s3://$bucket/$key/ --recursive
+      aws s3 rm s3://$bucket/$key
+    else
+      aws s3 rm s3://$bucket/$key
+    fi
 
   def upload(src, dst):
-    aws s3 cp $src s3://$bucket/$root/$dst
+    dst_key=$([ -z ${root%/} ] && echo $dst || echo "${root%/}/$dst")
+    if [ -d $src ]
+    then
+      aws s3 cp $src s3://$bucket/$dst_key/ --recursive
+    else
+      aws s3 cp $src s3://$bucket/$dst_key
+    fi
 
   def download(src, dst):
-    aws s3 cp s3://$bucket/$root/$src $dst
+    src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
+    if aws s3api list-objects-v2 --bucket $bucket --prefix $src_key/ --query 'Contents[]' --max-items 0 | jq -e
+    then
+      aws s3 cp s3://$bucket/$src_key/ $dst --recursive
+    else
+      aws s3 cp s3://$bucket/$src_key $dst

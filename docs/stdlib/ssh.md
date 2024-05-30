@@ -9,7 +9,7 @@ Defines a SSH server in HyperMake. Note that this file system is able to execute
 Example:
 ```py
 import ssh
-object my_server = ssh.Server(
+object my_server = ssh.server(
     host='192.168.0.7',    # host name, in ~/.ssh/config
     root='/home/user/out'  # root of HyperMake output on the remote server
 )

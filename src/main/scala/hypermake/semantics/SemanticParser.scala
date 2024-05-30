@@ -120,7 +120,8 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
                 yield selectPotentiallyMultipleValues[Value](value, indices, x => x)
             }
             .orElse { // non-indexed task outputs in scope or global
-              for (task <- (scope.tasks ++ root.tasks).get(name.init))
+              val task = (scope.tasks ++ root.tasks).get(name.init)
+              for (task <- task)
                 yield selectPotentiallyMultipleValues[Task](task, indices, _.outputs(name.last))
             }
             .orElse { // package outputs in scope or global
@@ -135,7 +136,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
                 }
             }
       }
-      resolved.getOrElse(throw new ReferenceResolutionException(vr))
+      resolved.getOrElse(throw ReferenceResolutionException(vr))
     }
   }
 
@@ -231,7 +232,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     }
   }
 
-  implicit def ParseFuncDef: Denotation[FuncDef, Definition[Func]] = { case FuncDef(name, params, outputs, impl) =>
+  implicit def ParseFuncDef: Denotation[FuncDef, Definition[Func]] = { case fd @ FuncDef(name, params, outputs, impl) =>
     val ps = Params.fromArgs(params.!)
     val os = Params.fromArgs(outputs.!)
     val implTensor = impl.!().impl

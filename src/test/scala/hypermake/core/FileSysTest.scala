@@ -1,6 +1,6 @@
 package hypermake.core
 
-import java.nio.file.{Files => JFiles, Path => JPath, Paths => JPaths}
+import java.nio.file.{Path => JPath, Paths => JPaths}
 
 import better.files.File
 import org.scalacheck.{Arbitrary, Gen, Prop}
@@ -12,9 +12,8 @@ import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 import zio._
 import zio.stream.ZSink
 
-import hypermake.collection.PointedTensor
 import hypermake.execution.RuntimeConfig
-import hypermake.semantics.{Context, Definition, SemanticParser}
+import hypermake.semantics.{Context, SemanticParser}
 import hypermake.util.StdSinks
 
 object FileSysGen {
@@ -49,7 +48,7 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
   def fileSys = new DefaultRuleSet(
     "fileSys",
     None,
-    "[write >> read]" -> Prop.forAll { (path: JPath, content: String) =>
+    "read" -> Prop.forAll { (path: JPath, content: String) =>
       val eff = for {
         _ <- fs.mkdir(path.getParent.toString)
         _ <- fs.write(path.toString, content)
@@ -57,17 +56,44 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
       } yield c == content
       Runtime.default.unsafeRun(eff)
     },
-    "[touch >> delete >> !exists]" -> Prop.forAll { path: JPath =>
+    "mkdir" -> Prop.forAll { path: JPath =>
       val eff = for {
-        _ <- fs.mkdir(path.getParent.toString)
-        _ <- fs.touch(path.toString)
+        _ <- fs.mkdir(path.toString)
+        e <- fs.exists(path.toString)
+      } yield e
+      Runtime.default.unsafeRun(eff)
+    },
+    "removeEmptyDir" -> Prop.forAll { path: JPath =>
+      val eff = for {
+        _ <- fs.mkdir(path.toString)
         a <- fs.exists(path.toString)
-        _ <- fs.delete(path.toString)
+        _ <- fs.remove(path.toString)
         b <- fs.exists(path.toString)
       } yield a && !b
       Runtime.default.unsafeRun(eff)
     },
-    "[write >> link >> read]" -> Prop.forAll { (src: JPath, dst: JPath, content: String) =>
+    "removeNonEmptyDir" -> Prop.forAll { (path: JPath, a: String, b: String) =>
+      val eff = for {
+        _ <- fs.mkdir(path.toString)
+        _ <- fs.write(s"${path.toString}${fs./}a", a)
+        _ <- fs.write(s"${path.toString}${fs./}b", b)
+        a <- fs.exists(path.toString)
+        _ <- fs.remove(path.toString)
+        b <- fs.exists(path.toString)
+      } yield a && !b
+      Runtime.default.unsafeRun(eff)
+    },
+    "deleteFile" -> Prop.forAll { path: JPath =>
+      val eff = for {
+        _ <- fs.mkdir(path.getParent.toString)
+        _ <- fs.touch(path.toString)
+        a <- fs.exists(path.toString)
+        _ <- fs.remove(path.toString)
+        b <- fs.exists(path.toString)
+      } yield a && !b
+      Runtime.default.unsafeRun(eff)
+    },
+    "linkFile" -> Prop.forAll { (src: JPath, dst: JPath, content: String) =>
       val eff = for {
         _ <- fs.mkdir(src.getParent.toString)
         _ <- fs.write(src.toString, content)
@@ -82,7 +108,7 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
   def fileTransfer = new DefaultRuleSet(
     "fileTransfer",
     None,
-    "[upload >> download]" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, content: String) =>
+    "uploadThenDownloadFile" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, content: String) =>
       val eff = for {
         _ <- local.mkdir(p.getParent.toString)
         _ <- local.write(p.toString, content)
@@ -96,6 +122,22 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
         (a == content) && (b == content)
       }
       Runtime.default.unsafeRun(eff)
+    },
+    "uploadThenDownloadDirectory" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, a: String, b: String) =>
+      val eff = for {
+        _ <- local.mkdir(p.toString)
+        _ <- local.write(s"${p.toString}${local./}a", a)
+        _ <- local.write(s"${p.toString}${local./}b", b)
+        _ <- fs.mkdir(q.toString)
+        _ <- fs.upload(p.toString, q.toString)
+        _ <- local.mkdir(r.toString)
+        _ <- fs.download(q.toString, r.toString)
+        c <- local.read(s"${r.toString}${local./}a")
+        d <- local.read(s"${r.toString}${local./}b")
+      } yield {
+        (a == c) && (b == d)
+      }
+      Runtime.default.unsafeRun(eff)
     }
   )
 }
@@ -104,35 +146,28 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
 
   import FileSysGen._
 
+  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 3)
   implicit val runtime = RuntimeConfig.create(shell = "bash -eux")
   implicit val ctx = new Context()
-  val tempDir = JFiles.createTempDirectory("hypermake-test")
-
-  val predef =
-    f"""
-       |local.root = "${tempDir.toString}"
-       |import aws
-       |object my_bucket = aws.s3(bucket="tongfeipersonal", root="hypermake")
-       |""".stripMargin
 
   val parser = new SemanticParser(ctx.root)
-  parser.semanticParse(parser.readLinesToStmts(predef.split("\n")))
+  parser.semanticParse(parser.readFileToStmts(File(getClass.getClassLoader.getResource("test-filesys.hm"))))
   val local = FileSys.local
-  val fs = FileSys("my_bucket")
-  assert(local.root == tempDir.toString)
-  implicit val stdSinks = StdSinks.default
+  val s3 = FileSys("my_s3")
+  val asb = FileSys("my_asb")
+  val sftp = FileSys("my_sftp")
+  implicit val stdSinks: StdSinks = StdSinks.default
 
-//  override def beforeAll(): Unit = {
-//    zio.Runtime.default.unsafeRun(
-//      FileSys.getTaskByName("ssh_server.setup").script.executeLocally(workDir = runtime.workDir)
-//    )
-//  }
-
-  checkAll("FileSys laws", new FileSysLaws(local, fs).fileSys)
-  checkAll("FileTransfer laws", new FileSysLaws(local, fs).fileTransfer)
-
-  override def afterAll(): Unit = {
-    File(tempDir).delete(swallowIOExceptions = true)
+  override def beforeAll(): Unit = {
+    val eff = ctx.root.tasks("my_sftp.setup").default.script.executeLocally(runtime.workDir)
+    Runtime.default.unsafeRun(eff)
   }
+
+//  checkAll("local", new FileSysLaws(local, local).fileSys)
+//  checkAll("local", new FileSysLaws(local, local).fileTransfer)
+  checkAll("aws.s3", new FileSysLaws(local, s3).fileSys)
+  checkAll("aws.s3", new FileSysLaws(local, s3).fileTransfer)
+//  checkAll("az.blob_storage", new FileSysLaws(local, asb).fileSys)
+//  checkAll("az.blob_storage", new FileSysLaws(local, asb).fileTransfer)
 
 }
