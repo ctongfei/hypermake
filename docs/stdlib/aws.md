@@ -1,5 +1,3 @@
 # Module `aws`
 
-## `aws.S3`
-
-## `aws.EC2`
+## `aws.s3`
