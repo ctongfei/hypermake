@@ -102,6 +102,18 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
         c <- fs.read(dst.toString)
       } yield c == content
       Runtime.default.unsafeRun(eff)
+    },
+    "linkDir" -> Prop.forAll { (src: JPath, dst: JPath, a: String, b: String) =>
+      val eff = for {
+        _ <- fs.mkdir(src.toString)
+        _ <- fs.write(s"${src.toString}${fs./}a", a)
+        _ <- fs.write(s"${src.toString}${fs./}b", b)
+        _ <- fs.mkdir(dst.toString)
+        _ <- fs.link(src.toString, dst.toString)
+        c <- fs.read(s"${dst.toString}${fs./}a")
+        d <- fs.read(s"${dst.toString}${fs./}b")
+      } yield (a == c) && (b == d)
+      Runtime.default.unsafeRun(eff)
     }
   )
 
@@ -123,14 +135,14 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
       }
       Runtime.default.unsafeRun(eff)
     },
-    "uploadThenDownloadDirectory" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, a: String, b: String) =>
+    "uploadThenDownloadDir" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, a: String, b: String) =>
       val eff = for {
         _ <- local.mkdir(p.toString)
         _ <- local.write(s"${p.toString}${local./}a", a)
         _ <- local.write(s"${p.toString}${local./}b", b)
-        _ <- fs.mkdir(q.toString)
+        _ <- fs.mkdir(q.getParent.toString)
         _ <- fs.upload(p.toString, q.toString)
-        _ <- local.mkdir(r.toString)
+        _ <- local.mkdir(r.getParent.toString)
         _ <- fs.download(q.toString, r.toString)
         c <- local.read(s"${r.toString}${local./}a")
         d <- local.read(s"${r.toString}${local./}b")
@@ -146,7 +158,7 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
 
   import FileSysGen._
 
-  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 3)
+  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 0.1)
   implicit val runtime = RuntimeConfig.create(shell = "bash -eux")
   implicit val ctx = new Context()
 
@@ -158,10 +170,10 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
   val sftp = FileSys("my_sftp")
   implicit val stdSinks: StdSinks = StdSinks.default
 
-  override def beforeAll(): Unit = {
-    val eff = ctx.root.tasks("my_sftp.setup").default.script.executeLocally(runtime.workDir)
-    Runtime.default.unsafeRun(eff)
-  }
+//  override def beforeAll(): Unit = {
+//    val eff = ctx.root.tasks("my_sftp.setup").default.script.executeLocally(runtime.workDir)
+//    Runtime.default.unsafeRun(eff)
+//  }
 
 //  checkAll("local", new FileSysLaws(local, local).fileSys)
 //  checkAll("local", new FileSysLaws(local, local).fileTransfer)

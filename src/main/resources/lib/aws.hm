@@ -62,6 +62,9 @@ class s3(bucket, root):
     src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
     if aws s3api list-objects-v2 --bucket $bucket --prefix $src_key/ --query 'Contents[]' --max-items 0 | jq -e
     then
-      aws s3 cp s3://$bucket/$src_key/ $dst --recursive
+      dirname=$(basename $src_key)
+      mkdir -p $dst
+      aws s3 cp s3://$bucket/$src_key/ $dst/ --recursive
     else
       aws s3 cp s3://$bucket/$src_key $dst
+    fi
