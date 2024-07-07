@@ -224,26 +224,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Introduction
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -258,10 +238,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -272,8 +252,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_2">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             Tutorial
           </label>
@@ -380,11 +360,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../functions/" class="md-nav__link">
+      <a href="../subroutines/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Functions
+    Subroutines
   </span>
   
 
@@ -464,11 +444,76 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tuntorial/filesystems.md" class="md-nav__link">
+      <a href="../filesys/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Environments
+    File systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Example Pipelines
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Example Pipelines
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../example-beir/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BEIR
   </span>
   
 
@@ -529,6 +574,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../stdlib/std/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Std
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../stdlib/aws/" class="md-nav__link">
         
   
@@ -550,7 +616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stdlib/azure/" class="md-nav__link">
+      <a href="../../stdlib/az/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -592,11 +658,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stdlib/sftp/" class="md-nav__link">
+      <a href="../../stdlib/ssh/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    SFTP
+    SSH
   </span>
   
 
@@ -670,6 +736,9 @@ We create another task that takes the output of the <code>download</code> task a
 <span class="w">  </span><span class="p">|</span><span class="w"> </span>perl<span class="w"> </span>-ne<span class="w"> </span><span class="s1">&#39;if (/&lt;a href=&quot;(.*?)&quot; class=&quot;storylink&quot;&gt;(.*?)&lt;\/a&gt;/) { print &quot;$1\t$2\n&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>&gt;<span class="w"> </span><span class="nv">$out</span>
 </code></pre></div></p>
+<div class="admonition info inline end">
+<p>Note that to refer to the output of a task, one can use the syntax <code>$taskName.$outputName</code>. Here <code>$download.out</code> is the <code>out</code> output of the <code>download</code> task.</p>
+</div>
 <p>It creates the following pipeline:</p>
 <pre class="mermaid"><code>flowchart LR
     download --&gt; get_titles</code></pre>
@@ -681,14 +750,14 @@ and the resulting TSV table will be located in <code>out/get_titles/default/out<
 <p>In the directory <code>out/get_titles/default</code>, you can find the following files that may be of interest:</p>
 <ul>
 <li><code>out</code>: the resulting TSV table</li>
-<li><code>script.sh</code>: the script that was used to run the task</li>
+<li><code>script</code>: the script that was used to run the task</li>
 <li><code>stdout</code>: the standard output of the task</li>
 <li><code>stderr</code>: the standard error of the task</li>
 <li><code>args</code>: A shell script that contains the arguments that were used to run the task</li>
 <li><code>exitcode</code>: A file that contains the exit code of the task</li>
 </ul>
-<p>To recreate the task in shell, you can use the following command. It should behaves the same as if directly running from Hypermake.
-<div class="highlight"><pre><span></span><code>.<span class="w"> </span>args<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>.<span class="w"> </span>script.sh
+<p>To recreate the task in shell, you can use the following command. It should behave the same as if directly running from HyperMake.
+<div class="highlight"><pre><span></span><code>.<span class="w"> </span>args<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>.<span class="w"> </span>script
 </code></pre></div></p>
 
 

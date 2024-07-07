@@ -14,8 +14,6 @@
       
       
       
-        <link rel="next" href="tutorial/hello/">
-      
       
       <link rel="icon" href="assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
@@ -71,6 +69,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#hypermake" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -103,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              HyperMake
             
           </span>
         </div>
@@ -217,34 +220,6 @@
       
   
   
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    Introduction
-  </span>
-  
-
-      </a>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
   
   
     
@@ -257,10 +232,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -271,8 +246,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             Tutorial
           </label>
@@ -369,11 +344,11 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/functions/" class="md-nav__link">
+      <a href="tutorial/subroutines/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Functions
+    Subroutines
   </span>
   
 
@@ -453,11 +428,76 @@
   
   
     <li class="md-nav__item">
-      <a href="tuntorial/filesystems.md" class="md-nav__link">
+      <a href="tutorial/filesys/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Environments
+    File systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Example Pipelines
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Example Pipelines
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorial/example-beir/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BEIR
   </span>
   
 
@@ -518,6 +558,27 @@
   
   
     <li class="md-nav__item">
+      <a href="stdlib/std/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Std
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="stdlib/aws/" class="md-nav__link">
         
   
@@ -539,7 +600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/azure/" class="md-nav__link">
+      <a href="stdlib/az/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,11 +642,11 @@
   
   
     <li class="md-nav__item">
-      <a href="stdlib/sftp/" class="md-nav__link">
+      <a href="stdlib/ssh/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    SFTP
+    SSH
   </span>
   
 
@@ -619,6 +680,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -636,9 +699,15 @@
   
 
 
-  <h1>Introduction</h1>
-
-
+<h1 id="hypermake">HyperMake</h1>
+<p><code>HyperMake</code> is a parameterized workflow manager (think of a <code>make</code> where tasks can be parameterized) heavily inspired by <a href="https://github.com/jhclark/ducttape">Ducttape</a>.</p>
+<p>It supports the following features:</p>
+<ul>
+<li><strong>Parameterization of tasks:</strong> a task can be of multiple versions (e.g. in a ML pipeline, a task can be of different hyperparameters)</li>
+<li><strong>Minimal juggling</strong>: Inputs and outputs are just files/symlinks, and arguments are all passed as environment variables</li>
+<li><strong>Automatic parallelization:</strong> based on the dependency DAG</li>
+<li><strong>Cloud support:</strong> tasks can be easily be decorated run on cloud (e.g. AWS, Azure)</li>
+</ul>
 
 
 
