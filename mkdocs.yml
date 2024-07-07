@@ -37,6 +37,8 @@ nav:
       - "Packages": 'tutorial/packages.md'
       - "Modules": 'tutorial/modules.md'
       - "File systems": 'tutorial/filesys.md'
+  - "Example Pipelines":
+      - "BEIR": 'tutorial/example-beir.md'
   - 'Library Reference':
       - "Std": 'stdlib/std.md'
       - "AWS": 'stdlib/aws.md'

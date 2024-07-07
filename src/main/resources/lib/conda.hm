@@ -1,17 +1,29 @@
-## Builds a Conda environment from a YAML file.
-def env_create(file) -> out:
+# Creates a Conda environment with a list of packages.
+def create(args, extra_pip_packages="") -> out:
+  mkdir -p $out
+  conda create -y -p $out $args
+  if [ ! -z "$extra_pip_packages" ]
+  then
+    $out/bin/pip install $extra_pip_packages
+  fi
+
+## Builds a Conda environment from a YAML file or requirements.txt.
+def env_create(file, extra_pip_packages="") -> out:
   mkdir -p $out
   conda env create \
     --file $file \
     --prefix $out
-
+  if [ ! -z "$extra_pip_packages" ]
+  then
+    $out/bin/pip install $extra_pip_packages
+  fi
 
 ## Executes the given script in a specific Conda environment.
 class activate(environment):
 
   def run(_internal_conda_script):
     eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-    if [ -f $environment ]
+    if [ -d $environment ]
     then  # local environment
       conda activate ./$environment
     else  # global environment

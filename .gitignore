@@ -89,3 +89,6 @@ project/plugins/project/
 .lib/
 site/
 
+# Ignore npm
+node_modules/
+**/node_modules/
