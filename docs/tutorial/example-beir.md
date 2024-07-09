@@ -170,7 +170,35 @@ task aggregate_metric(
 ```
 
 ### Run the pipeline
-Now the full pipeline definition (`beir.hm`) is complete.  We can run the pipeline with the following command:
+Now the full pipeline definition (`beir.hm`) is complete.  
+
+Let's preview the pipeline with `hypermake list`:
+```bash
+hypermake beir.hm list
+```
+
+It shows the nice DAG structure of our pipeline:
+```
+HyperMake 0.1.0 -- A parameterized workflow manager
+Workflow file: beir.hm
+
+Variables:
+  • Metric: { map recall_100 ndcg_cut_10 }
+  • BeirDataset: { msmarco scifact trec-covid webis-touche2020 fiqa dbpedia-entity fever nfcorpus hotpotqa climate-fever scidocs nq quora arguana }
+
+Tasks:
+  • pyserini@local
+  │ • raw_beir_data[BeirDataset]
+  │ │ • trec_eval@local
+  ├─┴─│─• beir_to_trec[BeirDataset]
+  ├───│─┼─• index[BeirDataset]
+  └───│─┼─┴─• retrieve[BeirDataset]
+      └─┴───┴─• evaluate[BeirDataset]
+              └─• aggregate_metric[Metric]
+```
+
+
+We can run the pipeline with the following command:
 ```bash
 hypermake beir.hm run "aggregate_metric[Metric: *]" -j8
 ```

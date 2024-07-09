@@ -22,4 +22,7 @@ install: $(JAR)
 	cp bin/hypermake $(PREFIX)/bin/hypermake
 	chmod +x $(PREFIX)/bin/hypermake
 
-.PHONY: all clean install
+update-docs:
+	mkdocs gh-deploy
+
+.PHONY: all clean install update-docs
