@@ -1,0 +1,9 @@
+#! /bin/bash
+
+# Entrypoint to HyperMake.
+
+HYPERMAKE_ENTRYPOINT_PATH=$(command -v "$0")
+HYPERMAKE_INSTALL_ROOT=$(dirname $(dirname "$HYPERMAKE_ENTRYPOINT_PATH"))
+
+export HYPERMAKE_PATH="$HYPERMAKE_INSTALL_ROOT/share/hypermake"
+java -jar "$HYPERMAKE_INSTALL_ROOT/lib/hypermake/hypermake.jar" "$@"

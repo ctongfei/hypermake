@@ -1,12 +1,8 @@
 package hypermake.semantics
 
 import scala.collection._
-import scala.util.matching.Regex
 
 import better.files._
-import cats.instances.all._
-import cats.syntax.monad._
-import cats.syntax.unorderedTraverse._
 
 import hypermake.collection._
 import hypermake.core._
@@ -393,15 +389,17 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
           case None       => scope.merge(obj)
         }
       case ImportObject(modulePath, moduleName) =>
-        val obj = semanticParseFile(resolveModule(modulePath.!.toString))
-        moduleName match {
-          case Some(name) => scope.addDef(name.! := obj)
-          case None       => scope.addDef(modulePath.! := obj)
+        val newModuleName = moduleName match {
+          case Some(name) => name.!
+          case None       => modulePath.!.toString
         }
+        val newObj = new Obj(scope.prefix / newModuleName)
+        val obj = semanticParseFile(resolveModule(modulePath.!.toString), newObj)
+        scope.addDef(newModuleName := obj)
       case d: Def =>
         scope.addDef(d.!)
     }
-    root
+    scope
   }
 
   def addDefs(defs: Iterable[Definition[_]]): Unit =
@@ -422,7 +420,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
     if (!local.values.contains(Path("root")))
       local.addDef(
-        "root" := PointedTensor.Singleton(Value.Pure(".out"))
+        "root" := PointedTensor.Singleton(Value.Pure("out"))
       )
   }
 
@@ -447,7 +445,15 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
   }
 
   def semanticParseFile(file: File, scope: Obj = ctx.root): Obj = {
-    semanticParse(readFileToStmts(file), scope)
+    import hypermake.util.printing._
+    try {
+      semanticParse(readFileToStmts(file), scope)
+    } catch {
+      case e: java.nio.file.NoSuchFileException =>
+        System.err.println(s"Workflow file ${K(file.pathAsString)} does not exist.")
+        System.exit(1)
+        throw e
+    }
   }
 
   def parseTask(tr: TaskRef) = {

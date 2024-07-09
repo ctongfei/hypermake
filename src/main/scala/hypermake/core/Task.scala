@@ -64,7 +64,12 @@ class PointedTaskTensor(
         j.name
       })
     }
-    (allTaskNames ++ decoratorTaskNames).map(k => ctx.root.tasks(k))
+    (allTaskNames ++ decoratorTaskNames).map { k =>
+      ctx.root.tasks.get(k).getOrElse {
+        val Array(pack, fs) = k.split("@")
+        ctx.root.packages(pack).on(FileSys(fs))
+      }
+    }
   }
 
   def partial(args: PointedArgsTensor[Value]): PointedTaskTensor = {

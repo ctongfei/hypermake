@@ -36,11 +36,7 @@ class RuntimeConfig private (
   lazy val paths =
     envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
-  // TODO: This should probably be installed somewhere else, like /usr/share/hypermake/lib
-  // TODO: when we are doing a system-wide installation.
-  lazy val bundledStdLibPath = this.getClass.getClassLoader.getResource("lib").getPath
-
-  lazy val resolutionPaths = workDir +: paths :+ bundledStdLibPath
+  lazy val resolutionPaths = workDir +: paths
 
   private lazy val tempPath = JFiles.createTempDirectory("hypermake").toAbsolutePath
 

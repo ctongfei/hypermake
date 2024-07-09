@@ -6,7 +6,6 @@ import hypermake.util.DefaultMapBase
 
 /** An identifier path in the format of "a.b.c". */
 case class Path(components: List[String]) {
-  override def toString = components.mkString(".")
 
   def head = components.head
   def tail = Path(components.tail)
@@ -14,6 +13,10 @@ case class Path(components: List[String]) {
   def last = components.last
 
   def /(c: String) = Path(components :+ c)
+
+  override def toString = components.mkString(".")
+
+  override def hashCode() = toString.hashCode
 
 }
 

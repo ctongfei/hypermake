@@ -64,7 +64,7 @@ object Main extends App {
       case Cmd.Run(options, scriptFile, runOptions, subtask, targets) =>
         implicit val runtime: RuntimeConfig =
           RuntimeConfig.createFromCLIOptions(options, runOptions)
-        val cli = PlainCLI.create()
+        val cli = PlainCLI.create(style = Style.Plain)
 
         // Constructs a semantic parser and its accompanying parsing context
         implicit val ctx: Context = new Context()
@@ -94,7 +94,7 @@ object Main extends App {
               case Subcommand.List =>
                 for {
                   _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(s"Workflow file: ${O(scriptFile)}")
+                  _ <- putStrLn(B("Workflow file: ") + O(scriptFile))
                   _ <- putStrLn(B("\nVariables:"))
                   _ <- putStrLn(
                     ctx.allCases.assignments
