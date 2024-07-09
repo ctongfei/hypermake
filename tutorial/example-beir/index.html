@@ -1054,10 +1054,33 @@ And now we aggregate the results over all datasets with <code>[BeirDataset: *]</
 <span class="w">  </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;^</span><span class="nv">$metric</span><span class="s2"> &quot;</span><span class="w"> </span><span class="nv">$eval_results</span>/*<span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$out</span>
 </code></pre></div></p>
 <h3 id="run-the-pipeline">Run the pipeline</h3>
-<p>Now the full pipeline definition (<code>beir.hm</code>) is complete.  We can run the pipeline with the following command:
+<p>Now the full pipeline definition (<code>beir.hm</code>) is complete.  </p>
+<p>Let's preview the pipeline with <code>hypermake list</code>:
+<div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>beir.hm<span class="w"> </span>list
+</code></pre></div></p>
+<p>It shows the nice DAG structure of our pipeline:
+<div class="highlight"><pre><span></span><code>HyperMake 0.1.0 -- A parameterized workflow manager
+Workflow file: beir.hm
+
+Variables:
+  • Metric: { map recall_100 ndcg_cut_10 }
+  • BeirDataset: { msmarco scifact trec-covid webis-touche2020 fiqa dbpedia-entity fever nfcorpus hotpotqa climate-fever scidocs nq quora arguana }
+
+Tasks:
+  • pyserini@local
+  │ • raw_beir_data[BeirDataset]
+  │ │ • trec_eval@local
+  ├─┴─│─• beir_to_trec[BeirDataset]
+  ├───│─┼─• index[BeirDataset]
+  └───│─┼─┴─• retrieve[BeirDataset]
+      └─┴───┴─• evaluate[BeirDataset]
+              └─• aggregate_metric[Metric]
+</code></pre></div></p>
+<p>We can run the pipeline with the following command:
 <div class="highlight"><pre><span></span><code>hypermake<span class="w"> </span>beir.hm<span class="w"> </span>run<span class="w"> </span><span class="s2">&quot;aggregate_metric[Metric: *]&quot;</span><span class="w"> </span>-j8
 </code></pre></div>
 Here we compute the <code>aggregate_metric</code> task for all metrics defined in <code>metric</code>, with max 8 jobs running in parallel!</p>
+<p>The results should match the results in Table 2 (BM25 column) of the <a href="https://arxiv.org/pdf/2310.08319">RepLlama paper</a>. </p>
 
 
 
