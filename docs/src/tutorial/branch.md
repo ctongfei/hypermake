@@ -22,8 +22,7 @@ task downloadGloVe(gloveUrl=$) -> out:
   mv *.txt $out
   rm glove.zip
 ```
-!!! info inline end ""
-    If the key is the same as the value, one can omit the value in the declaration, like this:
+>  If the key is the same as the value, one can omit the value in the declaration, like this:
     `{Version: 6b cc42b cc840b twitter27b}`.
 Note that we declared a `Dict`-like object here: `{Version: 6b=XX cc42b=XX cc840b=XX twitter27b=XX}`.
 This is a parameter declaration: the name of the parameter is `Version`, and it has 4 potential keys `6b`, `cc42b`, `cc840b`, and `twitter27b`.
@@ -40,10 +39,9 @@ One can use `[Var:*]` syntax to refer to **all** cases of the task. The followin
 ```shell
 hypermake glove.hm run 'downloadGloVe[Version: *]' -j4
 ```
-!!! info inline end ""
-    Single-quoting the task `downloadGlove[Version: *]` prohibits bash from expanding the wildcard `*` symbol.
+> Single-quoting the task `downloadGlove[Version: *]` prohibits bash from expanding the wildcard `*` symbol.
 Again, we can find the output files in `out/downloadGloVe/Version=XX`.
 
-`-j4` is a flag that specifies the number of parallel jobs to run. Here we run 4 jobs in parallel.
+`-j $N` is a flag that specifies the number of parallel jobs to run. Here we run 4 jobs in parallel.
 
 

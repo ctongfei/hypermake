@@ -5,7 +5,7 @@ Contains some miscellaneous utilities for HyperMake.
 ## Function `std.symlink`
 
 Creates a symbolic link as an output. This is particularly useful when referring to a local repository that is under development.
-```shell
+```py
 import std
 package my_repo = std.symlink(path="path/to/my/repo")
 ```

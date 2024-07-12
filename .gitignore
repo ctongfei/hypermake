@@ -92,3 +92,7 @@ site/
 # Ignore npm
 node_modules/
 **/node_modules/
+
+# mdbook
+book/
+docs/book/

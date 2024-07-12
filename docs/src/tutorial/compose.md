@@ -3,14 +3,14 @@
 A task can take parameters, and yield outputs.
 ```shell
 url = "https://news.ycombinator.org"
+
 task download(url=$) -> (out="homepage.html"):
   wget $url -O $out
 ```
 
-!!! info inline end ""
-    Generally, when declaring a parameter whose default argument is a variable with the same name,
-    one can omit the argument name by just writing `$`.
-Running the task `download` will download the homepage of the Hacker News. Note the parameter is declared as `url=$`: 
+ > Generally, when declaring a parameter whose default argument is a variable with the same name, one can omit the argument name by just writing `$`.
+
+Running the task `download` will download the homepage of the [Hacker News](https://news.ycombinator.org). Note the parameter is declared as `url=$`: 
 This is a shorthand for `url=$url`.
 
 This task creates a single output called `homepage.html`: You can find this file at `out/download/default` directory. 
@@ -24,8 +24,7 @@ task get_titles(html=$download.out) -> out:
   | perl -ne 'if (/<a href="(.*?)" class="storylink">(.*?)<\/a>/) { print "$1\t$2\n" }' \
   > $out
 ```
-!!! info inline end ""
-    Note that to refer to the output of a task, one can use the syntax `$taskName.$outputName`. Here `$download.out` is the `out` output of the `download` task.
+> Note that to refer to the output of a task, one can use the syntax `$taskName.$outputName`. Here `$download.out` is the `out` output of the `download` task.
 
 It creates the following pipeline:
 
@@ -50,7 +49,7 @@ In the directory `out/get_titles/default`, you can find the following files that
   * `args`: A shell script that contains the arguments that were used to run the task
   * `exitcode`: A file that contains the exit code of the task
 
-To recreate the task in shell, you can use the following command. It should behave the same as if directly running from HyperMake.
+To re-run the task in shell, you can use the following command. It should behave the same as if directly running from HyperMake.
 ```shell
 . args && . script
 ```

@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 SBT = sbt
 PREFIX = $(HOME)/.local
 SCALA_VERSION = 2.13
@@ -22,7 +23,23 @@ install: $(JAR)
 	cp bin/hypermake $(PREFIX)/bin/hypermake
 	chmod +x $(PREFIX)/bin/hypermake
 
-update-docs:
-	mkdocs gh-deploy
+build-docs:
+	mdbook build
 
-.PHONY: all clean install update-docs
+# Credit to https://github.com/kg4zow/mdbook-template/blob/main/Makefile
+gh-deploy: build-docs
+	set -ex ; \
+	WORK="$$( mktemp -d )" ; \
+	VER="$$( git describe --always --tags --dirty )" ; \
+	git worktree add --force "$$WORK" gh-pages ; \
+	rm -rf "$$WORK"/* ; \
+	rsync -av book/ "$$WORK"/ ; \
+	if [ -f CNAME ] ; then cp CNAME "$$WORK"/ ; fi ; \
+	pushd "$$WORK" ; \
+	git add -A ; \
+	git commit -m "Updated gh-pages $$VER" ; \
+	popd ; \
+	git worktree remove "$$WORK" ; \
+	git push origin gh-pages
+
+.PHONY: all clean install build-docs gh-deploy

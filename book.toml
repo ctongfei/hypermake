@@ -1,0 +1,19 @@
+[book]
+title = "HyperMake"
+author = "Tongfei Chen"
+description = "A parameterized pipeline manager"
+src = "docs/src"
+language = "en"
+
+[build]
+build-dir = "book"
+
+[output.html]
+preferred-dark-theme = "light"
+mathjax-support = true
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
