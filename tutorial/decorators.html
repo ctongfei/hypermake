@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html" class="active"><strong aria-hidden="true">7.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html"><strong aria-hidden="true">8.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html"><strong aria-hidden="true">9.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html"><strong aria-hidden="true">7.</strong> Modules, objects, classes</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html" class="active"><strong aria-hidden="true">8.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html"><strong aria-hidden="true">9.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -183,38 +183,40 @@
 <li>Running through some cluster submission systems;</li>
 <li>etc.</li>
 </ul>
-<p>The general syntax for defining a decorator is:</p>
-<pre><code class="language-shell">def &lt;decoratorName&gt;(&lt;arguments&gt;) &lt;- input=&lt;internalScriptName&gt;:
-  &lt;script&gt;
+<p>A decorator in HyperMake is just an object with a <code>run</code> method that takes a script as input and runs a modified version.</p>
+<pre><code class="language-py">object decorator:
+    def run(internal_script):
+        ...
+</code></pre>
+<p>If a decorator admits parameters, it simply becomes a class:</p>
+<pre><code class="language-py">class decorator(args):
+    def run(internal_script):
+        ...
 </code></pre>
 <p>and when applying a decorator, one could write</p>
-<pre><code class="language-shell">@&lt;decoratorName&gt;(&lt;arguments&gt;)
+<pre><code class="language-shell">@decorator(args)
 task taskName(...) -&gt; out:
   ...
 </code></pre>
-<p>This will modify the task with the decorator. The script to be modified will be stored as <code>internalScriptName</code>.</p>
-<h4 id="example-1-a-simple-decorator"><a class="header" href="#example-1-a-simple-decorator">Example 1: A simple decorator</a></h4>
+<h4 id="example-1-a-decorator-that-runs-a-task-in-python"><a class="header" href="#example-1-a-decorator-that-runs-a-task-in-python">Example 1: A decorator that runs a task in Python</a></h4>
 <p>An example that let us runs a task in Python instead of shell:</p>
-<pre><code class="language-shell">def python() &lt;- internalPythonScript="script.py":
-  python $internalPythonScript
+<pre><code class="language-shell">object python:
+  def run(internal_script):
+    python $internal_script
 
 @python
 task helloWorldInPython:
   print("Hello World" + " " + "in Python!")
 </code></pre>
-<p>And we can invoke the task from the command line:</p>
-<pre><code class="language-shell">hypermake tutorial/decorators.hm run helloWorldInPython
-</code></pre>
-<p>Let's see what's happening under the hood here. The script in the task <code>helloWorldInPython</code> is decorated with <code>@python</code>.
-The script with the line <code>print(...)</code> is stored as <code>script.py</code> as directed in the decorator. Then, in shell, the command
-in the decorator is run instead: <code>python script.py</code>.</p>
-<h4 id="example-2-a-parameterized-decorator"><a class="header" href="#example-2-a-parameterized-decorator">Example 2: A parameterized decorator</a></h4>
+<p>There is no need to define this in your pipelines: it is already available in the standard library as <code>@std.run(interpreter="python")</code>.</p>
+<h4 id="example-2-decorates-a-script-to-run-in-a-conda-virtual-environment"><a class="header" href="#example-2-decorates-a-script-to-run-in-a-conda-virtual-environment">Example 2: Decorates a script to run in a Conda virtual environment</a></h4>
 <p>In Python, a task can be run in different Conda virtual environments. This is a decorator that lets us do that.</p>
-<pre><code class="language-shell">def conda(env) &lt;- internalCondaScript="conda-internal.sh":
-  eval "$(command conda 'shell.bash' 'hook' 2&gt; /dev/null)"
-  conda activate $env
-  . $internalCondaScript
-  conda deactivate
+<pre><code class="language-shell">class conda(env):
+  def run(internal_conda_script):
+    eval "$(command conda 'shell.bash' 'hook' 2&gt; /dev/null)"
+    conda activate $env
+    . $internal_conda_script
+    conda deactivate
 
 @conda(env={Env: base myenv})
 task helloWorldFromEnv:
@@ -242,17 +244,37 @@ task helloWorldInPythonFromEnv:
   import os
   print(f"Hello World in Python from {os.environ['env']}!")
 </code></pre>
-<p>!!! info inline end ""
-One can use <code>os.environ[var]</code> to get the environment variable <code>$var</code> in Python.
+<blockquote>
+<p>One can use <code>os.environ[var]</code> to get the environment variable <code>$var</code> in Python.
 First, our script is wrapped by <code>@python</code>, then <code>@conda(env)</code>.
-Recall that Hypermake passes parameters into the script as environment variables:
-we cannot use <code>$env</code> to get the Hypermake variable in Python.</p>
+Recall that HyperMake passes parameters into the script as environment variables:
+we cannot use <code>$env</code> to get the HyperMake variable in Python.</p>
+</blockquote>
+<h4 id="example-4-a-decorator-that-runs-a-compiled-language-c"><a class="header" href="#example-4-a-decorator-that-runs-a-compiled-language-c">Example 4: A decorator that runs a compiled language: C</a></h4>
+<p>We can also create a decorator that runs a task in C. Since C is a compiled language, we need to compile the script first.</p>
+<pre><code class="language-python">object gcc:
+  def run(internal_c_script):
+    ln -s $internal_c_script source.c
+    gcc source.c -o source.out
+    ./source.out
+</code></pre>
+<p>Now we can do fun things: write C scripts in HyperMake!</p>
+<pre><code class="language-c">@gcc
+task print(input="abcde"):
+  #include &lt;stdio.h&gt;
+  #include &lt;stdlib.h&gt;
+  int main() {
+    char* input = getenv("input");
+    printf("%s\n", input);
+    return 0;
+  }
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../tutorial/subroutines.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tutorial/modules.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -266,7 +288,7 @@ we cannot use <code>$env</code> to get the Hypermake variable in Python.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../tutorial/subroutines.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tutorial/modules.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 

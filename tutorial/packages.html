@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">7.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html" class="active"><strong aria-hidden="true">8.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html"><strong aria-hidden="true">9.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html"><strong aria-hidden="true">7.</strong> Modules, objects, classes</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">8.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html" class="active"><strong aria-hidden="true">9.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -176,9 +176,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="packages"><a class="header" href="#packages">Packages</a></h1>
-<p>In Hypermake, packages are special tasks that builds a software package.
+<p>In HyperMake, packages are special tasks that builds a software package.
 They can depends on other packages but not tasks, and will be built differently on different environments (see next tutorial).</p>
-<p>A package is defined as follows:</p>
+<p>A package is defined as follows (note that a package can only have exactly 1 output):</p>
 <pre><code>package $packageName -&gt; $packageOutputName:
   # build script
 </code></pre>
@@ -204,18 +204,14 @@ For example, if an evaluation task requires this package, one can write</p>
 <pre><code class="language-bash">import std
 package pack1 = std.symlink(path=$localDir)
 </code></pre>
-<h4 id="example-2-cloning-from-a-remote-repository"><a class="header" href="#example-2-cloning-from-a-remote-repository">Example 2: Cloning from a remote repository</a></h4>
-<pre><code class="language-bash">package pack2 -&gt; out:
-  git clone $repo out
-</code></pre>
-<h4 id="example-3-call-its-makefile-after-cloning-from-a-repo"><a class="header" href="#example-3-call-its-makefile-after-cloning-from-a-repo">Example 3: Call its Makefile after cloning from a repo</a></h4>
-<pre><code class="language-bash">package pack3(repo=$) -&gt; out:
+<h4 id="example-2-cloning-from-a-remote-repository-and-build-it"><a class="header" href="#example-2-cloning-from-a-remote-repository-and-build-it">Example 2: Cloning from a remote repository and build it</a></h4>
+<pre><code class="language-bash">package pack2(repo=$) -&gt; out:
   git clone $repo out
   cd out
   make
 </code></pre>
-<h4 id="example-4-creates-a-conda-environment-from-a-python-package"><a class="header" href="#example-4-creates-a-conda-environment-from-a-python-package">Example 4: Creates a Conda environment from a Python package</a></h4>
-<pre><code class="language-bash">package pack4(pythonPackage=$) -&gt; out:
+<h4 id="example-3-creates-a-conda-environment-from-a-python-package"><a class="header" href="#example-3-creates-a-conda-environment-from-a-python-package">Example 3: Creates a Conda environment from a Python package</a></h4>
+<pre><code class="language-bash">package pack3(pythonPackage=$) -&gt; out:
   mkdir -p $out
   conda env create -p $out -f $pythonPackage/environment.yml
 </code></pre>
@@ -228,7 +224,7 @@ package pack1 = std.symlink(path=$localDir)
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../tutorial/modules.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../tutorial/filesys.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -242,7 +238,7 @@ package pack1 = std.symlink(path=$localDir)
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../tutorial/modules.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../tutorial/filesys.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

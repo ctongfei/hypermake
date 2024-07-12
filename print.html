@@ -91,7 +91,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded "><a href="install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="tutorial/decorators.html"><strong aria-hidden="true">7.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="tutorial/packages.html"><strong aria-hidden="true">8.</strong> Packages</a></li><li class="chapter-item expanded "><a href="tutorial/modules.html"><strong aria-hidden="true">9.</strong> Modules</a></li><li class="chapter-item expanded "><a href="tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded "><a href="install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="tutorial/modules.html"><strong aria-hidden="true">7.</strong> Modules, objects, classes</a></li><li class="chapter-item expanded "><a href="tutorial/decorators.html"><strong aria-hidden="true">8.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="tutorial/packages.html"><strong aria-hidden="true">9.</strong> Packages</a></li><li class="chapter-item expanded "><a href="tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -177,13 +177,13 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="hypermake"><a class="header" href="#hypermake">HyperMake</a></h1>
-<p><code>HyperMake</code> is a parameterized workflow manager (think of a <code>make</code> where tasks can be parameterized) heavily inspired by <a href="https://github.com/jhclark/ducttape">Ducttape</a>.</p>
+<p><code>HyperMake</code> is a parameterized pipeline definition language (think of a <code>make</code> where tasks can be parameterized) heavily inspired by <a href="https://github.com/jhclark/ducttape">Ducttape</a>.</p>
 <p>It supports the following features:</p>
 <ul>
 <li><strong>Parameterization of tasks:</strong> a task can be of multiple versions (e.g. in a ML pipeline, a task can be of different hyperparameters)</li>
 <li><strong>Minimal juggling</strong>: Inputs and outputs are just files/symlinks, and arguments are all passed as environment variables</li>
 <li><strong>Automatic parallelization:</strong> based on the dependency DAG</li>
-<li><strong>Cloud support:</strong> tasks can be easily be decorated run on cloud (e.g. AWS, Azure)</li>
+<li><strong>Cloud-agnostic:</strong> tasks can be run locally, or on a cloud (e.g. AWS, Azure), with minimal changes to the pipeline.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <h3 id="via-homebrew"><a class="header" href="#via-homebrew">Via Homebrew</a></h3>
@@ -225,7 +225,7 @@ Now let's run this task!</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="inputs-outputs-and-composing-tasks"><a class="header" href="#inputs-outputs-and-composing-tasks">Inputs, outputs, and composing tasks</a></h1>
 <p>A task can take parameters, and yield outputs.</p>
-<pre><code class="language-shell">url = "https://news.ycombinator.org"
+<pre><code class="language-shell">url = "https://news.ycombinator.com"
 
 task download(url=$) -&gt; (out="homepage.html"):
   wget $url -O $out
@@ -233,7 +233,7 @@ task download(url=$) -&gt; (out="homepage.html"):
 <blockquote>
 <p>Generally, when declaring a parameter whose default argument is a variable with the same name, one can omit the argument name by just writing <code>$</code>.</p>
 </blockquote>
-<p>Running the task <code>download</code> will download the homepage of the <a href="https://news.ycombinator.org">Hacker News</a>. Note the parameter is declared as <code>url=$</code>:
+<p>Running the task <code>download</code> will download the homepage of the <a href="https://news.ycombinator.com">Hacker News</a>. Note the parameter is declared as <code>url=$</code>:
 This is a shorthand for <code>url=$url</code>.</p>
 <p>This task creates a single output called <code>homepage.html</code>: You can find this file at <code>out/download/default</code> directory.
 One can simply write <code>out</code> instead of <code>(out="homepage.html")</code>: in this case the output file name will be <code>out</code>.</p>
@@ -309,7 +309,15 @@ Again, we can find the output files in <code>out/downloadGloVe/Version=XX</code>
 </blockquote>
 <p><code>-j $N</code> is a flag that specifies the number of parallel jobs to run. Here we run 4 jobs in parallel.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="composing-parameterized-tasks"><a class="header" href="#composing-parameterized-tasks">Composing parameterized tasks</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="classesobjects"><a class="header" href="#classesobjects">Classes/Objects</a></h1>
+<p>In Hypermake, sometimes it is needed to bundle certain definitions together so that it can be reused.
+This forms an <code>object</code> (or <em>modules</em>, since a module can be seen as a singleton object):</p>
+<pre><code>object my_obj:
+  def x(...):
+  def y(...):
+  
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
 <p>In Hypermake, a task can be decorated with some decorators, effectively modifying its behavior. This can support</p>
 <ul>
 <li>Running with different shell;</li>
@@ -317,38 +325,40 @@ Again, we can find the output files in <code>out/downloadGloVe/Version=XX</code>
 <li>Running through some cluster submission systems;</li>
 <li>etc.</li>
 </ul>
-<p>The general syntax for defining a decorator is:</p>
-<pre><code class="language-shell">def &lt;decoratorName&gt;(&lt;arguments&gt;) &lt;- input=&lt;internalScriptName&gt;:
-  &lt;script&gt;
+<p>A decorator in HyperMake is just an object with a <code>run</code> method that takes a script as input and runs a modified version.</p>
+<pre><code class="language-py">object decorator:
+    def run(internal_script):
+        ...
+</code></pre>
+<p>If a decorator admits parameters, it simply becomes a class:</p>
+<pre><code class="language-py">class decorator(args):
+    def run(internal_script):
+        ...
 </code></pre>
 <p>and when applying a decorator, one could write</p>
-<pre><code class="language-shell">@&lt;decoratorName&gt;(&lt;arguments&gt;)
+<pre><code class="language-shell">@decorator(args)
 task taskName(...) -&gt; out:
   ...
 </code></pre>
-<p>This will modify the task with the decorator. The script to be modified will be stored as <code>internalScriptName</code>.</p>
-<h4 id="example-1-a-simple-decorator"><a class="header" href="#example-1-a-simple-decorator">Example 1: A simple decorator</a></h4>
+<h4 id="example-1-a-decorator-that-runs-a-task-in-python"><a class="header" href="#example-1-a-decorator-that-runs-a-task-in-python">Example 1: A decorator that runs a task in Python</a></h4>
 <p>An example that let us runs a task in Python instead of shell:</p>
-<pre><code class="language-shell">def python() &lt;- internalPythonScript="script.py":
-  python $internalPythonScript
+<pre><code class="language-shell">object python:
+  def run(internal_script):
+    python $internal_script
 
 @python
 task helloWorldInPython:
   print("Hello World" + " " + "in Python!")
 </code></pre>
-<p>And we can invoke the task from the command line:</p>
-<pre><code class="language-shell">hypermake tutorial/decorators.hm run helloWorldInPython
-</code></pre>
-<p>Let's see what's happening under the hood here. The script in the task <code>helloWorldInPython</code> is decorated with <code>@python</code>.
-The script with the line <code>print(...)</code> is stored as <code>script.py</code> as directed in the decorator. Then, in shell, the command
-in the decorator is run instead: <code>python script.py</code>.</p>
-<h4 id="example-2-a-parameterized-decorator"><a class="header" href="#example-2-a-parameterized-decorator">Example 2: A parameterized decorator</a></h4>
+<p>There is no need to define this in your pipelines: it is already available in the standard library as <code>@std.run(interpreter="python")</code>.</p>
+<h4 id="example-2-decorates-a-script-to-run-in-a-conda-virtual-environment"><a class="header" href="#example-2-decorates-a-script-to-run-in-a-conda-virtual-environment">Example 2: Decorates a script to run in a Conda virtual environment</a></h4>
 <p>In Python, a task can be run in different Conda virtual environments. This is a decorator that lets us do that.</p>
-<pre><code class="language-shell">def conda(env) &lt;- internalCondaScript="conda-internal.sh":
-  eval "$(command conda 'shell.bash' 'hook' 2&gt; /dev/null)"
-  conda activate $env
-  . $internalCondaScript
-  conda deactivate
+<pre><code class="language-shell">class conda(env):
+  def run(internal_conda_script):
+    eval "$(command conda 'shell.bash' 'hook' 2&gt; /dev/null)"
+    conda activate $env
+    . $internal_conda_script
+    conda deactivate
 
 @conda(env={Env: base myenv})
 task helloWorldFromEnv:
@@ -376,15 +386,35 @@ task helloWorldInPythonFromEnv:
   import os
   print(f"Hello World in Python from {os.environ['env']}!")
 </code></pre>
-<p>!!! info inline end ""
-One can use <code>os.environ[var]</code> to get the environment variable <code>$var</code> in Python.
+<blockquote>
+<p>One can use <code>os.environ[var]</code> to get the environment variable <code>$var</code> in Python.
 First, our script is wrapped by <code>@python</code>, then <code>@conda(env)</code>.
-Recall that Hypermake passes parameters into the script as environment variables:
-we cannot use <code>$env</code> to get the Hypermake variable in Python.</p>
+Recall that HyperMake passes parameters into the script as environment variables:
+we cannot use <code>$env</code> to get the HyperMake variable in Python.</p>
+</blockquote>
+<h4 id="example-4-a-decorator-that-runs-a-compiled-language-c"><a class="header" href="#example-4-a-decorator-that-runs-a-compiled-language-c">Example 4: A decorator that runs a compiled language: C</a></h4>
+<p>We can also create a decorator that runs a task in C. Since C is a compiled language, we need to compile the script first.</p>
+<pre><code class="language-python">object gcc:
+  def run(internal_c_script):
+    ln -s $internal_c_script source.c
+    gcc source.c -o source.out
+    ./source.out
+</code></pre>
+<p>Now we can do fun things: write C scripts in HyperMake!</p>
+<pre><code class="language-c">@gcc
+task print(input="abcde"):
+  #include &lt;stdio.h&gt;
+  #include &lt;stdlib.h&gt;
+  int main() {
+    char* input = getenv("input");
+    printf("%s\n", input);
+    return 0;
+  }
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="packages"><a class="header" href="#packages">Packages</a></h1>
-<p>In Hypermake, packages are special tasks that builds a software package.
+<p>In HyperMake, packages are special tasks that builds a software package.
 They can depends on other packages but not tasks, and will be built differently on different environments (see next tutorial).</p>
-<p>A package is defined as follows:</p>
+<p>A package is defined as follows (note that a package can only have exactly 1 output):</p>
 <pre><code>package $packageName -&gt; $packageOutputName:
   # build script
 </code></pre>
@@ -410,28 +440,16 @@ For example, if an evaluation task requires this package, one can write</p>
 <pre><code class="language-bash">import std
 package pack1 = std.symlink(path=$localDir)
 </code></pre>
-<h4 id="example-2-cloning-from-a-remote-repository"><a class="header" href="#example-2-cloning-from-a-remote-repository">Example 2: Cloning from a remote repository</a></h4>
-<pre><code class="language-bash">package pack2 -&gt; out:
-  git clone $repo out
-</code></pre>
-<h4 id="example-3-call-its-makefile-after-cloning-from-a-repo"><a class="header" href="#example-3-call-its-makefile-after-cloning-from-a-repo">Example 3: Call its Makefile after cloning from a repo</a></h4>
-<pre><code class="language-bash">package pack3(repo=$) -&gt; out:
+<h4 id="example-2-cloning-from-a-remote-repository-and-build-it"><a class="header" href="#example-2-cloning-from-a-remote-repository-and-build-it">Example 2: Cloning from a remote repository and build it</a></h4>
+<pre><code class="language-bash">package pack2(repo=$) -&gt; out:
   git clone $repo out
   cd out
   make
 </code></pre>
-<h4 id="example-4-creates-a-conda-environment-from-a-python-package"><a class="header" href="#example-4-creates-a-conda-environment-from-a-python-package">Example 4: Creates a Conda environment from a Python package</a></h4>
-<pre><code class="language-bash">package pack4(pythonPackage=$) -&gt; out:
+<h4 id="example-3-creates-a-conda-environment-from-a-python-package"><a class="header" href="#example-3-creates-a-conda-environment-from-a-python-package">Example 3: Creates a Conda environment from a Python package</a></h4>
+<pre><code class="language-bash">package pack3(pythonPackage=$) -&gt; out:
   mkdir -p $out
   conda env create -p $out -f $pythonPackage/environment.yml
-</code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="classesobjects"><a class="header" href="#classesobjects">Classes/Objects</a></h1>
-<p>In Hypermake, sometimes it is needed to bundle certain definitions together so that it can be reused.
-This forms an <code>object</code> (or <em>modules</em>, since a module can be seen as a singleton object):</p>
-<pre><code>object my_obj:
-  def x(...):
-  def y(...):
-  
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="file-systems"><a class="header" href="#file-systems">File systems</a></h1>
 <p>A <strong>file system</strong> encapsulates the operations that can be performed on files and directories in a particular environment in HyperMake.</p>
@@ -454,7 +472,7 @@ and has utilities to define file systems over common remote systems such as SFTP
 </tbody></table>
 </div>
 <p>There is no need to define <code>local</code> as it is internal to HyperMake. A reference implementation of <code>local</code> is provided below.</p>
-<pre><code class="language-shell">object local:
+<pre><code class="language-py">object local:
     root = "."
     
     def read(file):
