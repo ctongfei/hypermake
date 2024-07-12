@@ -1,0 +1,401 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>BEIR - HyperMake</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="A parameterized pipeline manager">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">7.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html"><strong aria-hidden="true">8.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html"><strong aria-hidden="true">9.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html" class="active"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">HyperMake</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p>We showcase an example pipeline of running the <a href="https://beir.ai">BEIR</a> (<a href="https://datasets-benchmarks-proceedings.neurips.cc/paper_files/paper/2021/hash/65b9eea6e1cc6bb9f0cd2a47751a186f-Abstract-round2.html">paper</a>) benchmark in HyperMake.</p>
+<p>BEIR is a robust and heterogeneous evaluation benchmark for zero-shot information retrieval. It includes a diverse set of retrieval tasks, such as web search, question answering, and entity retrieval. The benchmark is designed to evaluate the generalization capabilities of retrieval models across different tasks and domains.</p>
+<p>In this example, we run the standard BM25 lexical retrieval model (with <a href="https://github.com/castorini/pyserini">Pyserini</a>) on the BEIR-14 subset (those with public licenses), evaluated with the standard <a href="https://github.com/usnistgov/trec_eval"><code>trec_eval</code></a> evaluation tool.</p>
+<p>First, let's import some modules to simplify the pipeline definition:</p>
+<pre><code class="language-bash">import conda
+import std
+</code></pre>
+<p>Next, we define some hyperparameters for the pipeline.</p>
+<p>BEIR-14 datasets, defined as a HyperMake variable:</p>
+<pre><code class="language-bash">beir_dataset = {BeirDataset:
+  msmarco trec-covid nfcorpus nq hotpotqa fiqa
+  arguana webis-touche2020 quora dbpedia-entity
+  scidocs fever climate-fever scifact
+}
+</code></pre>
+<p>Partition of the datasets that we want to evaluate (MSMARCO is evaluated on the <code>dev</code> set), defined as a HyperMake dict:</p>
+<pre><code class="language-bash">test_partition = {BeirDataset:
+  msmarco=dev trec-covid=test nfcorpus=test nq=test hotpotqa=test fiqa=test
+  arguana=test webis-touche2020=test quora=test dbpedia-entity=test
+  scidocs=test fever=test climate-fever=test scifact=test
+}
+</code></pre>
+<p>And a constant for the data downloading URL prefix:</p>
+<pre><code class="language-bash">beir_url_prefix = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets"
+</code></pre>
+<h3 id="step-1-build-the-trec_eval-tool"><a class="header" href="#step-1-build-the-trec_eval-tool">Step 1: Build the <code>trec_eval</code> tool</a></h3>
+<pre><code class="language-bash">package trec_eval -&gt; out:
+  git clone https://github.com/usnistgov/trec_eval.git $out
+  cd $out
+  make
+</code></pre>
+<h3 id="step-2-build-our-conda-environment-for-pyserini"><a class="header" href="#step-2-build-our-conda-environment-for-pyserini">Step 2: Build our Conda environment for Pyserini</a></h3>
+<pre><code class="language-bash">package pyserini = conda.create(
+  args="-c conda-forge python=3.10 openjdk=21",
+  extra_pip_packages="torch faiss-cpu pyserini"
+)
+</code></pre>
+<p>Note that both of these steps are <em>packages</em> instead of <code>tasks</code>: these are platform-dependent and should be built for each platform separately.</p>
+<h3 id="step-3-download-the-beir-datasets"><a class="header" href="#step-3-download-the-beir-datasets">Step 3: Download the BEIR datasets</a></h3>
+<pre><code class="language-bash">task raw_beir_data(beir_dataset=$, beir_url_prefix=$) -&gt; out:
+  wget -O dataset.zip $beir_url_prefix/$beir_dataset.zip
+  unzip dataset.zip
+  rm dataset.zip
+  mv $beir_dataset out
+</code></pre>
+<h3 id="step-4-convert-the-beir-datasets-to-standard-trec-format"><a class="header" href="#step-4-convert-the-beir-datasets-to-standard-trec-format">Step 4: Convert the BEIR datasets to standard TREC format</a></h3>
+<p>Here Python code is embedded directly in the task definition with <code>std.run</code> as an example, showing how to use Python code directly in the task definition.  This is useful for small scripts that are not worth putting in a separate file.  This script is actually large enough that it would be better to put it in a separate file, but for the sake of demonstration, we include it here.</p>
+<p>Note the use of <code>@conda.activate</code> to run this task in the Pyserini environment we created earlier.</p>
+<pre><code class="language-python">@conda.activate(environment=$pyserini)
+@std.run(interpreter="python")
+task beir_to_trec(data=$raw_beir_data.out) -&gt; out:
+  import os
+  import json
+  import sys
+  import csv
+  from tqdm import tqdm
+  data = os.environ['data']  # HyperMake variables are sent as environment variables
+  out = os.environ['out']
+  os.mkdir(out)
+  with open(f"{data}/corpus.jsonl") as f_in, open(f"{out}/corpus", 'w') as f_out:
+    for line in tqdm(f_in):
+      obj = json.loads(line)
+      id = obj['_id']
+      text = obj['text'].replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
+      title = obj.get('title', "")
+      trec_line = f"{id}\t{title}: {text}" if title != "" else f"{id}\t{text}" 
+      # Concatenate title and text
+      print(trec_line, file=f_out)
+  queries = {}
+  with open(f"{data}/queries.jsonl") as f:
+    for line in tqdm(f):
+      obj = json.loads(line)
+      id = obj['_id']
+      text = obj['text']
+      queries[id] = text
+  for partition in os.listdir(f"{data}/qrels"):
+    partition = os.path.splitext(partition)[0]
+    with open(f"{data}/qrels/{partition}.tsv") as f_in, open(f"{out}/{partition}.qrels", 'w') as f_out:
+      query_ids = set()
+      for row in tqdm(csv.DictReader(f_in, delimiter='\t')):
+        query_ids.add(row['query-id'])
+        print(f"{row['query-id']}\t0\t{row['corpus-id']}\t{row['score']}", file=f_out)
+    with open(f"{out}/{partition}.queries", 'w') as f:
+      for query_id in query_ids:
+        print(f"{query_id}\t{queries[query_id]}", file=f)
+</code></pre>
+<h3 id="step-5-index-the-corpus-with-pyserini"><a class="header" href="#step-5-index-the-corpus-with-pyserini">Step 5: Index the corpus with Pyserini</a></h3>
+<p>At this step, we run a Bash script under the Pyserini conda environment.</p>
+<pre><code class="language-bash">@conda.activate(environment=$pyserini)
+task index(data=$beir_to_trec.out) -&gt; out:
+  mkdir corpus
+  cat $data/corpus \
+    | jq -Rc 'inputs | split("\t") | {id: .[0], contents: .[1]}' \
+    &gt; corpus/corpus.json  # Convert TREC format to Pyserini JSON
+  python -m pyserini.index.lucene \
+    --collection JsonCollection \
+    --input corpus \
+    --index $out \
+    --generator DefaultLuceneDocumentGenerator \
+    --threads $(nproc) \
+    --storePositions \
+    --storeDocvectors \
+    --storeRaw
+</code></pre>
+<h3 id="step-6-run-bm25-retrieval-with-pyserini"><a class="header" href="#step-6-run-bm25-retrieval-with-pyserini">Step 6: Run BM25 retrieval with Pyserini</a></h3>
+<p>Again, this is run under the Pyserini conda environment.</p>
+<pre><code class="language-bash">@conda.activate(environment=$pyserini)
+task retrieve(
+  data=$beir_to_trec.out, 
+  test_partition=$, 
+  index=$index.out
+) -&gt; (out="result.qres"):
+  ln -s $data/$test_partition.queries test.tsv
+  python -m pyserini.search.lucene \
+    --index $index \
+    --topics test.tsv \
+    --output $out \
+    --batch-size 32 \
+    --hits 100 \
+    --threads $(nproc) \
+    --remove-duplicates --remove-query --bm25
+</code></pre>
+<h3 id="step-7-evaluate-the-retrieval-results-with-trec_eval"><a class="header" href="#step-7-evaluate-the-retrieval-results-with-trec_eval">Step 7: Evaluate the retrieval results with <code>trec_eval</code></a></h3>
+<pre><code class="language-bash">task evaluate(
+  data=$beir_to_trec.out,
+  result=$retrieve.out,
+  test_partition=$,
+  trec_eval=$
+) -&gt; (out="eval.txt"):
+  $trec_eval/trec_eval -m all_trec $data/$test_partition.qrels $result &gt; $out
+</code></pre>
+<h3 id="step-8-aggregate-the-evaluation-results-over-all-datasets-in-beir-14"><a class="header" href="#step-8-aggregate-the-evaluation-results-over-all-datasets-in-beir-14">Step 8: Aggregate the evaluation results over all datasets in BEIR-14</a></h3>
+<p>Assume that we care about <code>map</code>, <code>recall_100</code>, and <code>ndcg_cut_10</code> metrics from <code>trec_eval</code>.</p>
+<pre><code class="language-bash">metric = {Metric: map recall_100 ndcg_cut_10}
+</code></pre>
+<p>And now we aggregate the results over all datasets with <code>[BeirDataset: *]</code> in HyperMake:</p>
+<pre><code class="language-bash">task aggregate_metric(
+  eval_results=$evaluate[BeirDataset: *].out, 
+  metric=$
+) -&gt; (out="aggregate.txt"):
+  grep -E "^$metric " $eval_results/* &gt; $out
+</code></pre>
+<h3 id="run-the-pipeline"><a class="header" href="#run-the-pipeline">Run the pipeline</a></h3>
+<p>Now the full pipeline definition (<code>beir.hm</code>) is complete.</p>
+<p>Let's preview the pipeline with <code>hypermake list</code>:</p>
+<pre><code class="language-bash">hypermake beir.hm list
+</code></pre>
+<p>It shows the nice DAG structure of our pipeline:</p>
+<pre><code>HyperMake 0.1.0 -- A parameterized workflow manager
+Workflow file: beir.hm
+
+Variables:
+  • Metric: { map recall_100 ndcg_cut_10 }
+  • BeirDataset: { msmarco scifact trec-covid webis-touche2020 fiqa dbpedia-entity fever nfcorpus hotpotqa climate-fever scidocs nq quora arguana }
+
+Tasks:
+  • pyserini@local
+  │ • raw_beir_data[BeirDataset]
+  │ │ • trec_eval@local
+  ├─┴─│─• beir_to_trec[BeirDataset]
+  ├───│─┼─• index[BeirDataset]
+  └───│─┼─┴─• retrieve[BeirDataset]
+      └─┴───┴─• evaluate[BeirDataset]
+              └─• aggregate_metric[Metric]
+</code></pre>
+<p>We can run the pipeline with the following command:</p>
+<pre><code class="language-bash">hypermake beir.hm run "aggregate_metric[Metric: *]" -j8
+</code></pre>
+<p>Here we compute the <code>aggregate_metric</code> task for all metrics defined in <code>metric</code>, with max 8 jobs running in parallel!</p>
+<p>The results should match the results in Table 2 (BM25 column) of the <a href="https://arxiv.org/pdf/2310.08319">RepLlama paper</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../examples/examples.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../stdlib/stdlib.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../examples/examples.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../stdlib/stdlib.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+    </div>
+    </body>
+</html>
