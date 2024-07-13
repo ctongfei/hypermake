@@ -25,7 +25,7 @@ In HyperMake, a file system is an _object_ with various member functions defined
 | `fs.execute(command)`   | **(Optional)** Executes the command `$command` in `fs`'s shell. <br> This can be omitted if the file system does not support running commands.                                                                        |
 
 There is no need to define `local` as it is internal to HyperMake. A reference implementation of `local` is provided below.
-```shell
+```py
 object local:
     root = "."
     

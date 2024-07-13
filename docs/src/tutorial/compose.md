@@ -2,7 +2,7 @@
 
 A task can take parameters, and yield outputs.
 ```shell
-url = "https://news.ycombinator.org"
+url = "https://news.ycombinator.com"
 
 task download(url=$) -> (out="homepage.html"):
   wget $url -O $out
@@ -10,7 +10,7 @@ task download(url=$) -> (out="homepage.html"):
 
  > Generally, when declaring a parameter whose default argument is a variable with the same name, one can omit the argument name by just writing `$`.
 
-Running the task `download` will download the homepage of the [Hacker News](https://news.ycombinator.org). Note the parameter is declared as `url=$`: 
+Running the task `download` will download the homepage of the [Hacker News](https://news.ycombinator.com). Note the parameter is declared as `url=$`: 
 This is a shorthand for `url=$url`.
 
 This task creates a single output called `homepage.html`: You can find this file at `out/download/default` directory. 

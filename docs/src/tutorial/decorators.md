@@ -7,51 +7,54 @@ In Hypermake, a task can be decorated with some decorators, effectively modifyin
  - Running through some cluster submission systems;
  - etc.
 
-The general syntax for defining a decorator is:
+A decorator in HyperMake is just an object with a `run` method that takes a script as input and runs a modified version.
 
-```shell
-def <decoratorName>(<arguments>) <- input=<internalScriptName>:
-  <script>
+```py
+object decorator:
+    def run(internal_script):
+        ...
 ```
+If a decorator admits parameters, it simply becomes a class:
+```py
+class decorator(args):
+    def run(internal_script):
+        ...
+```
+
 and when applying a decorator, one could write
 ```shell
-@<decoratorName>(<arguments>)
+@decorator(args)
 task taskName(...) -> out:
   ...
 ```
 
-This will modify the task with the decorator. The script to be modified will be stored as `internalScriptName`.
 
-#### Example 1: A simple decorator
+#### Example 1: A decorator that runs a task in Python
 An example that let us runs a task in Python instead of shell:
 ```shell
-def python() <- internalPythonScript="script.py":
-  python $internalPythonScript
+object python:
+  def run(internal_script):
+    python $internal_script
 
 @python
 task helloWorldInPython:
   print("Hello World" + " " + "in Python!")
 ```
 
-And we can invoke the task from the command line:
-```shell
-hypermake tutorial/decorators.hm run helloWorldInPython
-```
+There is no need to define this in your pipelines: it is already available in the standard library as `@std.run(interpreter="python")`.
 
-Let's see what's happening under the hood here. The script in the task `helloWorldInPython` is decorated with `@python`.
-The script with the line `print(...)` is stored as `script.py` as directed in the decorator. Then, in shell, the command
-in the decorator is run instead: `python script.py`.
 
-#### Example 2: A parameterized decorator
+#### Example 2: Decorates a script to run in a Conda virtual environment
 
 In Python, a task can be run in different Conda virtual environments. This is a decorator that lets us do that.
 
 ```shell
-def conda(env) <- internalCondaScript="conda-internal.sh":
-  eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-  conda activate $env
-  . $internalCondaScript
-  conda deactivate
+class conda(env):
+  def run(internal_conda_script):
+    eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
+    conda activate $env
+    . $internal_conda_script
+    conda deactivate
 
 @conda(env={Env: base myenv})
 task helloWorldFromEnv:
@@ -87,8 +90,29 @@ task helloWorldInPythonFromEnv:
   print(f"Hello World in Python from {os.environ['env']}!")
 ```
 
-!!! info inline end ""
-    One can use `os.environ[var]` to get the environment variable `$var` in Python.
+> One can use `os.environ[var]` to get the environment variable `$var` in Python.
 First, our script is wrapped by `@python`, then `@conda(env)`. 
-Recall that Hypermake passes parameters into the script as environment variables: 
-we cannot use `$env` to get the Hypermake variable in Python.
+Recall that HyperMake passes parameters into the script as environment variables: 
+we cannot use `$env` to get the HyperMake variable in Python.
+
+#### Example 4: A decorator that runs a compiled language: C
+We can also create a decorator that runs a task in C. Since C is a compiled language, we need to compile the script first. 
+```python
+object gcc:
+  def run(internal_c_script):
+    ln -s $internal_c_script source.c
+    gcc source.c -o source.out
+    ./source.out
+```
+Now we can do fun things: write C scripts in HyperMake!
+```c
+@gcc
+task print(input="abcde"):
+  #include <stdio.h>
+  #include <stdlib.h>
+  int main() {
+    char* input = getenv("input");
+    printf("%s\n", input);
+    return 0;
+  }
+```

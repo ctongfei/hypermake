@@ -19,7 +19,7 @@ object Main extends App {
 
   val version = "0.1.0"
 
-  lazy val headerMessage = s"${B("HyperMake")} $version -- A parameterized workflow manager"
+  lazy val headerMessage = s"${B("HyperMake")} $version -- A parameterized pipeline manager"
 
   lazy val helpMessage = {
     s"""

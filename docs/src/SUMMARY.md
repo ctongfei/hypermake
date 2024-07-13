@@ -8,9 +8,9 @@
  - [Parameters](tutorial/branch.md) 
  - [Parameterized pipelines](tutorial/parameterized-compose.md)
  - [Subroutines](tutorial/subroutines.md)
+ - [Modules, objects, classes](tutorial/modules.md)
  - [Decorators](tutorial/decorators.md)
  - [Packages](tutorial/packages.md)
- - [Modules](tutorial/modules.md)
  - [File systems](tutorial/filesys.md)
 
 # Example pipelines

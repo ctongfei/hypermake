@@ -179,7 +179,7 @@ hypermake beir.hm list
 
 It shows the nice DAG structure of our pipeline:
 ```
-HyperMake 0.1.0 -- A parameterized workflow manager
+HyperMake 0.1.0 -- A parameterized pipeline manager
 Workflow file: beir.hm
 
 Variables:

@@ -1,9 +1,9 @@
 # Packages
 
-In Hypermake, packages are special tasks that builds a software package. 
+In HyperMake, packages are special tasks that builds a software package. 
 They can depends on other packages but not tasks, and will be built differently on different environments (see next tutorial).
 
-A package is defined as follows:
+A package is defined as follows (note that a package can only have exactly 1 output):
 ```
 package $packageName -> $packageOutputName:
   # build script
@@ -37,23 +37,17 @@ import std
 package pack1 = std.symlink(path=$localDir)
 ```
 
-#### Example 2: Cloning from a remote repository
+#### Example 2: Cloning from a remote repository and build it
 ```bash
-package pack2 -> out:
-  git clone $repo out
-```
-
-#### Example 3: Call its Makefile after cloning from a repo
-```bash
-package pack3(repo=$) -> out:
+package pack2(repo=$) -> out:
   git clone $repo out
   cd out
   make
 ```
 
-#### Example 4: Creates a Conda environment from a Python package
+#### Example 3: Creates a Conda environment from a Python package
 ```bash
-package pack4(pythonPackage=$) -> out:
+package pack3(pythonPackage=$) -> out:
   mkdir -p $out
   conda env create -p $out -f $pythonPackage/environment.yml
 ```

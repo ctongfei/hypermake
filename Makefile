@@ -27,7 +27,7 @@ build-docs:
 	mdbook build
 
 # Credit to https://github.com/kg4zow/mdbook-template/blob/main/Makefile
-gh-deploy: build-docs
+gh-deploy-docs: build-docs
 	set -ex ; \
 	WORK="$$( mktemp -d )" ; \
 	VER="$$( git describe --always --tags --dirty )" ; \
@@ -42,4 +42,4 @@ gh-deploy: build-docs
 	git worktree remove "$$WORK" ; \
 	git push origin gh-pages
 
-.PHONY: all clean install build-docs gh-deploy
+.PHONY: all clean install build-docs gh-deploy-docs
