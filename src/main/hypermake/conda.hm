@@ -1,7 +1,7 @@
 # Creates a Conda environment with a list of packages.
-def create(args, extra_pip_packages="") -> out:
+def create(packages, extra_args="", extra_pip_packages="") -> out:
   mkdir -p $out
-  conda create -y -p $out $args
+  conda create -y -p $out $extra_args $packages
   if [ ! -z "$extra_pip_packages" ]
   then
     $out/bin/pip install $extra_pip_packages

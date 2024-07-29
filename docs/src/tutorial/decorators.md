@@ -1,118 +1,128 @@
 # Decorators
 
-In Hypermake, a task can be decorated with some decorators, effectively modifying its behavior. This can support 
+Now let's convert our downloaded BEIR data to the standard TREC format.
+This format is standard for information retrieval tasks.
+There are 3 kinds of files in the TREC format: 
+ - `*.queries`, a TSV file with two columns, query id and query text;
+ - `*.qrels`, a TSV file with four columns, query id, iteration id, document id, and relevance label;
+ - `corpus`, a TSV file with two columns, document id and document text.
 
- - Running with different shell;
- - Running in specific virtual environments;
- - Running through some cluster submission systems;
- - etc.
-
-A decorator in HyperMake is just an object with a `run` method that takes a script as input and runs a modified version.
-
-```py
-object decorator:
-    def run(internal_script):
-        ...
-```
-If a decorator admits parameters, it simply becomes a class:
-```py
-class decorator(args):
-    def run(internal_script):
-        ...
-```
-
-and when applying a decorator, one could write
-```shell
-@decorator(args)
-task taskName(...) -> out:
-  ...
-```
-
-
-#### Example 1: A decorator that runs a task in Python
-An example that let us runs a task in Python instead of shell:
-```shell
-object python:
-  def run(internal_script):
-    python $internal_script
-
-@python
-task helloWorldInPython:
-  print("Hello World" + " " + "in Python!")
-```
-
-There is no need to define this in your pipelines: it is already available in the standard library as `@std.run(interpreter="python")`.
-
-
-#### Example 2: Decorates a script to run in a Conda virtual environment
-
-In Python, a task can be run in different Conda virtual environments. This is a decorator that lets us do that.
-
-```shell
-class conda(env):
-  def run(internal_conda_script):
-    eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-    conda activate $env
-    . $internal_conda_script
-    conda deactivate
-
-@conda(env={Env: base myenv})
-task helloWorldFromEnv:
-  python -c "print('Hello World in Python from $env!')"
-```
-
-Note that in the task `helloWorldFromEnv`, the decorator `conda` has a parameterized argument: `env={Env: base myenv}`.
-We can invoke both cases of the task `helloWorldFromEnv`:
-```shell
-hypermake tutorial/decorators.hm run 'helloWorldFromEnv[Env: *]'
-```
-
-We will see both lines
-```
-Hello World in Python from base!
-Hello World in Python from myenv!
-```
-output to the terminal.
-
-#### Example 3: Chaining decorators
-We have now created two decorators:
-
- - `@python` that executes a script using Python instead of Bash as the interpreter;
- - `@conda` that runs a task in a specific Conda virtual environment.
-
-Can we compose these decorators? Yes.
+This conversion involves some complex processing, so we will first write a Python script `beir_to_trec.py` to do this.
 
 ```python
-@conda(env={Env: base myenv})
-@python
-task helloWorldInPythonFromEnv:
-  import os
-  print(f"Hello World in Python from {os.environ['env']}!")
+import os
+import json
+import sys
+import csv
+from tqdm import tqdm
+data = sys.argv[1]  # The directory containing the downloaded BEIR data
+out = sys.argv[2]  # The directory to write the TREC format data
+os.mkdir(out)
+with open(f"{data}/corpus.jsonl") as f_in, open(f"{out}/corpus", 'w') as f_out:
+  for line in tqdm(f_in):
+    obj = json.loads(line)
+    id = obj['_id']
+    text = obj['text'].replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
+    title = obj.get('title', "")
+    trec_line = f"{id}\t{title}: {text}" if title != "" else f"{id}\t{text}" 
+    # Concatenate title and text
+    print(trec_line, file=f_out)
+queries = {}
+with open(f"{data}/queries.jsonl") as f:
+  for line in tqdm(f):
+    obj = json.loads(line)
+    id = obj['_id']
+    text = obj['text']
+    queries[id] = text
+for partition in os.listdir(f"{data}/qrels"):
+  partition = os.path.splitext(partition)[0]
+  with open(f"{data}/qrels/{partition}.tsv") as f_in, open(f"{out}/{partition}.qrels", 'w') as f_out:
+    query_ids = set()
+    for row in tqdm(csv.DictReader(f_in, delimiter='\t')):
+      query_ids.add(row['query-id'])
+      print(f"{row['query-id']}\t0\t{row['corpus-id']}\t{row['score']}", file=f_out)
+  with open(f"{out}/{partition}.queries", 'w') as f:
+    for query_id in query_ids:
+      print(f"{query_id}\t{queries[query_id]}", file=f)
 ```
+Now we can write a task to run this script.
 
-> One can use `os.environ[var]` to get the environment variable `$var` in Python.
-First, our script is wrapped by `@python`, then `@conda(env)`. 
-Recall that HyperMake passes parameters into the script as environment variables: 
-we cannot use `$env` to get the HyperMake variable in Python.
+```bash
+task beir_to_trec(data=$raw_beir_data.out) -> out:
+  python beir_to_trec.py $data out
+```
+This task takes the output of the `raw_beir_data` task as input and produces a directory `out` containing the TREC format data.
 
-#### Example 4: A decorator that runs a compiled language: C
-We can also create a decorator that runs a task in C. Since C is a compiled language, we need to compile the script first. 
+But to run this task, before invoking `hypermake` from the command line, we need to first activate the Conda environment that contains the Python dependencies required by the script `beir_to_trec.py`. This is not ideal -- recall that we just built the `pyserini` Conda environment in the previous section. We would like to run this task in the `pyserini` environment.
+
+Let's decorate this task with a `@conda` **decorator** that activates the `pyserini` environment.
+
 ```python
-object gcc:
-  def run(internal_c_script):
-    ln -s $internal_c_script source.c
-    gcc source.c -o source.out
-    ./source.out
+import conda
+
+@conda.activate(environment=$pyserini)
+task beir_to_trec(data=$raw_beir_data.out) -> out:
+    python beir_to_trec.py $data out
 ```
-Now we can do fun things: write C scripts in HyperMake!
-```c
-@gcc
-task print(input="abcde"):
-  #include <stdio.h>
-  #include <stdlib.h>
-  int main() {
-    char* input = getenv("input");
-    printf("%s\n", input);
-    return 0;
-  }
+
+> What is the magic behind this decorator? A HyperMake decorator takes a script and returns a new wrapped script.
+  To implement your own decorator, you need an object with a `run` function.
+> If you are curious, you can find the implementation of the `conda.activate` decorator [here](https://github.com/ctongfei/hypermake/blob/main/src/main/hypermake/conda.hm).
+
+### Next steps
+
+Let's continue building our pipeline, starting from indexing the corpus with Pyserini.
+
+
+At this step, we run a Bash script under the Pyserini conda environment.
+```python
+@conda.activate(environment=$pyserini)
+task index(data=$beir_to_trec.out) -> out:
+  mkdir corpus
+  cat $data/corpus \
+    | jq -Rc 'inputs | split("\t") | {id: .[0], contents: .[1]}' \
+    > corpus/corpus.json  # Convert TREC format to Pyserini JSON
+  python -m pyserini.index.lucene \
+    --collection JsonCollection \
+    --input corpus \
+    --index $out \
+    --generator DefaultLuceneDocumentGenerator \
+    --threads $(nproc) \
+    --storePositions \
+    --storeDocvectors \
+    --storeRaw
 ```
+
+Run the actual retrieving with Pyserini.
+```python
+@conda.activate(environment=$pyserini)
+task retrieve(
+  data=$beir_to_trec.out, 
+  test_partition=$, 
+  index=$index.out
+) -> (out="result.qres"):
+  ln -s $data/$test_partition.queries test.tsv
+  python -m pyserini.search.lucene \
+    --index $index \
+    --topics test.tsv \
+    --output $out \
+    --batch-size 32 \
+    --hits 100 \
+    --threads $(nproc) \
+    --remove-duplicates --remove-query --bm25
+```
+
+Evaluate the retrieval results with `trec_eval`.
+### Step 7: Evaluate the retrieval results with `trec_eval`
+```bash
+task evaluate(
+  data=$beir_to_trec.out,
+  result=$retrieve.out,
+  test_partition=$,
+  trec_eval=$
+) -> (out="eval.txt"):
+  $trec_eval/trec_eval -m all_trec $data/$test_partition.qrels $result > $out
+```
+
+> Here we referenced the output of the `trec_eval` package as `$trec_eval`. This is because the `trec_eval` package is a separate package that we built in the previous section. 
+  We can refer to the output of a package directly by its name.

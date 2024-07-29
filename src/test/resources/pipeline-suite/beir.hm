@@ -27,7 +27,8 @@ package trec_eval -> out:
 
 # Creates a conda environment that contains the pyserini package.
 package pyserini = conda.create(
-  args="-c conda-forge python=3.10 openjdk=21",
+  packages="python=3.10 openjdk=21",
+  extra_args="-c conda-forge",
   extra_pip_packages="torch faiss-cpu pyserini"
 )
 

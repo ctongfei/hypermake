@@ -1,21 +1,20 @@
 # HyperMake
 [Introduction](index.md)
  - [Installation](install.md)
+ - [Tutorial](tutorial/tutorial-index.md)
+   - [Hello, world!](tutorial/hello.md)
+   - [Parameters](tutorial/params.md)
+   - [Task composition](tutorial/compose.md)
+   - [Packages](tutorial/pack.md)
+   - [Decorators](tutorial/decorators.md)
+   - [Reduction](tutorial/reduce.md)
+   - [Plans](tutorial/plans.md)
 
-# Tutorial
- - [Hello world!](tutorial/hello.md)
- - [Inputs & outputs](tutorial/compose.md)
- - [Parameters](tutorial/branch.md) 
- - [Parameterized pipelines](tutorial/parameterized-compose.md)
- - [Subroutines](tutorial/subroutines.md)
- - [Modules, objects, classes](tutorial/modules.md)
- - [Decorators](tutorial/decorators.md)
- - [Packages](tutorial/packages.md)
- - [File systems](tutorial/filesys.md)
-
-# Example pipelines
- - [Examples](examples/examples.md)
-   - [BEIR](examples/beir.md)
+# Language reference
+ - [Modules](lang/modules.md)
+ - [Decorators](lang/decorators.md)
+ - [Packages](lang/packages.md)
+ - [File systems](lang/filesys.md)
 
 # Library reference
  - [Standard library](stdlib/stdlib.md)

@@ -32,7 +32,7 @@ object Main extends App {
        |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
        |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
        |  -H, --help                 : Prints this message and exit.
-       |  -V, --version              : Shows Hypermake version and exit.
+       |  -V, --version              : Shows HyperMake version and exit.
        |
        | ${B("Commands:")}
        |  list                       : Lists the variables and tasks in this pipeline.
@@ -40,7 +40,7 @@ object Main extends App {
        |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
        |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
        |  invalidate ${V("$targets")}        : Invalidates the given tasks or plans.
-       |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of Hypermake is unexpectedly killed.
+       |  unlock ${V("$targets")}            : Unlocks the given tasks if another instance of HyperMake is unexpectedly killed.
        |  remove ${V("$targets")}            : Removes the output of the given tasks or plans.
        |  mark-as-done ${V("$targets")}      : Marks the given tasks as if they have exited normally.
        |
@@ -51,6 +51,7 @@ object Main extends App {
        |  -v, --verbose              : Verbose mode.
        |  -y, --yes                  : Automatic "yes" to prompts.
        |""".stripMargin
+    // TODO: timestamp (-t) and checksum (-c)
   }
 
   def run(args: List[String]) = {
