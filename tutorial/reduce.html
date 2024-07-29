@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Examples - HyperMake</title>
+        <title>Reduction - HyperMake</title>
 
 
         <!-- Custom HTML head -->
@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html"><strong aria-hidden="true">7.</strong> Modules, objects, classes</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">8.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html"><strong aria-hidden="true">9.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html" class="active"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="../tutorial/params.html"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="../tutorial/pack.html"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/reduce.html" class="active"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="../tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="../lang/modules.html"><strong aria-hidden="true">3.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../lang/decorators.html"><strong aria-hidden="true">4.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../lang/packages.html"><strong aria-hidden="true">5.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../lang/filesys.html"><strong aria-hidden="true">6.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">7.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">7.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">7.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">7.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">7.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">7.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -175,16 +175,38 @@
 
                 <div id="content" class="content">
                     <main>
-                        
+                        <h1 id="reduction"><a class="header" href="#reduction">Reduction</a></h1>
+<p>At this point we have a pipeline that retrieves documents from a corpus using Pyserini. We have also evaluated the retrieval results with <code>trec_eval</code>. But there are a lot of runs: one for each dataset in BEIR-14. We would like to aggregate the evaluation results.</p>
+<p>This is done by <strong>reduction</strong> in HyperMake: think this as <code>reduce</code> in functional programming, or <code>.max(dim=i)</code> in a tensor processing library.</p>
+<p>Recall that at the end of the pipeline we have built thus far, the <code>trec_eval</code> output files are in the format of <code>eval.txt</code> for each dataset, under the variable <code>$evaluate.out</code>. We would like to aggregate the results over all datasets in BEIR-14. Additionally, there is more than 1 metric that we cared: for example, <code>ndcg_cut_10</code>, <code>recall_100</code>, <code>map</code>, and <code>mrr</code>.</p>
+<p>We can define a new task <code>aggregate_metric</code> that takes the evaluation results of all datasets and aggregates them. The task definition is as follows:</p>
+<pre><code class="language-python">metric = {Metric: ndcg_cut_10 recall_100 map mrr}
+
+task aggregate_metric(
+  eval_results=$evaluate[BeirDataset: *].out, 
+  metric=$
+) -&gt; (out="aggregate.txt"):
+  grep -E "^$metric " $eval_results/* &gt; $out
+</code></pre>
+<p>Note here that we used <code>$evaluate[BeirDataset: *].out</code> to refer to the outputs of all <code>evaluate</code> tasks for each dataset in BEIR-14. The parameter <code>eval_results</code>, while logically is a dictionary from configurations to files, will be realized as a folder of files for the Shell script.</p>
+<blockquote>
+<p>HyperMake maps a dictionary to a folder of files in the Shell script. This is a common pattern in HyperMake to handle multiple outputs.</p>
+<ul>
+<li><code>dict[key]</code> would be <code>$d/$key</code> in Shell.</li>
+<li><code>dict.values()</code> would be <code>$d/*</code> in Shell.</li>
+<li><code>for key in dict</code> would be <code>for f in $d/*</code> in Shell.</li>
+</ul>
+</blockquote>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../tutorial/filesys.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tutorial/decorators.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../examples/beir.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../tutorial/plans.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -194,11 +216,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../tutorial/filesys.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tutorial/decorators.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../examples/beir.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../tutorial/plans.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

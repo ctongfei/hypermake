@@ -91,7 +91,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded "><a href="install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="tutorial/modules.html"><strong aria-hidden="true">7.</strong> Modules, objects, classes</a></li><li class="chapter-item expanded "><a href="tutorial/decorators.html"><strong aria-hidden="true">8.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="tutorial/packages.html"><strong aria-hidden="true">9.</strong> Packages</a></li><li class="chapter-item expanded "><a href="tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded "><a href="install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="tutorial/params.html"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="tutorial/pack.html"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="tutorial/reduce.html"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="lang/modules.html"><strong aria-hidden="true">3.</strong> Modules</a></li><li class="chapter-item expanded "><a href="lang/decorators.html"><strong aria-hidden="true">4.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="lang/packages.html"><strong aria-hidden="true">5.</strong> Packages</a></li><li class="chapter-item expanded "><a href="lang/filesys.html"><strong aria-hidden="true">6.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="stdlib/stdlib.html"><strong aria-hidden="true">7.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="stdlib/std.html"><strong aria-hidden="true">7.1.</strong> std</a></li><li class="chapter-item expanded "><a href="stdlib/aws.html"><strong aria-hidden="true">7.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="stdlib/az.html"><strong aria-hidden="true">7.3.</strong> az</a></li><li class="chapter-item expanded "><a href="stdlib/conda.html"><strong aria-hidden="true">7.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="stdlib/ssh.html"><strong aria-hidden="true">7.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -178,11 +178,12 @@
                     <main>
                         <h1 id="hypermake"><a class="header" href="#hypermake">HyperMake</a></h1>
 <p><code>HyperMake</code> is a parameterized pipeline definition language (think of a <code>make</code> where tasks can be parameterized) heavily inspired by <a href="https://github.com/jhclark/ducttape">Ducttape</a>.</p>
-<p>It supports the following features:</p>
 <ul>
-<li><strong>Parameterization of tasks:</strong> a task can be of multiple versions (e.g. in a ML pipeline, a task can be of different hyperparameters)</li>
-<li><strong>Minimal juggling</strong>: Inputs and outputs are just files/symlinks, and arguments are all passed as environment variables</li>
-<li><strong>Automatic parallelization:</strong> based on the dependency DAG</li>
+<li><strong>Shell scripting</strong>: Write tasks in plain Bash, just like <code>make</code>. No Python or YAML for defining tasks.</li>
+<li><strong>Cached intermediate results</strong>: Intermediate results are cached, so that if a task fails, it can be re-run from the last successful task.</li>
+<li><strong>Parameterization of tasks:</strong> a task can be of multiple versions (e.g. in a ML pipeline, a task can be of different hyperparameters).</li>
+<li><strong>Minimal juggling</strong>: Inputs and outputs are just files/symlinks, and arguments are all passed as environment variables. Tasks are realized as a child process.</li>
+<li><strong>Automatic parallelization:</strong> based on the dependency DAG.</li>
 <li><strong>Cloud-agnostic:</strong> tasks can be run locally, or on a cloud (e.g. AWS, Azure), with minimal changes to the pipeline.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
@@ -204,18 +205,32 @@ make install
 </code></pre>
 <p>This will build the HyperMake binary and install it locally to <code>$HOME/.local/bin/hypermake</code>.
 To install it elsewhere, simply modify the <code>$PREFIX</code> variable in the <code>Makefile</code>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="run-a-simple-hello-world-task"><a class="header" href="#run-a-simple-hello-world-task">Run a simple "Hello, world" task</a></h1>
-<p>First let's define our first task (without any inputs or outputs declared!):</p>
-<pre><code class="language-shell">task hello:
+<div style="break-before: page; page-break-before: always;"></div><p>In the following sections we will first glimpse into HyperMake by running a simple "Hello, world" task.</p>
+<p>Then, we will gradually introduce more advanced features of HyperMake to build a pipeline for
+running the <a href="https://beir.ai">BEIR</a> (<a href="https://datasets-benchmarks-proceedings.neurips.cc/paper_files/paper/2021/hash/65b9eea6e1cc6bb9f0cd2a47751a186f-Abstract-round2.html">paper</a>) benchmark<sup class="footnote-reference"><a href="#beir">1</a></sup>.</p>
+<div class="footnote-definition" id="beir"><sup class="footnote-definition-label">1</sup>
+<p>BEIR is a robust and heterogeneous evaluation benchmark for zero-shot information retrieval. It includes a diverse set of retrieval tasks, such as web search, question answering, and entity retrieval. The benchmark is designed to evaluate the generalization capabilities of retrieval models across different tasks and domains.</p>
+</div>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="hello-world"><a class="header" href="#hello-world">Hello, world!</a></h1>
+<p>To introduce HyperMake, let's define our first task:</p>
+<pre><code class="language-makefile">task hello:
   echo "Hello, world!"
 </code></pre>
 <p>Save this file as <code>hello.hm</code>.</p>
+<p>We have created our first HyperMake script file that contains a single task.
+This script defines a task named <code>hello</code> that prints <code>Hello, world!</code> to the console. There is no input or output for this task.</p>
 <blockquote>
 <p>Note the syntax here: A code block starts after the <code>:</code> at the end of the task signature.
-A code block is a consecutive list of <strong>indented</strong> lines of scripts, where each line must start with at least 2 spaces.</p>
+A code block is a consecutive list of <em><strong>indented</strong></em> lines of scripts, where each line must start with at least <em><strong>2 spaces</strong></em>.
+By default, the script is written in Bash.</p>
 </blockquote>
-<p>We have created our first HyperMake script file that contains a single task.
-Now let's run this task!</p>
+<p>If you are familiar with <code>make</code>, you can think of a task as a <code>make</code> rule. The task above written as a Makefile would just be</p>
+<pre><code class="language-makefile">hello:
+    echo "Hello, world!"
+
+.PHONY: hello  # since this task does not produce any output
+</code></pre>
+<p>Now let's run this task!</p>
 <p>Execute the following command in your shell:</p>
 <pre><code class="language-shell">  hypermake hello.hm run hello 
 </code></pre>
@@ -223,93 +238,323 @@ Now let's run this task!</p>
 <blockquote>
 <p>The basic command line usage is <code>hypermake $script &lt;subtask&gt; $target</code>. Here the <code>&lt;subtask&gt;</code> is simply <code>run</code>.</p>
 </blockquote>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="inputs-outputs-and-composing-tasks"><a class="header" href="#inputs-outputs-and-composing-tasks">Inputs, outputs, and composing tasks</a></h1>
-<p>A task can take parameters, and yield outputs.</p>
-<pre><code class="language-shell">url = "https://news.ycombinator.com"
-
-task download(url=$) -&gt; (out="homepage.html"):
-  wget $url -O $out
-</code></pre>
-<blockquote>
-<p>Generally, when declaring a parameter whose default argument is a variable with the same name, one can omit the argument name by just writing <code>$</code>.</p>
-</blockquote>
-<p>Running the task <code>download</code> will download the homepage of the <a href="https://news.ycombinator.com">Hacker News</a>. Note the parameter is declared as <code>url=$</code>:
-This is a shorthand for <code>url=$url</code>.</p>
-<p>This task creates a single output called <code>homepage.html</code>: You can find this file at <code>out/download/default</code> directory.
-One can simply write <code>out</code> instead of <code>(out="homepage.html")</code>: in this case the output file name will be <code>out</code>.</p>
-<p>Now, we'd like to extract all the headlines: their URLs and titles.
-We create another task that takes the output of the <code>download</code> task as input:</p>
-<pre><code class="language-shell">task get_titles(html=$download.out) -&gt; out:
-  cat $html \
-  | perl -ne 'if (/&lt;a href="(.*?)" class="storylink"&gt;(.*?)&lt;\/a&gt;/) { print "$1\t$2\n" }' \
-  &gt; $out
-</code></pre>
-<blockquote>
-<p>Note that to refer to the output of a task, one can use the syntax <code>$taskName.$outputName</code>. Here <code>$download.out</code> is the <code>out</code> output of the <code>download</code> task.</p>
-</blockquote>
-<p>It creates the following pipeline:</p>
-<pre class="mermaid">flowchart LR
-    download --&gt; get_titles
-</pre>
-<p>Running the following command</p>
-<pre><code class="language-shell">hypermake tutorial/ycomb.hm run get_titles
-</code></pre>
-<p>will sequentially run the two dependent jobs: first <code>download</code> then <code>get_titles</code>,
-and the resulting TSV table will be located in <code>out/get_titles/default/out</code>.</p>
-<p>In the directory <code>out/get_titles/default</code>, you can find the following files that may be of interest:</p>
-<ul>
-<li><code>out</code>: the resulting TSV table</li>
-<li><code>script</code>: the script that was used to run the task</li>
-<li><code>stdout</code>: the standard output of the task</li>
-<li><code>stderr</code>: the standard error of the task</li>
-<li><code>args</code>: A shell script that contains the arguments that were used to run the task</li>
-<li><code>exitcode</code>: A file that contains the exit code of the task</li>
-</ul>
-<p>To re-run the task in shell, you can use the following command. It should behave the same as if directly running from HyperMake.</p>
-<pre><code class="language-shell">. args &amp;&amp; . script
-</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="parameters"><a class="header" href="#parameters">Parameters</a></h1>
-<p>We'd like to <em>parameterize</em> our tasks: there could be multiple versions of a task.
-This could be different datasets, different preprocessing pipelines, different pretrained models, etc.
-Hypermake models these configurations as <strong>parameters</strong> to values and tasks.</p>
-<p>For example, we are here downloading various versions of the <a href="https://nlp.stanford.edu/projects/glove/">GloVe embeddings</a>
-from the Stanford NLP website:</p>
-<pre><code class="language-shell">gloveUrl = {Version:
-  6b="http://nlp.stanford.edu/data/glove.6B.zip"
-  cc42b="http://nlp.stanford.edu/data/glove.42B.300d.zip"
-  cc840b="http://nlp.stanford.edu/data/glove.840B.300d.zip"
-  twitter27b="http://nlp.stanford.edu/data/glove.twitter.27B.zip"
+<p>For the following tutorial sections, we will gradually build our <code>beir.hm</code> pipeline.</p>
+<p>In any ML pipeline, one starts with data. In this example, we will use the BEIR-14 subset (those with public licenses) of the BEIR benchmark.</p>
+<p>We declare these datasets as a pipeline <strong>parameter</strong> <code>BeirDataset</code>:</p>
+<pre><code class="language-python">beir_dataset = {BeirDataset: 
+    msmarco scifact trec-covid webis-touche2020 
+    fiqa dbpedia-entity fever nfcorpus hotpotqa 
+    climate-fever scidocs nq quora arguana
 }
+</code></pre>
+<blockquote>
+<p>Note the syntax for declaring a parameter: <code>{ParamName: key0 key1 ...}</code>. For each parameter, <strong>the first key</strong> is considered the <strong>default case</strong> -- here <code>msmarco</code>.</p>
+</blockquote>
+<p>Now we want to download the raw data from their official location.</p>
+<pre><code class="language-python">beir_url_prefix = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets"
+</code></pre>
+<p>We proceed to write the first task of our pipeline: downloading the raw data and unzip it.</p>
+<pre><code class="language-bash">task raw_beir_data(beir_dataset=$, beir_url_prefix=$) -&gt; out:
+  wget -O dataset.zip $beir_url_prefix/$beir_dataset.zip
+  unzip dataset.zip
+  rm dataset.zip
+  mv $beir_dataset out
+</code></pre>
+<p>We declared a task that takes two inputs: <code>beir_dataset</code> and <code>beir_url_prefix</code>, and produces an output directory <code>out</code>.</p>
+<blockquote>
+<p>The syntax <code>name=$</code> is a shorthand for <code>name=$name</code>. Here, <code>beir_dataset=$</code> introduced the <code>beir_dataset</code> parameter as an input to the task.</p>
+</blockquote>
+<p>The task is considered <em>complete</em> when its output directory <code>out</code> exists after the task exits with a zero status code.</p>
+<blockquote>
+<p>In HyperMake, the success of a task is determined by</p>
+<ul>
+<li>the existence of all of its specified outputs</li>
+<li><strong>AND</strong> the zero exit status code of the task script.</li>
+</ul>
+</blockquote>
+<p>Note that</p>
+<ul>
+<li><code>beir_dataset</code> is a <strong>parameterized value</strong>: it can take any of the values in the <code>BeirDataset</code> parameter;</li>
+<li><code>beir_url_prefix</code> is a <em>singleton</em> (non-parameterized) value.</li>
+</ul>
+<p>Hence the task <code>raw_beir_data</code> is parameterized with <strong>all the parameters in its inputs</strong>. Consider
+<code>raw_beir_data</code> not a single task, but a <strong>tensor</strong> of tasks, where it has dimension 1: the <code>BeirDataset</code> parameter.</p>
+<h3 id="invoking-the-task"><a class="header" href="#invoking-the-task">Invoking the task</a></h3>
+<p>Let's invoke this task. To download the <code>msmarco</code> dataset, we run:</p>
+<pre><code class="language-bash">hypermake beir.hm run "raw_beir_data[BeirDataset:msmarco]"
+</code></pre>
+<p>We will find the downloaded dataset in the <code>out/raw_beir_data/default</code> directory.</p>
+<blockquote>
+<p>Note the task indexing syntax: <code>task[Param0: key0, Param0: key1, ...]</code>.</p>
+</blockquote>
+<p>Download another one:</p>
+<pre><code class="language-bash">hypermake beir.hm run "raw_beir_data[BeirDataset:scifact]"
+</code></pre>
+<p>We will find the downloaded dataset in the <code>out/raw_beir_data/BeirDataset=scifact</code> directory.</p>
+<blockquote>
+<p>The output directory will be <code>out/&lt;task-name&gt;/&lt;non-default-params&gt;</code>, where <code>&lt;non-default-params&gt;</code> is the URL percent-encoding of the key-value pairs.</p>
+</blockquote>
+<p>Clearly we do not wish to invoke the downloading one by one. Let's use the wildcard <code>*</code>:</p>
+<pre><code class="language-bash">hypermake beir.hm run "raw_beir_data[BeirDataset: *]" -j8
+</code></pre>
+<blockquote>
+<p>The <code>-j</code> flag specifies the number of parallel jobs to run. Here we run 8 jobs in parallel.</p>
+</blockquote>
+<p>At this point we have downloaded all the datasets. We will proceed to the next steps in the following sections.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="task-composition"><a class="header" href="#task-composition">Task composition</a></h1>
+<p>In the previous section, we saw how to define a task with parameters. In this section, we will see how to compose tasks together to form a pipeline.</p>
+<p>To run the BEIR benchmark with the Pyserini package, we envision the following pipeline:</p>
+<pre class="mermaid">graph LR;
+raw_beir_data --&gt; beir_to_trec;
+beir_to_trec --&gt; index;
+index --&gt; retrieve;
+beir_to_trec --&gt; retrieve;
+retrieve --&gt; evaluate;
+beir_to_trec --&gt; evaluate;
+</pre>
+<p>Essentially, our pipeline consists of the following steps:</p>
+<ul>
+<li>Download the raw data in <code>raw_beir_data</code>;</li>
+<li>Preprocess the data to the standard TREC format in <code>beir_to_trec</code>;</li>
+<li>Index the data in <code>index</code> to create a BM25 index (depending on the preprocesed data);</li>
+<li>Retrieve the top-100 documents for each query in <code>retrieve</code> (depending on the index and the data);</li>
+<li>Evaluate the retrieval results in <code>evaluate</code> (depending on the data and the retrieved results).</li>
+</ul>
+<p>To compose these tasks, we need to define the dependencies between them. This is done by specifying the output of one task as the input of another task.</p>
+<pre><code class="language-python">task raw_beir_data(beir_dataset=$, beir_url_prefix=$) -&gt; out:
+  ...
+  
+task beir_to_trec(data=$raw_beir_data.out) -&gt; out:
+  ...
 
-task downloadGloVe(gloveUrl=$) -&gt; out:
-  sleep $((( $RANDOM % 10 ) + 1))s
-  wget -O glove.zip $gloveUrl
-  unzip glove.zip
-  mv *.txt $out
-  rm glove.zip
+task index(data=$beir_to_trec.out) -&gt; out:
+  ...
+
+task retrieve(data=$beir_to_trec.out, index=$index.out) -&gt; out:
+  ...
+
+task evaluate(data=$raw_beir_data.out, rseult=$retrieve.out) -&gt; out:
+  ...
+</code></pre>
+<p>In the next sections we will implement these tasks one by one.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="packages"><a class="header" href="#packages">Packages</a></h1>
+<p>Our previous sketch requires some packages to be built.</p>
+<ul>
+<li>A <code>conda</code> package that contains a bunch of Python libraries (mainly <a href="https://github.com/castorini/pyserini">Pyserini</a>) to run BM25 search;</li>
+<li>The NIST <a href="https://github.com/usnistgov/trec_eval"><code>trec_eval</code></a> package to evaluate the retrieval results.</li>
+</ul>
+<p>We will define these packages in HyperMake and let them be part of the whole pipeline,
+so when a user runs the pipeline, the packages will be built and installed automatically.</p>
+<p>A package in HyperMake is defined with the <code>package</code> keyword, and it is a special kind of task.</p>
+<h3 id="creating-a-conda-package"><a class="header" href="#creating-a-conda-package">Creating a Conda package</a></h3>
+<pre><code class="language-python">package pyserini -&gt; out:
+  mkdir -p $out
+  conda create -y \
+    -p $out \
+    -c conda-forge \
+    python=3.10 openjdk=21
+  $out/bin/pip install torch faiss-cpu pyserini
+</code></pre>
+<p>We declared a package named <code>pyserini</code> that when building, creates a new Conda environment with Python 3.10 and OpenJDK 21, and installs Pyserini in it. Note that we build the package in a HyperMake-managed, separate directory <code>$out</code> (with the <code>-p</code>/<code>--prefix</code> directive of Conda) instead of a global Conda environment.</p>
+<p>This is common so that HyperMake provided standard library subroutines to make this easier:</p>
+<pre><code class="language-python">import conda
+package pyserini = conda.create(
+    packages="python=3.10 openjdk=21",
+    extra_args="-c conda-forge",
+    extra_pip_packages="torch faiss-cpu pyserini"
+)
+</code></pre>
+<h3 id="building-the-trec_eval-package"><a class="header" href="#building-the-trec_eval-package">Building the <code>trec_eval</code> package</a></h3>
+<p><code>trec_eval</code> is a C package built with Make. We can define a package for it as well:</p>
+<pre><code class="language-python">package trec_eval -&gt; out:
+  git clone https://github.com/usnistgov/trec_eval.git $out
+  cd $out
+  make
 </code></pre>
 <blockquote>
-<p>If the key is the same as the value, one can omit the value in the declaration, like this:
-<code>{Version: 6b cc42b cc840b twitter27b}</code>.
-Note that we declared a <code>Dict</code>-like object here: <code>{Version: 6b=XX cc42b=XX cc840b=XX twitter27b=XX}</code>.
-This is a parameter declaration: the name of the parameter is <code>Version</code>, and it has 4 potential keys <code>6b</code>, <code>cc42b</code>, <code>cc840b</code>, and <code>twitter27b</code>.
-Each key is associated with a value that follows the key (that is the URL in this example).</p>
+<p>In HyperMake, <em><strong>a package must have exactly 1 output</strong></em>: the built package directory. To refer to the output directory, directly use the package name as a variable (e.g. <code>$pyserini</code>, <code>$trec_eval</code> here).</p>
 </blockquote>
-<p>Our task <code>downloadGloVe</code> is now parameterized with variable <code>Version</code>. To refer to one of these task (a <strong>case</strong>),
-we can use the indexing notation <code>task[Var:key]</code>: here for example <code>downloadGloVe[Version:6b]</code>.</p>
-<p>We can use the task referring expressions in the Hypermake command line interface. To download GloVe <code>6b</code> version, do</p>
-<pre><code class="language-shell">hypermake glove.hm run downloadGloVe[Version:6b]
+<blockquote>
+<p>What is exactly the difference between a package and a task?
+When a HyperMake pipeline is defined across multiple file systems (e.g. local, AWS, SSH, etc.),
+a task is only run once and transferred between file systems, while a package is separately built on each file system.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
+<p>Now let's convert our downloaded BEIR data to the standard TREC format.
+This format is standard for information retrieval tasks.
+There are 3 kinds of files in the TREC format:</p>
+<ul>
+<li><code>*.queries</code>, a TSV file with two columns, query id and query text;</li>
+<li><code>*.qrels</code>, a TSV file with four columns, query id, iteration id, document id, and relevance label;</li>
+<li><code>corpus</code>, a TSV file with two columns, document id and document text.</li>
+</ul>
+<p>This conversion involves some complex processing, so we will first write a Python script <code>beir_to_trec.py</code> to do this.</p>
+<pre><code class="language-python">import os
+import json
+import sys
+import csv
+from tqdm import tqdm
+data = sys.argv[1]  # The directory containing the downloaded BEIR data
+out = sys.argv[2]  # The directory to write the TREC format data
+os.mkdir(out)
+with open(f"{data}/corpus.jsonl") as f_in, open(f"{out}/corpus", 'w') as f_out:
+  for line in tqdm(f_in):
+    obj = json.loads(line)
+    id = obj['_id']
+    text = obj['text'].replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
+    title = obj.get('title', "")
+    trec_line = f"{id}\t{title}: {text}" if title != "" else f"{id}\t{text}" 
+    # Concatenate title and text
+    print(trec_line, file=f_out)
+queries = {}
+with open(f"{data}/queries.jsonl") as f:
+  for line in tqdm(f):
+    obj = json.loads(line)
+    id = obj['_id']
+    text = obj['text']
+    queries[id] = text
+for partition in os.listdir(f"{data}/qrels"):
+  partition = os.path.splitext(partition)[0]
+  with open(f"{data}/qrels/{partition}.tsv") as f_in, open(f"{out}/{partition}.qrels", 'w') as f_out:
+    query_ids = set()
+    for row in tqdm(csv.DictReader(f_in, delimiter='\t')):
+      query_ids.add(row['query-id'])
+      print(f"{row['query-id']}\t0\t{row['corpus-id']}\t{row['score']}", file=f_out)
+  with open(f"{out}/{partition}.queries", 'w') as f:
+    for query_id in query_ids:
+      print(f"{query_id}\t{queries[query_id]}", file=f)
 </code></pre>
-<p>One can use <code>[Var:*]</code> syntax to refer to <strong>all</strong> cases of the task. The following command line invocation downloads all GloVe versions:</p>
-<pre><code class="language-shell">hypermake glove.hm run 'downloadGloVe[Version: *]' -j4
+<p>Now we can write a task to run this script.</p>
+<pre><code class="language-bash">task beir_to_trec(data=$raw_beir_data.out) -&gt; out:
+  python beir_to_trec.py $data out
+</code></pre>
+<p>This task takes the output of the <code>raw_beir_data</code> task as input and produces a directory <code>out</code> containing the TREC format data.</p>
+<p>But to run this task, before invoking <code>hypermake</code> from the command line, we need to first activate the Conda environment that contains the Python dependencies required by the script <code>beir_to_trec.py</code>. This is not ideal -- recall that we just built the <code>pyserini</code> Conda environment in the previous section. We would like to run this task in the <code>pyserini</code> environment.</p>
+<p>Let's decorate this task with a <code>@conda</code> <strong>decorator</strong> that activates the <code>pyserini</code> environment.</p>
+<pre><code class="language-python">import conda
+
+@conda.activate(environment=$pyserini)
+task beir_to_trec(data=$raw_beir_data.out) -&gt; out:
+    python beir_to_trec.py $data out
 </code></pre>
 <blockquote>
-<p>Single-quoting the task <code>downloadGlove[Version: *]</code> prohibits bash from expanding the wildcard <code>*</code> symbol.
-Again, we can find the output files in <code>out/downloadGloVe/Version=XX</code>.</p>
+<p>What is the magic behind this decorator? A HyperMake decorator takes a script and returns a new wrapped script.
+To implement your own decorator, you need an object with a <code>run</code> function.
+If you are curious, you can find the implementation of the <code>conda.activate</code> decorator <a href="https://github.com/ctongfei/hypermake/blob/main/src/main/hypermake/conda.hm">here</a>.</p>
 </blockquote>
-<p><code>-j $N</code> is a flag that specifies the number of parallel jobs to run. Here we run 4 jobs in parallel.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="composing-parameterized-tasks"><a class="header" href="#composing-parameterized-tasks">Composing parameterized tasks</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="classesobjects"><a class="header" href="#classesobjects">Classes/Objects</a></h1>
+<h3 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h3>
+<p>Let's continue building our pipeline, starting from indexing the corpus with Pyserini.</p>
+<p>At this step, we run a Bash script under the Pyserini conda environment.</p>
+<pre><code class="language-python">@conda.activate(environment=$pyserini)
+task index(data=$beir_to_trec.out) -&gt; out:
+  mkdir corpus
+  cat $data/corpus \
+    | jq -Rc 'inputs | split("\t") | {id: .[0], contents: .[1]}' \
+    &gt; corpus/corpus.json  # Convert TREC format to Pyserini JSON
+  python -m pyserini.index.lucene \
+    --collection JsonCollection \
+    --input corpus \
+    --index $out \
+    --generator DefaultLuceneDocumentGenerator \
+    --threads $(nproc) \
+    --storePositions \
+    --storeDocvectors \
+    --storeRaw
+</code></pre>
+<p>Run the actual retrieving with Pyserini.</p>
+<pre><code class="language-python">@conda.activate(environment=$pyserini)
+task retrieve(
+  data=$beir_to_trec.out, 
+  test_partition=$, 
+  index=$index.out
+) -&gt; (out="result.qres"):
+  ln -s $data/$test_partition.queries test.tsv
+  python -m pyserini.search.lucene \
+    --index $index \
+    --topics test.tsv \
+    --output $out \
+    --batch-size 32 \
+    --hits 100 \
+    --threads $(nproc) \
+    --remove-duplicates --remove-query --bm25
+</code></pre>
+<p>Evaluate the retrieval results with <code>trec_eval</code>.</p>
+<h3 id="step-7-evaluate-the-retrieval-results-with-trec_eval"><a class="header" href="#step-7-evaluate-the-retrieval-results-with-trec_eval">Step 7: Evaluate the retrieval results with <code>trec_eval</code></a></h3>
+<pre><code class="language-bash">task evaluate(
+  data=$beir_to_trec.out,
+  result=$retrieve.out,
+  test_partition=$,
+  trec_eval=$
+) -&gt; (out="eval.txt"):
+  $trec_eval/trec_eval -m all_trec $data/$test_partition.qrels $result &gt; $out
+</code></pre>
+<blockquote>
+<p>Here we referenced the output of the <code>trec_eval</code> package as <code>$trec_eval</code>. This is because the <code>trec_eval</code> package is a separate package that we built in the previous section.
+We can refer to the output of a package directly by its name.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="reduction"><a class="header" href="#reduction">Reduction</a></h1>
+<p>At this point we have a pipeline that retrieves documents from a corpus using Pyserini. We have also evaluated the retrieval results with <code>trec_eval</code>. But there are a lot of runs: one for each dataset in BEIR-14. We would like to aggregate the evaluation results.</p>
+<p>This is done by <strong>reduction</strong> in HyperMake: think this as <code>reduce</code> in functional programming, or <code>.max(dim=i)</code> in a tensor processing library.</p>
+<p>Recall that at the end of the pipeline we have built thus far, the <code>trec_eval</code> output files are in the format of <code>eval.txt</code> for each dataset, under the variable <code>$evaluate.out</code>. We would like to aggregate the results over all datasets in BEIR-14. Additionally, there is more than 1 metric that we cared: for example, <code>ndcg_cut_10</code>, <code>recall_100</code>, <code>map</code>, and <code>mrr</code>.</p>
+<p>We can define a new task <code>aggregate_metric</code> that takes the evaluation results of all datasets and aggregates them. The task definition is as follows:</p>
+<pre><code class="language-python">metric = {Metric: ndcg_cut_10 recall_100 map mrr}
+
+task aggregate_metric(
+  eval_results=$evaluate[BeirDataset: *].out, 
+  metric=$
+) -&gt; (out="aggregate.txt"):
+  grep -E "^$metric " $eval_results/* &gt; $out
+</code></pre>
+<p>Note here that we used <code>$evaluate[BeirDataset: *].out</code> to refer to the outputs of all <code>evaluate</code> tasks for each dataset in BEIR-14. The parameter <code>eval_results</code>, while logically is a dictionary from configurations to files, will be realized as a folder of files for the Shell script.</p>
+<blockquote>
+<p>HyperMake maps a dictionary to a folder of files in the Shell script. This is a common pattern in HyperMake to handle multiple outputs.</p>
+<ul>
+<li><code>dict[key]</code> would be <code>$d/$key</code> in Shell.</li>
+<li><code>dict.values()</code> would be <code>$d/*</code> in Shell.</li>
+<li><code>for key in dict</code> would be <code>for f in $d/*</code> in Shell.</li>
+</ul>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="plans"><a class="header" href="#plans">Plans</a></h1>
+<p>We have now built a full pipeline for the BEIR-14 dataset. The pipeline is defined in <code>beir.hm</code>.</p>
+<p>Let's first preview this in the command line:</p>
+<pre><code class="language-shell">hypermake beir.hm list
+</code></pre>
+<p>It shows a rendition of the DAG structure of our pipeline:</p>
+<pre><code>HyperMake 0.1.0 -- A parameterized pipeline manager
+Workflow file: beir.hm
+
+Variables:
+  • Metric: { ndcg_cut_10 recall_100 map mrr }
+  • BeirDataset: { msmarco scifact trec-covid webis-touche2020 fiqa dbpedia-entity fever nfcorpus hotpotqa climate-fever scidocs nq quora arguana }
+
+Tasks:
+  • pyserini@local
+  │ • raw_beir_data[BeirDataset]
+  │ │ • trec_eval@local
+  ├─┴─│─• beir_to_trec[BeirDataset]
+  ├───│─┼─• index[BeirDataset]
+  └───│─┼─┴─• retrieve[BeirDataset]
+      └─┴───┴─• evaluate[BeirDataset]
+              └─• aggregate_metric[Metric]
+</code></pre>
+<p>To run them all:</p>
+<pre><code class="language-shell">hypermake beir.hm run "aggregate_metric[Metric: *]" -j8
+</code></pre>
+<p>Here we compute the <code>aggregate_metric</code> task for all metrics defined in <code>metric</code>, with max 8 jobs running in parallel!</p>
+<p>Or, we can define a <strong>plan</strong> to define the targets we want to run:</p>
+<pre><code class="language-python">plan RunBEIR = {
+    aggregate_metric[Metric: *]
+}
+</code></pre>
+<blockquote>
+<p>A plan definition can contain multiple targets, separated by commas.</p>
+</blockquote>
+<p>And invoke it with:</p>
+<pre><code class="language-shell">hypermake beir.hm run RunBEIR -j8
+</code></pre>
+<p>The results should match the results in Table 2 (BM25 column) of the <a href="https://arxiv.org/pdf/2310.08319">RepLlama paper</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="classesobjects"><a class="header" href="#classesobjects">Classes/Objects</a></h1>
 <p>In Hypermake, sometimes it is needed to bundle certain definitions together so that it can be reused.
 This forms an <code>object</code> (or <em>modules</em>, since a module can be seen as a singleton object):</p>
 <pre><code>object my_obj:
@@ -317,7 +562,7 @@ This forms an <code>object</code> (or <em>modules</em>, since a module can be se
   def y(...):
   
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="decorators-1"><a class="header" href="#decorators-1">Decorators</a></h1>
 <p>In Hypermake, a task can be decorated with some decorators, effectively modifying its behavior. This can support</p>
 <ul>
 <li>Running with different shell;</li>
@@ -411,7 +656,7 @@ task print(input="abcde"):
     return 0;
   }
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="packages"><a class="header" href="#packages">Packages</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="packages-1"><a class="header" href="#packages-1">Packages</a></h1>
 <p>In HyperMake, packages are special tasks that builds a software package.
 They can depends on other packages but not tasks, and will be built differently on different environments (see next tutorial).</p>
 <p>A package is defined as follows (note that a package can only have exactly 1 output):</p>
@@ -518,176 +763,6 @@ object my_container = az.storage_blob(name="...")
 <p>Sometimes different parts of a pipeline are run under different environments,
 e.g., data preprocessing may happen on a local machine, whereas training is done on an SSH grid, or
 on AWS EC2 or Azure ML.</p>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><p>We showcase an example pipeline of running the <a href="https://beir.ai">BEIR</a> (<a href="https://datasets-benchmarks-proceedings.neurips.cc/paper_files/paper/2021/hash/65b9eea6e1cc6bb9f0cd2a47751a186f-Abstract-round2.html">paper</a>) benchmark in HyperMake.</p>
-<p>BEIR is a robust and heterogeneous evaluation benchmark for zero-shot information retrieval. It includes a diverse set of retrieval tasks, such as web search, question answering, and entity retrieval. The benchmark is designed to evaluate the generalization capabilities of retrieval models across different tasks and domains.</p>
-<p>In this example, we run the standard BM25 lexical retrieval model (with <a href="https://github.com/castorini/pyserini">Pyserini</a>) on the BEIR-14 subset (those with public licenses), evaluated with the standard <a href="https://github.com/usnistgov/trec_eval"><code>trec_eval</code></a> evaluation tool.</p>
-<p>First, let's import some modules to simplify the pipeline definition:</p>
-<pre><code class="language-bash">import conda
-import std
-</code></pre>
-<p>Next, we define some hyperparameters for the pipeline.</p>
-<p>BEIR-14 datasets, defined as a HyperMake variable:</p>
-<pre><code class="language-bash">beir_dataset = {BeirDataset:
-  msmarco trec-covid nfcorpus nq hotpotqa fiqa
-  arguana webis-touche2020 quora dbpedia-entity
-  scidocs fever climate-fever scifact
-}
-</code></pre>
-<p>Partition of the datasets that we want to evaluate (MSMARCO is evaluated on the <code>dev</code> set), defined as a HyperMake dict:</p>
-<pre><code class="language-bash">test_partition = {BeirDataset:
-  msmarco=dev trec-covid=test nfcorpus=test nq=test hotpotqa=test fiqa=test
-  arguana=test webis-touche2020=test quora=test dbpedia-entity=test
-  scidocs=test fever=test climate-fever=test scifact=test
-}
-</code></pre>
-<p>And a constant for the data downloading URL prefix:</p>
-<pre><code class="language-bash">beir_url_prefix = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets"
-</code></pre>
-<h3 id="step-1-build-the-trec_eval-tool"><a class="header" href="#step-1-build-the-trec_eval-tool">Step 1: Build the <code>trec_eval</code> tool</a></h3>
-<pre><code class="language-bash">package trec_eval -&gt; out:
-  git clone https://github.com/usnistgov/trec_eval.git $out
-  cd $out
-  make
-</code></pre>
-<h3 id="step-2-build-our-conda-environment-for-pyserini"><a class="header" href="#step-2-build-our-conda-environment-for-pyserini">Step 2: Build our Conda environment for Pyserini</a></h3>
-<pre><code class="language-bash">package pyserini = conda.create(
-  args="-c conda-forge python=3.10 openjdk=21",
-  extra_pip_packages="torch faiss-cpu pyserini"
-)
-</code></pre>
-<p>Note that both of these steps are <em>packages</em> instead of <code>tasks</code>: these are platform-dependent and should be built for each platform separately.</p>
-<h3 id="step-3-download-the-beir-datasets"><a class="header" href="#step-3-download-the-beir-datasets">Step 3: Download the BEIR datasets</a></h3>
-<pre><code class="language-bash">task raw_beir_data(beir_dataset=$, beir_url_prefix=$) -&gt; out:
-  wget -O dataset.zip $beir_url_prefix/$beir_dataset.zip
-  unzip dataset.zip
-  rm dataset.zip
-  mv $beir_dataset out
-</code></pre>
-<h3 id="step-4-convert-the-beir-datasets-to-standard-trec-format"><a class="header" href="#step-4-convert-the-beir-datasets-to-standard-trec-format">Step 4: Convert the BEIR datasets to standard TREC format</a></h3>
-<p>Here Python code is embedded directly in the task definition with <code>std.run</code> as an example, showing how to use Python code directly in the task definition.  This is useful for small scripts that are not worth putting in a separate file.  This script is actually large enough that it would be better to put it in a separate file, but for the sake of demonstration, we include it here.</p>
-<p>Note the use of <code>@conda.activate</code> to run this task in the Pyserini environment we created earlier.</p>
-<pre><code class="language-python">@conda.activate(environment=$pyserini)
-@std.run(interpreter="python")
-task beir_to_trec(data=$raw_beir_data.out) -&gt; out:
-  import os
-  import json
-  import sys
-  import csv
-  from tqdm import tqdm
-  data = os.environ['data']  # HyperMake variables are sent as environment variables
-  out = os.environ['out']
-  os.mkdir(out)
-  with open(f"{data}/corpus.jsonl") as f_in, open(f"{out}/corpus", 'w') as f_out:
-    for line in tqdm(f_in):
-      obj = json.loads(line)
-      id = obj['_id']
-      text = obj['text'].replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
-      title = obj.get('title', "")
-      trec_line = f"{id}\t{title}: {text}" if title != "" else f"{id}\t{text}" 
-      # Concatenate title and text
-      print(trec_line, file=f_out)
-  queries = {}
-  with open(f"{data}/queries.jsonl") as f:
-    for line in tqdm(f):
-      obj = json.loads(line)
-      id = obj['_id']
-      text = obj['text']
-      queries[id] = text
-  for partition in os.listdir(f"{data}/qrels"):
-    partition = os.path.splitext(partition)[0]
-    with open(f"{data}/qrels/{partition}.tsv") as f_in, open(f"{out}/{partition}.qrels", 'w') as f_out:
-      query_ids = set()
-      for row in tqdm(csv.DictReader(f_in, delimiter='\t')):
-        query_ids.add(row['query-id'])
-        print(f"{row['query-id']}\t0\t{row['corpus-id']}\t{row['score']}", file=f_out)
-    with open(f"{out}/{partition}.queries", 'w') as f:
-      for query_id in query_ids:
-        print(f"{query_id}\t{queries[query_id]}", file=f)
-</code></pre>
-<h3 id="step-5-index-the-corpus-with-pyserini"><a class="header" href="#step-5-index-the-corpus-with-pyserini">Step 5: Index the corpus with Pyserini</a></h3>
-<p>At this step, we run a Bash script under the Pyserini conda environment.</p>
-<pre><code class="language-bash">@conda.activate(environment=$pyserini)
-task index(data=$beir_to_trec.out) -&gt; out:
-  mkdir corpus
-  cat $data/corpus \
-    | jq -Rc 'inputs | split("\t") | {id: .[0], contents: .[1]}' \
-    &gt; corpus/corpus.json  # Convert TREC format to Pyserini JSON
-  python -m pyserini.index.lucene \
-    --collection JsonCollection \
-    --input corpus \
-    --index $out \
-    --generator DefaultLuceneDocumentGenerator \
-    --threads $(nproc) \
-    --storePositions \
-    --storeDocvectors \
-    --storeRaw
-</code></pre>
-<h3 id="step-6-run-bm25-retrieval-with-pyserini"><a class="header" href="#step-6-run-bm25-retrieval-with-pyserini">Step 6: Run BM25 retrieval with Pyserini</a></h3>
-<p>Again, this is run under the Pyserini conda environment.</p>
-<pre><code class="language-bash">@conda.activate(environment=$pyserini)
-task retrieve(
-  data=$beir_to_trec.out, 
-  test_partition=$, 
-  index=$index.out
-) -&gt; (out="result.qres"):
-  ln -s $data/$test_partition.queries test.tsv
-  python -m pyserini.search.lucene \
-    --index $index \
-    --topics test.tsv \
-    --output $out \
-    --batch-size 32 \
-    --hits 100 \
-    --threads $(nproc) \
-    --remove-duplicates --remove-query --bm25
-</code></pre>
-<h3 id="step-7-evaluate-the-retrieval-results-with-trec_eval"><a class="header" href="#step-7-evaluate-the-retrieval-results-with-trec_eval">Step 7: Evaluate the retrieval results with <code>trec_eval</code></a></h3>
-<pre><code class="language-bash">task evaluate(
-  data=$beir_to_trec.out,
-  result=$retrieve.out,
-  test_partition=$,
-  trec_eval=$
-) -&gt; (out="eval.txt"):
-  $trec_eval/trec_eval -m all_trec $data/$test_partition.qrels $result &gt; $out
-</code></pre>
-<h3 id="step-8-aggregate-the-evaluation-results-over-all-datasets-in-beir-14"><a class="header" href="#step-8-aggregate-the-evaluation-results-over-all-datasets-in-beir-14">Step 8: Aggregate the evaluation results over all datasets in BEIR-14</a></h3>
-<p>Assume that we care about <code>map</code>, <code>recall_100</code>, and <code>ndcg_cut_10</code> metrics from <code>trec_eval</code>.</p>
-<pre><code class="language-bash">metric = {Metric: map recall_100 ndcg_cut_10}
-</code></pre>
-<p>And now we aggregate the results over all datasets with <code>[BeirDataset: *]</code> in HyperMake:</p>
-<pre><code class="language-bash">task aggregate_metric(
-  eval_results=$evaluate[BeirDataset: *].out, 
-  metric=$
-) -&gt; (out="aggregate.txt"):
-  grep -E "^$metric " $eval_results/* &gt; $out
-</code></pre>
-<h3 id="run-the-pipeline"><a class="header" href="#run-the-pipeline">Run the pipeline</a></h3>
-<p>Now the full pipeline definition (<code>beir.hm</code>) is complete.</p>
-<p>Let's preview the pipeline with <code>hypermake list</code>:</p>
-<pre><code class="language-bash">hypermake beir.hm list
-</code></pre>
-<p>It shows the nice DAG structure of our pipeline:</p>
-<pre><code>HyperMake 0.1.0 -- A parameterized workflow manager
-Workflow file: beir.hm
-
-Variables:
-  • Metric: { map recall_100 ndcg_cut_10 }
-  • BeirDataset: { msmarco scifact trec-covid webis-touche2020 fiqa dbpedia-entity fever nfcorpus hotpotqa climate-fever scidocs nq quora arguana }
-
-Tasks:
-  • pyserini@local
-  │ • raw_beir_data[BeirDataset]
-  │ │ • trec_eval@local
-  ├─┴─│─• beir_to_trec[BeirDataset]
-  ├───│─┼─• index[BeirDataset]
-  └───│─┼─┴─• retrieve[BeirDataset]
-      └─┴───┴─• evaluate[BeirDataset]
-              └─• aggregate_metric[Metric]
-</code></pre>
-<p>We can run the pipeline with the following command:</p>
-<pre><code class="language-bash">hypermake beir.hm run "aggregate_metric[Metric: *]" -j8
-</code></pre>
-<p>Here we compute the <code>aggregate_metric</code> task for all metrics defined in <code>metric</code>, with max 8 jobs running in parallel!</p>
-<p>The results should match the results in Table 2 (BM25 column) of the <a href="https://arxiv.org/pdf/2310.08319">RepLlama paper</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="module-std"><a class="header" href="#module-std">Module <code>std</code></a></h1>
 <p>Contains some miscellaneous utilities for HyperMake.</p>
 <h2 id="function-stdsymlink"><a class="header" href="#function-stdsymlink">Function <code>std.symlink</code></a></h2>

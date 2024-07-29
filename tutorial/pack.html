@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>az - HyperMake</title>
+        <title>Packages - HyperMake</title>
 
 
         <!-- Custom HTML head -->
@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="../tutorial/params.html"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="../tutorial/pack.html"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/reduce.html"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="../tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="../lang/modules.html"><strong aria-hidden="true">3.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../lang/decorators.html"><strong aria-hidden="true">4.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../lang/packages.html"><strong aria-hidden="true">5.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../lang/filesys.html"><strong aria-hidden="true">6.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">7.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">7.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">7.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html" class="active"><strong aria-hidden="true">7.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">7.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">7.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="../tutorial/params.html"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="../tutorial/pack.html" class="active"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/reduce.html"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="../tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="../lang/modules.html"><strong aria-hidden="true">3.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../lang/decorators.html"><strong aria-hidden="true">4.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../lang/packages.html"><strong aria-hidden="true">5.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../lang/filesys.html"><strong aria-hidden="true">6.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">7.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">7.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">7.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">7.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">7.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">7.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -175,33 +175,58 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="module-az"><a class="header" href="#module-az">Module <code>az</code></a></h1>
-<p>Enables various decorators for Microsoft Azure services in HyperMake.</p>
-<h2 id="azstorage_blob"><a class="header" href="#azstorage_blob"><code>az.storage_blob</code></a></h2>
-<p>Enables Azure Blob Storage containers to be used as a file system in HyperMake. Behind the scenes it uses the <code>az storage blob</code> CLI command family.</p>
-<p>Example usage:</p>
-<pre><code class="language-py">import az 
-object az_storage = az.storage_blob( 
-    container="my_container", 
-    extra_args="--account-name xxx --account-key yyy"
-)
-
-data_path = "/path/to/data"@az_storage
+                        <h1 id="packages"><a class="header" href="#packages">Packages</a></h1>
+<p>Our previous sketch requires some packages to be built.</p>
+<ul>
+<li>A <code>conda</code> package that contains a bunch of Python libraries (mainly <a href="https://github.com/castorini/pyserini">Pyserini</a>) to run BM25 search;</li>
+<li>The NIST <a href="https://github.com/usnistgov/trec_eval"><code>trec_eval</code></a> package to evaluate the retrieval results.</li>
+</ul>
+<p>We will define these packages in HyperMake and let them be part of the whole pipeline,
+so when a user runs the pipeline, the packages will be built and installed automatically.</p>
+<p>A package in HyperMake is defined with the <code>package</code> keyword, and it is a special kind of task.</p>
+<h3 id="creating-a-conda-package"><a class="header" href="#creating-a-conda-package">Creating a Conda package</a></h3>
+<pre><code class="language-python">package pyserini -&gt; out:
+  mkdir -p $out
+  conda create -y \
+    -p $out \
+    -c conda-forge \
+    python=3.10 openjdk=21
+  $out/bin/pip install torch faiss-cpu pyserini
 </code></pre>
-<h2 id="azstorage_fs"><a class="header" href="#azstorage_fs"><code>az.storage_fs</code></a></h2>
-<p>Enables Azure Data Lake Storage (ADLS) Gen2 containers to be used as a file system in HyperMake. Behind the scenes it uses the <code>az storage fs</code> CLI command family.</p>
-<h2 id="azml_job_create"><a class="header" href="#azml_job_create"><code>az.ml_job_create</code></a></h2>
-<p>Enables Azure ML command jobs as a submitter in HyperMake. Behind the scenes it uses the <code>az ml job</code> CLI command family.</p>
+<p>We declared a package named <code>pyserini</code> that when building, creates a new Conda environment with Python 3.10 and OpenJDK 21, and installs Pyserini in it. Note that we build the package in a HyperMake-managed, separate directory <code>$out</code> (with the <code>-p</code>/<code>--prefix</code> directive of Conda) instead of a global Conda environment.</p>
+<p>This is common so that HyperMake provided standard library subroutines to make this easier:</p>
+<pre><code class="language-python">import conda
+package pyserini = conda.create(
+    packages="python=3.10 openjdk=21",
+    extra_args="-c conda-forge",
+    extra_pip_packages="torch faiss-cpu pyserini"
+)
+</code></pre>
+<h3 id="building-the-trec_eval-package"><a class="header" href="#building-the-trec_eval-package">Building the <code>trec_eval</code> package</a></h3>
+<p><code>trec_eval</code> is a C package built with Make. We can define a package for it as well:</p>
+<pre><code class="language-python">package trec_eval -&gt; out:
+  git clone https://github.com/usnistgov/trec_eval.git $out
+  cd $out
+  make
+</code></pre>
+<blockquote>
+<p>In HyperMake, <em><strong>a package must have exactly 1 output</strong></em>: the built package directory. To refer to the output directory, directly use the package name as a variable (e.g. <code>$pyserini</code>, <code>$trec_eval</code> here).</p>
+</blockquote>
+<blockquote>
+<p>What is exactly the difference between a package and a task?
+When a HyperMake pipeline is defined across multiple file systems (e.g. local, AWS, SSH, etc.),
+a task is only run once and transferred between file systems, while a package is separately built on each file system.</p>
+</blockquote>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../stdlib/aws.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tutorial/compose.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../stdlib/conda.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../tutorial/decorators.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -211,11 +236,11 @@ data_path = "/path/to/data"@az_storage
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../stdlib/aws.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tutorial/compose.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../stdlib/conda.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../tutorial/decorators.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

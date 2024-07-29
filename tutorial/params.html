@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Modules, objects, classes - HyperMake</title>
+        <title>Parameters - HyperMake</title>
 
 
         <!-- Custom HTML head -->
@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.</strong> Hello world!</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">3.</strong> Inputs & outputs</a></li><li class="chapter-item expanded "><a href="../tutorial/branch.html"><strong aria-hidden="true">4.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/parameterized-compose.html"><strong aria-hidden="true">5.</strong> Parameterized pipelines</a></li><li class="chapter-item expanded "><a href="../tutorial/subroutines.html"><strong aria-hidden="true">6.</strong> Subroutines</a></li><li class="chapter-item expanded "><a href="../tutorial/modules.html" class="active"><strong aria-hidden="true">7.</strong> Modules, objects, classes</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">8.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/packages.html"><strong aria-hidden="true">9.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/filesys.html"><strong aria-hidden="true">10.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Example pipelines</li><li class="chapter-item expanded "><a href="../examples/examples.html"><strong aria-hidden="true">11.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/beir.html"><strong aria-hidden="true">11.1.</strong> BEIR</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">12.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">12.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">12.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">12.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">12.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">12.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="../tutorial/params.html" class="active"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="../tutorial/pack.html"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/reduce.html"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="../tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="../lang/modules.html"><strong aria-hidden="true">3.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../lang/decorators.html"><strong aria-hidden="true">4.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../lang/packages.html"><strong aria-hidden="true">5.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../lang/filesys.html"><strong aria-hidden="true">6.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">7.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">7.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">7.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">7.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">7.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">7.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -175,24 +175,80 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="classesobjects"><a class="header" href="#classesobjects">Classes/Objects</a></h1>
-<p>In Hypermake, sometimes it is needed to bundle certain definitions together so that it can be reused.
-This forms an <code>object</code> (or <em>modules</em>, since a module can be seen as a singleton object):</p>
-<pre><code>object my_obj:
-  def x(...):
-  def y(...):
-  
+                        <h1 id="parameters"><a class="header" href="#parameters">Parameters</a></h1>
+<p>For the following tutorial sections, we will gradually build our <code>beir.hm</code> pipeline.</p>
+<p>In any ML pipeline, one starts with data. In this example, we will use the BEIR-14 subset (those with public licenses) of the BEIR benchmark.</p>
+<p>We declare these datasets as a pipeline <strong>parameter</strong> <code>BeirDataset</code>:</p>
+<pre><code class="language-python">beir_dataset = {BeirDataset: 
+    msmarco scifact trec-covid webis-touche2020 
+    fiqa dbpedia-entity fever nfcorpus hotpotqa 
+    climate-fever scidocs nq quora arguana
+}
 </code></pre>
+<blockquote>
+<p>Note the syntax for declaring a parameter: <code>{ParamName: key0 key1 ...}</code>. For each parameter, <strong>the first key</strong> is considered the <strong>default case</strong> -- here <code>msmarco</code>.</p>
+</blockquote>
+<p>Now we want to download the raw data from their official location.</p>
+<pre><code class="language-python">beir_url_prefix = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets"
+</code></pre>
+<p>We proceed to write the first task of our pipeline: downloading the raw data and unzip it.</p>
+<pre><code class="language-bash">task raw_beir_data(beir_dataset=$, beir_url_prefix=$) -&gt; out:
+  wget -O dataset.zip $beir_url_prefix/$beir_dataset.zip
+  unzip dataset.zip
+  rm dataset.zip
+  mv $beir_dataset out
+</code></pre>
+<p>We declared a task that takes two inputs: <code>beir_dataset</code> and <code>beir_url_prefix</code>, and produces an output directory <code>out</code>.</p>
+<blockquote>
+<p>The syntax <code>name=$</code> is a shorthand for <code>name=$name</code>. Here, <code>beir_dataset=$</code> introduced the <code>beir_dataset</code> parameter as an input to the task.</p>
+</blockquote>
+<p>The task is considered <em>complete</em> when its output directory <code>out</code> exists after the task exits with a zero status code.</p>
+<blockquote>
+<p>In HyperMake, the success of a task is determined by</p>
+<ul>
+<li>the existence of all of its specified outputs</li>
+<li><strong>AND</strong> the zero exit status code of the task script.</li>
+</ul>
+</blockquote>
+<p>Note that</p>
+<ul>
+<li><code>beir_dataset</code> is a <strong>parameterized value</strong>: it can take any of the values in the <code>BeirDataset</code> parameter;</li>
+<li><code>beir_url_prefix</code> is a <em>singleton</em> (non-parameterized) value.</li>
+</ul>
+<p>Hence the task <code>raw_beir_data</code> is parameterized with <strong>all the parameters in its inputs</strong>. Consider
+<code>raw_beir_data</code> not a single task, but a <strong>tensor</strong> of tasks, where it has dimension 1: the <code>BeirDataset</code> parameter.</p>
+<h3 id="invoking-the-task"><a class="header" href="#invoking-the-task">Invoking the task</a></h3>
+<p>Let's invoke this task. To download the <code>msmarco</code> dataset, we run:</p>
+<pre><code class="language-bash">hypermake beir.hm run "raw_beir_data[BeirDataset:msmarco]"
+</code></pre>
+<p>We will find the downloaded dataset in the <code>out/raw_beir_data/default</code> directory.</p>
+<blockquote>
+<p>Note the task indexing syntax: <code>task[Param0: key0, Param0: key1, ...]</code>.</p>
+</blockquote>
+<p>Download another one:</p>
+<pre><code class="language-bash">hypermake beir.hm run "raw_beir_data[BeirDataset:scifact]"
+</code></pre>
+<p>We will find the downloaded dataset in the <code>out/raw_beir_data/BeirDataset=scifact</code> directory.</p>
+<blockquote>
+<p>The output directory will be <code>out/&lt;task-name&gt;/&lt;non-default-params&gt;</code>, where <code>&lt;non-default-params&gt;</code> is the URL percent-encoding of the key-value pairs.</p>
+</blockquote>
+<p>Clearly we do not wish to invoke the downloading one by one. Let's use the wildcard <code>*</code>:</p>
+<pre><code class="language-bash">hypermake beir.hm run "raw_beir_data[BeirDataset: *]" -j8
+</code></pre>
+<blockquote>
+<p>The <code>-j</code> flag specifies the number of parallel jobs to run. Here we run 8 jobs in parallel.</p>
+</blockquote>
+<p>At this point we have downloaded all the datasets. We will proceed to the next steps in the following sections.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../tutorial/subroutines.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tutorial/hello.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../tutorial/decorators.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../tutorial/compose.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -202,11 +258,11 @@ This forms an <code>object</code> (or <em>modules</em>, since a module can be se
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../tutorial/subroutines.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tutorial/hello.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../tutorial/decorators.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../tutorial/compose.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
