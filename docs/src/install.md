@@ -12,9 +12,9 @@ Right now the Homebrew formula is configured to use the `HEAD` version of HyperM
 brew reinstall ctongfei/repo/hypermake
 ```
 
-### Build from source
+### Building from source
 
-HyperMake can also be directly built from source. It requires [`sbt`](https://www.scala-sbt.org) to build.
+HyperMake can also be directly built from source. It requires [`sbt`](https://www.scala-sbt.org) to build and JDK 8+ to run.
 
 ```shell
 git clone https://github.com/ctongfei/hypermake

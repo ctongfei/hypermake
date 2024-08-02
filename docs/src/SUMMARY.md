@@ -11,6 +11,8 @@
    - [Plans](tutorial/plans.md)
 
 # Language reference
+ - [Tasks](lang/task.md)
+ - [Functions](lang/function.md)
  - [Modules](lang/modules.md)
  - [Decorators](lang/decorators.md)
  - [Packages](lang/packages.md)
