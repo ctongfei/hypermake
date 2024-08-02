@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>std - HyperMake</title>
+        <title>Functions - HyperMake</title>
 
 
         <!-- Custom HTML head -->
@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="../tutorial/params.html"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="../tutorial/pack.html"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/reduce.html"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="../tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="../lang/task.html"><strong aria-hidden="true">3.</strong> Tasks</a></li><li class="chapter-item expanded "><a href="../lang/function.html"><strong aria-hidden="true">4.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../lang/modules.html"><strong aria-hidden="true">5.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../lang/decorators.html"><strong aria-hidden="true">6.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../lang/packages.html"><strong aria-hidden="true">7.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../lang/filesys.html"><strong aria-hidden="true">8.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">9.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html" class="active"><strong aria-hidden="true">9.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">9.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">9.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">9.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">9.5.</strong> ssh</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded "><a href="../install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../tutorial/tutorial-index.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/hello.html"><strong aria-hidden="true">2.1.</strong> Hello, world!</a></li><li class="chapter-item expanded "><a href="../tutorial/params.html"><strong aria-hidden="true">2.2.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="../tutorial/compose.html"><strong aria-hidden="true">2.3.</strong> Task composition</a></li><li class="chapter-item expanded "><a href="../tutorial/pack.html"><strong aria-hidden="true">2.4.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../tutorial/decorators.html"><strong aria-hidden="true">2.5.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../tutorial/reduce.html"><strong aria-hidden="true">2.6.</strong> Reduction</a></li><li class="chapter-item expanded "><a href="../tutorial/plans.html"><strong aria-hidden="true">2.7.</strong> Plans</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Language reference</li><li class="chapter-item expanded "><a href="../lang/task.html"><strong aria-hidden="true">3.</strong> Tasks</a></li><li class="chapter-item expanded "><a href="../lang/function.html" class="active"><strong aria-hidden="true">4.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../lang/modules.html"><strong aria-hidden="true">5.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../lang/decorators.html"><strong aria-hidden="true">6.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="../lang/packages.html"><strong aria-hidden="true">7.</strong> Packages</a></li><li class="chapter-item expanded "><a href="../lang/filesys.html"><strong aria-hidden="true">8.</strong> File systems</a></li><li class="chapter-item expanded affix "><li class="part-title">Library reference</li><li class="chapter-item expanded "><a href="../stdlib/stdlib.html"><strong aria-hidden="true">9.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../stdlib/std.html"><strong aria-hidden="true">9.1.</strong> std</a></li><li class="chapter-item expanded "><a href="../stdlib/aws.html"><strong aria-hidden="true">9.2.</strong> aws</a></li><li class="chapter-item expanded "><a href="../stdlib/az.html"><strong aria-hidden="true">9.3.</strong> az</a></li><li class="chapter-item expanded "><a href="../stdlib/conda.html"><strong aria-hidden="true">9.4.</strong> conda</a></li><li class="chapter-item expanded "><a href="../stdlib/ssh.html"><strong aria-hidden="true">9.5.</strong> ssh</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -175,36 +175,36 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="module-std"><a class="header" href="#module-std">Module <code>std</code></a></h1>
-<p>Contains some miscellaneous utilities for HyperMake.</p>
-<h2 id="function-stdsymlink"><a class="header" href="#function-stdsymlink">Function <code>std.symlink</code></a></h2>
-<p>Creates a symbolic link as an output. This is particularly useful when referring to a local repository that is under development.</p>
-<pre><code class="language-py">import std
-package my_repo = std.symlink(path="path/to/my/repo")
+                        <h1 id="functions"><a class="header" href="#functions">Functions</a></h1>
+<p><strong>Functions</strong> in HyperMake are <strong>abstract <a href="./task.html">tasks</a></strong>: tasks whose inputs are not fully specified. Functions allow for the instantiation of tasks with different parameters at different locations in the pipeline.</p>
+<h3 id="syntax"><a class="header" href="#syntax">Syntax</a></h3>
+<pre><code class="language-python">def funcName(input1, input2, ...) -&gt; (output1, output2, ...):
+    # function script
 </code></pre>
-<h2 id="class-stdrun"><a class="header" href="#class-stdrun">Class <code>std.run</code></a></h2>
-<p>Enables a task in HyperMake to run in a custom interpreter (e.g. Python, Perl, etc.).</p>
-<p>Example usage:</p>
-<pre><code class="language-py">import std
-
-sender = {Sender: Alice Bob}
-
-@std.run(interpreter="python3")
-task hello_world(sender=$):
-    import os
-    print(f"Hello, world from {os.environ["sender"]}!")
+<p>where</p>
+<ul>
+<li><code>funcName</code> is the name of the function.</li>
+<li><code>input1</code>, <code>input2</code>, ... are the input arguments of the function.</li>
+<li><code>output1</code>, <code>output2</code>, ... are the output files of the function.</li>
+</ul>
+<h3 id="instantiation"><a class="header" href="#instantiation">Instantiation</a></h3>
+<p>To instantiate a function as a <a href="./task.html">task</a>, write</p>
+<pre><code class="language-python">task taskName($param1=$arg1, $param2=$arg2, ...) = 
+  funcName(input1=$param1, input2=$param2, ...)
 </code></pre>
-<p>Note that whatever interpreter you choose to use, HyperMake parameters are passed into the task as <strong>environment variables</strong>. Here in Python we use <code>os.environ</code> to access them.</p>
+<blockquote>
+<p>Instantiating a function as a task starts with <code>=</code>, not <code>:</code> (starts a script block).</p>
+</blockquote>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../stdlib/stdlib.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../lang/task.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../stdlib/aws.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../lang/modules.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -214,11 +214,11 @@ task hello_world(sender=$):
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../stdlib/stdlib.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../lang/task.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../stdlib/aws.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../lang/modules.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
