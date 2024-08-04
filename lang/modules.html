@@ -175,14 +175,61 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="classesobjects"><a class="header" href="#classesobjects">Classes/Objects</a></h1>
-<p>In Hypermake, sometimes it is needed to bundle certain definitions together so that it can be reused.
-This forms an <code>object</code> (or <em>modules</em>, since a module can be seen as a singleton object):</p>
-<pre><code>object my_obj:
-  def x(...):
-  def y(...):
+                        <h1 id="module-system"><a class="header" href="#module-system">Module System</a></h1>
+<h3 id="objects"><a class="header" href="#objects">Objects</a></h3>
+<p>In HyperMake, sometimes it is needed to bundle certain definitions together so that it can be reused.
+This forms an <strong>object</strong> in HyperMake (think of it as a singleton object in OO languages):</p>
+<pre><code class="language-python">object my_obj:
+  key = value
+  def f(...):
+    ...
   
+  task t0(...) -&gt; out = f(...)
 </code></pre>
+<p>Objects can be used as namespaces. To refer to a definition in an object, use the <code>.</code> sign. For example, to refer to</p>
+<ul>
+<li>the <code>key</code> in <code>my_obj</code>, write <code>$my_obj.key</code>；</li>
+<li>the <code>out</code> output in task <code>t0</code>, write <code>$my_obj.t0.out</code>.</li>
+</ul>
+<blockquote>
+<p>Given a task <code>a.b.c</code>, it will be placed in <code>${fileSys.root}/a/b/c</code>.</p>
+</blockquote>
+<h3 id="classes"><a class="header" href="#classes">Classes</a></h3>
+<p><strong>Classes</strong> are just abstract objects that can be instantiated with parameters.</p>
+<pre><code class="language-python">class my_class(param0, param1, ...):
+  key = value
+  task t0(...) -&gt; out:
+    ...
+</code></pre>
+<p>To instantiate a class, write</p>
+<pre><code class="language-python">object my_obj = my_class(arg0, arg1, ...)
+</code></pre>
+<blockquote>
+<p>Note that instantiation of an object starts with the keyword <code>object</code>.
+Just doing <code>my_obj = ...</code> would define a string-valued literal.</p>
+</blockquote>
+<h3 id="modules"><a class="header" href="#modules">Modules</a></h3>
+<p>HyperMake's module system is based on objects: each file, when imported, forms a singleton object.
+Given the following directory structure:</p>
+<ul>
+<li><code>main.hm</code></li>
+<li><code>data/</code>
+<ul>
+<li><code>preprocess.hm</code></li>
+</ul>
+</li>
+</ul>
+<p>In <code>main.hm</code>, you can import <code>preprocess.hm</code> as follows:</p>
+<pre><code class="language-python">import data.preprocess
+</code></pre>
+<p>This will create an object <code>data.preprocess</code> that contains all definitions in <code>preprocess.hm</code>. Or you can import it as an alias:</p>
+<pre><code class="language-python">import data.preprocess as pp
+</code></pre>
+<p>This will create an object <code>pp</code> that contains all definitions in <code>preprocess.hm</code>.</p>
+<p>Additionally, you can import a HyperMake script in the current namespace, not as an object:</p>
+<pre><code class="language-python">import "data/preprocess.hm"
+</code></pre>
+<p>Importing a file by its filename will import all definitions in <code>preprocess.hm</code> into the current namespace.</p>
 
                     </main>
 
