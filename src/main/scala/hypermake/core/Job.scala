@@ -110,6 +110,19 @@ abstract class Job(implicit ctx: Context) {
     effs.collect({ case (k, Some(v)) => k -> v }).toMap
   }
 
+  def prepareInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
+    val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, fileSys) }
+    for ((name, (input, fs)) <- (inputs.args zipByKey inputFs) ++ decoratorInputs)
+      yield fs
+        .prepareInput(name, input, path)
+        .map {
+          case Some(preparedPath) => name -> Some(preparedPath) // prepared input
+          case None               => name -> None // pure input, is not linked
+        }
+  } map { effs =>
+    effs.collect({ case (k, Some(v)) => k -> v }).toMap
+  }
+
   /** An operation that checks the output of this job and the exit status of this job. */
   def checkOutputs(implicit std: StdSinks): HIO[Boolean] = {
     ZIO
@@ -150,8 +163,8 @@ abstract class Job(implicit ctx: Context) {
       _ <- fileSys.mkdir(path)
       _ <- cli.update(this, Status.Waiting)
       _ <- fileSys.lock(path)
-      linkedArgs <- linkInputs
-      args <- writeScript(linkedArgs)
+      preparedArgs <- prepareInputs
+      args <- writeScript(preparedArgs)
       _ <- cli.update(this, Status.Running)
       exitCode <- fileSys.execute(path, runtime.shell, Seq("script"), args)
       hasOutputs <- checkOutputs

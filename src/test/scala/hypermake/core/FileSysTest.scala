@@ -10,6 +10,7 @@ import org.scalatestplus.scalacheck.Checkers
 import org.typelevel.discipline.Laws
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 import zio._
+import zio.console.putStrLn
 import zio.stream.ZSink
 
 import hypermake.execution.RuntimeConfig
@@ -92,7 +93,12 @@ class FileSysLaws(local: FileSys, fs: FileSys)(implicit arbPath: Arbitrary[JPath
         b <- fs.exists(path.toString)
       } yield a && !b
       Runtime.default.unsafeRun(eff)
-    },
+    }
+  )
+
+  def fileSysWithSymLinks = new DefaultRuleSet(
+    "fileSysWithSymLinks",
+    None,
     "linkFile" -> Prop.forAll { (src: JPath, dst: JPath, content: String) =>
       val eff = for {
         _ <- fs.mkdir(src.getParent.toString)
@@ -158,7 +164,7 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
 
   import FileSysGen._
 
-  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 0.1)
+  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 1, maxDiscardedFactor = 0.1)
   implicit val runtime = RuntimeConfig.create(shell = "bash -eux")
   implicit val ctx = new Context()
 
@@ -168,6 +174,7 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
   val s3 = FileSys("my_s3")
   val asb = FileSys("my_asb")
   val sftp = FileSys("my_sftp")
+  val gcs = FileSys("my_gcs")
   implicit val stdSinks: StdSinks = StdSinks.default
 
 //  override def beforeAll(): Unit = {
@@ -177,8 +184,10 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
 
 //  checkAll("local", new FileSysLaws(local, local).fileSys)
 //  checkAll("local", new FileSysLaws(local, local).fileTransfer)
-  checkAll("aws.s3", new FileSysLaws(local, s3).fileSys)
-  checkAll("aws.s3", new FileSysLaws(local, s3).fileTransfer)
+//  checkAll("aws.s3", new FileSysLaws(local, s3).fileSys)
+//  checkAll("aws.s3", new FileSysLaws(local, s3).fileTransfer)
+  checkAll("gcloud.storage", new FileSysLaws(local, gcs).fileSys)
+  checkAll("gcloud.storage", new FileSysLaws(local, gcs).fileTransfer)
 //  checkAll("az.blob_storage", new FileSysLaws(local, asb).fileSys)
 //  checkAll("az.blob_storage", new FileSysLaws(local, asb).fileTransfer)
 

@@ -1,5 +1,6 @@
 import aws
 import az
+import gcloud
 import ssh
 
 object my_s3 = aws.s3(
@@ -11,6 +12,11 @@ object my_asb = az.storage_blob(
   container="hypermake",
   root="az-test",
   extra_args="--account-name tongfeipersonal"
+)
+
+object my_gcs = gcloud.storage(
+  bucket="hypermake",
+  root="gcloud-test"
 )
 
 object my_sftp = ssh.server(

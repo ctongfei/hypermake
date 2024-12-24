@@ -1,0 +1,51 @@
+# Supports Google Cloud Storage as a HyperMake file system.
+# Use as follows:
+# import gcloud
+# object my_gc_storage = gcloud.storage(bucket="my_bucket", root="")
+class storage(bucket, root):
+
+    def read(file):
+      key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+      gcloud storage cat gs://$bucket/$key
+
+    def mkdir(dir):
+      key=$([ -z ${root%/} ] && echo $dir || echo "${root%/}/$dir")
+      gcloud storage cp /dev/null gs://$bucket/$key/
+
+    def exists(file):
+      key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+      gcloud storage ls gs://$bucket/$key 2>/dev/null
+
+    def touch(file):
+      key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+      echo -n "" | gcloud storage cp - gs://$bucket/$key
+
+    def remove(file):
+      key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
+      if gcloud storage ls gs://$bucket/$key/ > /dev/null
+      then
+        gcloud storage rm -r gs://$bucket/$key/
+        gcloud storage rm gs://$bucket/$key
+      elif gcloud storage objects describe gs://$bucket/$key > /dev/null
+      then
+        gcloud storage rm gs://$bucket/$key
+      fi
+
+    def upload(src, dst):
+      dst_key=$([ -z ${root%/} ] && echo $dst || echo "${root%/}/$dst")
+      if [ -d $src ]
+      then
+        gcloud storage cp -r $src gs://$bucket/$dst_key/
+      else
+        gcloud storage cp $src gs://$bucket/$dst_key
+      fi
+
+    def download(src, dst):
+      src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
+      if gcloud storage ls gs://$bucket/$src_key/ >/dev/null 2>&1
+      then
+        gcloud storage cp -r gs://$bucket/$src_key $dst/
+      elif gcloud storage objects describe gs://$bucket/$key >/dev/null 2>&1
+      then
+        gcloud storage cp gs://$bucket/$src_key $dst
+      fi

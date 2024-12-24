@@ -37,6 +37,8 @@ trait FileSys {
 
   def refreshInterval: Duration
 
+  def supportsSymLinks: Boolean
+
   /** Resolves a path relative to the given root directory. */
   def resolvePath(s: String, r: String = root) = {
     val p = s.trim
@@ -59,7 +61,7 @@ trait FileSys {
   /** Checks if a file exists on this file system. */
   def exists(f: String)(implicit std: StdSinks): HIO[Boolean]
 
-  /** Creates a symbolic link from `src` to `dst`. */
+  /** Creates a symbolic link from `src` to `dst`. If symlink not supported, noop. */
   def link(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
   /** Creates an empty file at the given path. */
@@ -98,7 +100,7 @@ trait FileSys {
     u <- if (isLocked) remove(s"$f${/}.lock") else ZIO.succeed(())
   } yield u
 
-  def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] = {
+  def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] =
     x match {
       case Value.Pure(_) => ZIO.none // do nothing
       case Value.Input(path, fs) =>
@@ -123,7 +125,31 @@ trait FileSys {
           }
         } yield Some(r.mkString(" "))
     }
-  }
+
+  def prepareInput(name: String, x: Value, wd: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] =
+    x match {
+      case Value.Pure(_) => ZIO.none // do nothing
+      case Value.Input(path, fs) =>
+        if (fs == this)
+          link(path, s"$wd${/}$name") as Some(resolvePath(path)) // for debugging purposes
+        else
+          copyFrom(path, fs, s"$wd${/}$name") as Some(resolvePath(s"$wd${/}$name"))
+      case Value.PackageOutput(pack) =>
+        val p = pack.output.on(this).value
+        link(p, s"$wd${/}$name") as Some(resolvePath(p))
+      case Value.Output(path, fs, job, _) =>
+        if (fs == this)
+          link(s"${job.path}${/}$path", s"$wd${/}$name") as Some(resolvePath(s"${job.path}${/}$path"))
+        else
+          copyFrom(s"${job.path}${/}$path", fs, s"$wd${/}$name") as Some(resolvePath(s"$wd${/}$name"))
+      case Value.Multiple(values, _) =>
+        for {
+          _ <- mkdir(s"$wd${/}$name")
+          r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
+            prepareInput(ctx.percentEncodedCaseStringPath(c), v, resolvePath(s"$wd${/}$name"))
+          }
+        } yield Some(r.collect(x => x).mkString(" "))
+    }
 
   override def toString = name
 
@@ -142,6 +168,9 @@ object FileSys {
     ctx.root.values.get(name).map(_.default.value)
 
   def getScriptByName(name: String)(implicit ctx: Context) = ctx.root.functions(name).impl.default
+
+  def getScriptByNameOpt(name: String)(implicit ctx: Context) =
+    ctx.root.functions.get(name).map(_.impl.default)
 
   def getTaskByName(name: String)(implicit ctx: Context) = ctx.root.tasks(name).default
 
@@ -171,8 +200,8 @@ object FileSys {
     val separator = java.io.File.separatorChar
     val pathSeparator = java.io.File.pathSeparatorChar
     lazy val root = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
-
-    def refreshInterval = 100.milliseconds
+    val refreshInterval = 100.milliseconds
+    val supportsSymLinks = true
 
     def read(f: String)(implicit std: StdSinks) = IO {
       File(resolvePath(f)).contentAsString
@@ -240,21 +269,24 @@ object FileSys {
 
     import ctx._
 
-    def separator =
+    lazy val separator =
       getValueByNameOpt(s"${name}.separator").map(_.head).getOrElse(java.io.File.separatorChar)
 
-    def pathSeparator =
+    lazy val pathSeparator =
       getValueByNameOpt(s"${name}.path_separator")
         .map(_.head)
         .getOrElse(java.io.File.pathSeparatorChar)
 
-    def root = getValueByName(s"${name}.root")
+    lazy val root = getValueByName(s"${name}.root")
 
-    def refreshInterval =
+    lazy val refreshInterval =
       getValueByNameOpt(s"${name}.refresh_interval")
         .map(_.toInt)
         .getOrElse(5)
         .seconds // by default, 5s
+
+    lazy val supportsSymLinks =
+      getScriptByNameOpt(s"${name}.link").isDefined
 
     def read(f: String)(implicit std: StdSinks) = {
       val baos = new java.io.ByteArrayOutputStream()
@@ -293,12 +325,14 @@ object FileSys {
       exitCode <- process.exitCode
     } yield exitCode.code == 0
 
-    def link(src: String, dst: String)(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.link")
-        .withArgs("src" -> src, "dst" -> dst)
-        .executeLocally(ctx.runtime.workDir)
-      u <- process.successfulExitCode.unit
-    } yield u
+    def link(src: String, dst: String)(implicit std: StdSinks) = {
+      (for {
+        process <- getScriptByName(s"${name}.link")
+          .withArgs("src" -> src, "dst" -> dst)
+          .executeLocally(ctx.runtime.workDir)
+        u <- process.successfulExitCode.unit
+      } yield u).when(supportsSymLinks)
+    }
 
     def touch(f: String)(implicit std: StdSinks) = for {
       process <- getScriptByName(s"$name.touch")
@@ -352,7 +386,7 @@ object FileSys {
 
   }
 
-  /** Copy between environments. */
+  /** Copy between file systems. */
   def copy(src: String, srcFs: FileSys, dst: String, dstFs: FileSys)(implicit
       ctx: Context,
       std: StdSinks
@@ -361,9 +395,7 @@ object FileSys {
       .withArgs("src" -> src, "dst" -> dst)
       .executeLocally(ctx.runtime.workDir)(ctx.runtime, std)
     exitCode <- process.exitCode
-    u <-
-      if (exitCode.code == 0) ZIO.succeed(())
-      else ZIO.fail(DataTransferFailedException(srcFs.name, src))
+    u <- ZIO.fail(DataTransferFailedException(srcFs.name, src)).unless(exitCode.code == 0)
   } yield u
 
 }

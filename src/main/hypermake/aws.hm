@@ -27,7 +27,7 @@ class s3(bucket, root):
   def link(src, dst):
     src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
     dst_key=$([ -z ${root%/} ] && echo $dst || echo "${root%/}/$dst")
-    if aws s3api list-objects-v2 --bucket $bucket --prefix $src_key/ --query 'Contents[]' --max-items 0 | jq -e;
+    if aws s3api list-objects-v2 --bucket $bucket --prefix $src_key/ --query 'Contents[]' --max-items 0 | jq -e
     then
       aws s3 cp s3://$bucket/$src_key/ s3://$bucket/$dst_key --recursive
     else
