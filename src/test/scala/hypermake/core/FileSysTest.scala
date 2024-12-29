@@ -126,19 +126,19 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
   def fileTransfer = new DefaultRuleSet(
     "fileTransfer",
     None,
-//    "uploadThenDownloadFile" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, content: String) =>
-//      val eff = for {
-//        _ <- local.mkdir(p.getParent.toString)
-//        _ <- local.write(p.toString, content)
-//        _ <- remote.mkdir(q.getParent.toString)
-//        _ <- remote.upload(p.toString, q.toString)
-//        a <- remote.read(q.toString)
-//        _ <- local.mkdir(r.getParent.toString)
-//        _ <- remote.download(q.toString, r.toString)
-//        b <- local.read(r.toString)
-//      } yield (a == content) && (b == content)
-//      Runtime.default.unsafeRun(eff)
-//    },
+    "uploadThenDownloadFile" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, content: String) =>
+      val eff = for {
+        _ <- local.mkdir(p.getParent.toString)
+        _ <- local.write(p.toString, content)
+        _ <- remote.mkdir(q.getParent.toString)
+        _ <- remote.upload(p.toString, q.toString)
+        a <- remote.read(q.toString)
+        _ <- local.mkdir(r.getParent.toString)
+        _ <- remote.download(q.toString, r.toString)
+        b <- local.read(r.toString)
+      } yield (a == content) && (b == content)
+      Runtime.default.unsafeRun(eff)
+    },
     "uploadThenDownloadDir" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, a: String, b: String) =>
       val eff = for {
         _ <- local.mkdir(p.toString)

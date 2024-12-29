@@ -15,7 +15,7 @@ class storage(bucket, root):
 
     def exists(file):
       key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
-      gcloud storage ls gs://$bucket/$key 2>/dev/null
+      gcloud storage ls gs://$bucket/$key 2> /dev/null
 
     def touch(file):
       key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
@@ -42,7 +42,7 @@ class storage(bucket, root):
 
     def download(src, dst):
       src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
-      if gcloud storage ls gs://$bucket/$src_key/ >/dev/null
+      if gcloud storage ls gs://$bucket/$src_key/ > /dev/null
       then
         mkdir -p $dst
         gcloud storage cp -r gs://$bucket/$src_key/* $dst/
