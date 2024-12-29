@@ -123,8 +123,8 @@ object Main extends App {
               case Subcommand.Run =>
                 val jobGraph = Graph.exploreBidirectionally[Job](
                   jobs,
-                  prev = j => j.dependentJobs ++ j.services.map(_.setup),
-                  next = j => j.services.map(_.teardown)
+                  prev = j => j.dependentJobs ++ j.services.map(_.start),
+                  next = j => j.services.map(_.stop)
                 )
                 val sortedJobs = jobGraph.topologicalSort.toIndexedSeq
                 val ephemeralJobs = sortedJobs.filter(_.ephemeral)
@@ -148,8 +148,8 @@ object Main extends App {
               case Subcommand.DryRun =>
                 val jobGraph = Graph.exploreBidirectionally[Job](
                   jobs,
-                  prev = j => j.dependentJobs ++ j.services.map(_.setup),
-                  next = j => j.services.map(_.teardown)
+                  prev = j => j.dependentJobs ++ j.services.map(_.start),
+                  next = j => j.services.map(_.stop)
                 )
                 for {
                   _ <- putStrLn(headerMessage)

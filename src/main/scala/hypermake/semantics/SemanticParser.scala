@@ -13,6 +13,7 @@ import hypermake.util._
 
 /**
  * A semantic parsing run in a specific module/scope.
+ * @param scope Root namespace of this parsing run
  * @param ctx Global context
  */
 class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
@@ -128,7 +129,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
               for (serviceObj <- (scope.objects ++ root.objects).get(name))
                 yield {
                   val service = serviceObj.asService
-                  selectPotentiallyMultipleValues[Service](service, indices, _.setup.outputs.head._2)
+                  selectPotentiallyMultipleValues[Service](service, indices, _.start.outputs.head._2)
                 }
             }
       }
@@ -456,13 +457,12 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     }
   }
 
-  def parseTask(tr: TaskRef) = {
-    try {
-      Some(tr.!.allElements.head.default)
-    } catch {
-      case e: Exception => None
-    }
-  } // TODO: make sure that there is only 1 in the tensor
+  def parseTask(tr: TaskRef) = try {
+    Some(tr.!.allElements.head.default)
+  } catch {
+    case e: Exception => None
+  }
+  // TODO: make sure that there is only 1 in the tensor
 
   def parseTarget(tr: TaskRef) =
     root.plans.get(tr.name.!).map(_.targets).getOrElse(Seq(tr.!.map(_.default)))

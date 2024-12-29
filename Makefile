@@ -4,11 +4,17 @@ PREFIX = $(HOME)/.local
 SCALA_VERSION = 2.13
 HYPERMAKE_VERSION = 0.1.0
 JAR = target/scala-$(SCALA_VERSION)/hypermake-assembly-${HYPERMAKE_VERSION}.jar
-
-all: $(JAR)
+NATIVE_IMAGE = target/graalvm-native-image/hypermake
 
 $(JAR):
 	$(SBT) assembly
+
+$(NATIVE_IMAGE):
+	$(SBT) 'show GraalVMNativeImage/packageBin'
+
+jar: $(JAR)
+
+native-image: $(NATIVE_IMAGE)
 
 clean:
 	$(SBT) clean
@@ -23,7 +29,7 @@ install: $(JAR)
 	cp bin/hypermake $(PREFIX)/bin/hypermake
 	chmod +x $(PREFIX)/bin/hypermake
 
-build-docs:
+docs:
 	mdbook build
 
 # Credit to https://github.com/kg4zow/mdbook-template/blob/main/Makefile
@@ -42,4 +48,4 @@ gh-deploy-docs: build-docs
 	git worktree remove "$$WORK" ; \
 	git push origin gh-pages
 
-.PHONY: all clean install build-docs gh-deploy-docs
+.PHONY: jar native-image clean install docs gh-deploy-docs

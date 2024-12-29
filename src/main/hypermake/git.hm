@@ -1,3 +1,12 @@
 def clone(repo) -> out:
   mkdir -p $out
   git clone $repo $out
+
+
+def sparse_checkout(repo, path) -> out:
+  mkdir -p $out
+  git clone --no-checkout $repo $out
+  cd $out
+  git sparse-checkout init --cone
+  git sparse-checkout set $path
+  git checkout

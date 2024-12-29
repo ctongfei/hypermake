@@ -5,8 +5,8 @@ import hypermake.exception.ObjectIsNotServiceException
 import hypermake.semantics.Context
 import hypermake.util.StdSinks
 
-case class Service(rawSetup: Task, teardown: Task) {
-  val setup: Task = new Service.ServiceEphemeralTask(rawSetup, this)(rawSetup.ctx)
+case class Service(rawStart: Task, stop: Task) {
+  val start: Task = new Service.ServiceEphemeralTask(rawStart, this)(rawStart.ctx)
 }
 
 object Service {
@@ -40,9 +40,9 @@ case class PointedServiceTensor(setup: PointedTaskTensor, teardown: PointedTaskT
 
 object PointedServiceTensor {
   def fromObj(obj: Obj): PointedServiceTensor = {
-    val setup = obj.tasks.get("setup").getOrElse(throw ObjectIsNotServiceException(obj))
-    val teardown = obj.tasks.get("teardown").getOrElse(throw ObjectIsNotServiceException(obj))
-    if (!(setup.ephemeral && teardown.ephemeral)) throw ObjectIsNotServiceException(obj)
-    PointedServiceTensor(setup, teardown)
+    val start = obj.tasks.get("start").getOrElse(throw ObjectIsNotServiceException(obj))
+    val stop = obj.tasks.get("stop").getOrElse(throw ObjectIsNotServiceException(obj))
+    if (!(start.ephemeral && stop.ephemeral)) throw ObjectIsNotServiceException(obj)
+    PointedServiceTensor(start, stop)
   }
 }

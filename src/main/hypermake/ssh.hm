@@ -1,11 +1,11 @@
 class server(host, root):
 
-  ephemeral task setup() -> sock:
+  ephemeral task start() -> sock:
     mkdir -p .ssh-server
     ssh -fNM -S $sock $host
     sleep 2
 
-  ephemeral task teardown(sock=$setup.sock):
+  ephemeral task stop(sock=$start.sock):
     ssh -S $sock -O exit $host
 
   def read(file, sock=$setup.sock):
