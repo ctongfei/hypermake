@@ -24,6 +24,7 @@ class RuntimeConfig private (
     val numParallelJobs: Int,
     val keepGoing: Boolean,
     val silent: Boolean,
+    val verbose: Boolean,
     val yes: Boolean
 ) {
 
@@ -98,6 +99,7 @@ object RuntimeConfig {
       numParallelJobs: Int = 1,
       keepGoing: Boolean = false,
       silent: Boolean = false,
+      verbose: Boolean = false,
       yes: Boolean = false
   ): RuntimeConfig =
     new RuntimeConfig(
@@ -109,6 +111,7 @@ object RuntimeConfig {
       numParallelJobs = numParallelJobs,
       keepGoing = keepGoing,
       silent = silent,
+      verbose = verbose,
       yes = yes
     )
 
@@ -119,6 +122,7 @@ object RuntimeConfig {
       numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
       keepGoing = runOptions contains RunOpt.KeepGoing,
       silent = runOptions contains RunOpt.Silent,
+      verbose = runOptions contains RunOpt.Verbose,
       yes = runOptions contains RunOpt.Yes
     )
 

@@ -100,32 +100,6 @@ trait FileSys {
     u <- if (isLocked) remove(s"$f${/}.lock") else ZIO.succeed(())
   } yield u
 
-  def linkValue(x: Value, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] =
-    x match {
-      case Value.Pure(_) => ZIO.none // do nothing
-      case Value.Input(path, fs) =>
-        val e =
-          if (fs == this) link(path, dst)
-          else copyFrom(path, fs, dst)
-        e as Some(dst)
-      case Value.PackageOutput(pack) =>
-        val p = pack.output.on(this).value
-        link(p, dst) as Some(dst)
-      case Value.Output(path, fs, job, _) =>
-        val e =
-          if (fs == this) link(f"${job.path}${/}$path", dst)
-          else copyFrom(f"${job.path}${/}$path", fs, dst)
-        e as Some(dst)
-      case Value.Multiple(values, _) =>
-        for {
-          _ <- mkdir(dst)
-          r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
-            val argsString = ctx.percentEncodedCaseStringPath(c)
-            linkValue(v, s"$dst${/}$argsString") as s"$dst${/}$argsString"
-          }
-        } yield Some(r.mkString(" "))
-    }
-
   def prepareInput(name: String, x: Value, wd: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] =
     x match {
       case Value.Pure(_) => ZIO.none // do nothing
@@ -295,6 +269,7 @@ object FileSys {
         err = std.err
       )
       for {
+        _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.read $f"))
         process <- getScriptByName(s"${name}.read")
           .withArgs("file" -> f)
           .executeLocally(ctx.runtime.workDir)(ctx.runtime, sinks)
@@ -304,6 +279,7 @@ object FileSys {
     def write(f: String, content: String)(implicit std: StdSinks) = {
       val tempScriptFile = runtime.newTempFile()
       for {
+        _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.write $f"))
         _ <- IO {
           File(tempScriptFile).writeText(content)
         }
@@ -312,6 +288,7 @@ object FileSys {
     }
 
     def mkdir(f: String)(implicit std: StdSinks) = for {
+      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.mkdir $f"))
       process <- getScriptByName(s"$name.mkdir")
         .withArgs("dir" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -319,6 +296,7 @@ object FileSys {
     } yield u
 
     def exists(f: String)(implicit std: StdSinks) = for {
+      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.exists $f"))
       process <- getScriptByName(s"$name.exists")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -327,6 +305,7 @@ object FileSys {
 
     def link(src: String, dst: String)(implicit std: StdSinks) = {
       (for {
+        _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.link $src $dst"))
         process <- getScriptByName(s"${name}.link")
           .withArgs("src" -> src, "dst" -> dst)
           .executeLocally(ctx.runtime.workDir)
@@ -335,6 +314,7 @@ object FileSys {
     }
 
     def touch(f: String)(implicit std: StdSinks) = for {
+      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.touch $f"))
       process <- getScriptByName(s"$name.touch")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -342,6 +322,7 @@ object FileSys {
     } yield u
 
     def remove(f: String)(implicit std: StdSinks) = for {
+      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.remove $f"))
       process <- getScriptByName(s"$name.remove")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -349,6 +330,7 @@ object FileSys {
     } yield u
 
     def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
+      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.upload $src $dst"))
       process <- ctx.root
         .functions(s"${name}.upload")
         .partial(Args.from("src" -> src, "dst" -> dst))
@@ -359,6 +341,7 @@ object FileSys {
     } yield u
 
     def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
+      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.download $src $dst"))
       process <- ctx.root
         .functions(s"${name}.download")
         .partial(Args.from("src" -> src, "dst" -> dst))

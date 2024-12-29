@@ -8,9 +8,10 @@ class storage(bucket, root):
       key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
       gcloud storage cat gs://$bucket/$key
 
+    # https://cloud.google.com/storage/docs/objects#simulated-folders
     def mkdir(dir):
       key=$([ -z ${root%/} ] && echo $dir || echo "${root%/}/$dir")
-      gcloud storage cp /dev/null gs://$bucket/$key/
+      gcloud storage cp /dev/null gs://$bucket/$key/_\$folder\$
 
     def exists(file):
       key=$([ -z ${root%/} ] && echo $file || echo "${root%/}/$file")
@@ -25,7 +26,6 @@ class storage(bucket, root):
       if gcloud storage ls gs://$bucket/$key/ > /dev/null
       then
         gcloud storage rm -r gs://$bucket/$key/
-        gcloud storage rm gs://$bucket/$key
       elif gcloud storage objects describe gs://$bucket/$key > /dev/null
       then
         gcloud storage rm gs://$bucket/$key
@@ -35,17 +35,18 @@ class storage(bucket, root):
       dst_key=$([ -z ${root%/} ] && echo $dst || echo "${root%/}/$dst")
       if [ -d $src ]
       then
-        gcloud storage cp -r $src gs://$bucket/$dst_key/
+        gcloud storage cp -r $src/* gs://$bucket/$dst_key/
       else
         gcloud storage cp $src gs://$bucket/$dst_key
       fi
 
     def download(src, dst):
       src_key=$([ -z ${root%/} ] && echo $src || echo "${root%/}/$src")
-      if gcloud storage ls gs://$bucket/$src_key/ >/dev/null 2>&1
+      if gcloud storage ls gs://$bucket/$src_key/ >/dev/null
       then
-        gcloud storage cp -r gs://$bucket/$src_key $dst/
-      elif gcloud storage objects describe gs://$bucket/$key >/dev/null 2>&1
+        mkdir -p $dst
+        gcloud storage cp -r gs://$bucket/$src_key/* $dst/
+      elif gcloud storage objects describe gs://$bucket/$src_key > /dev/null
       then
         gcloud storage cp gs://$bucket/$src_key $dst
       fi

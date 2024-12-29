@@ -96,20 +96,7 @@ abstract class Job(implicit ctx: Context) {
     outputsExist <- checkOutputs
   } yield exitCode == 0 && outputsExist
 
-  /** An operation that links output of dependent jobs to the working directory of this job. */
-  def linkInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
-    val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, fileSys) }
-    for ((name, (input, fs)) <- (inputs.args zipByKey inputFs) ++ decoratorInputs)
-      yield fs
-        .linkValue(input, f"$path${fileSys./}$name")
-        .map {
-          case Some(_) => name -> Some(name) // linked input
-          case None    => name -> None // pure input, is not linked
-        }
-  } map { effs =>
-    effs.collect({ case (k, Some(v)) => k -> v }).toMap
-  }
-
+  /** An operation that prepares output of dependent jobs to the file system of this job. */
   def prepareInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
     val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, fileSys) }
     for ((name, (input, fs)) <- (inputs.args zipByKey inputFs) ++ decoratorInputs)

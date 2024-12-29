@@ -123,11 +123,11 @@ class Statements(indent: Int) {
   }
 
   def definition[$: P]: P[Def] = P {
-    valDef | funcDef | taskDef | packageDef | planDef | classDef | objectDef
+    Lexical.wsComment ~ (valDef | funcDef | taskDef | packageDef | planDef | classDef | objectDef)
   }
 
   def stmt[$: P]: P[Statement] = P {
-    definition | importFile | importObject
+    Lexical.wsComment ~ (definition | importFile | importObject)
   }
 
   def top[$: P]: P[Seq[Statement]] = P {
