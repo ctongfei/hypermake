@@ -48,3 +48,5 @@ case class ObjectIsNotServiceException(obj: Obj)
     extends Exception(s"Object “$obj” cannot be used as a service since it does not have member tasks “setup” and “teardown”.")
 
 case class PackageOutputException(n: String) extends Exception(s"Package “$n” can only have exactly 1 output.")
+
+case class PackageInputException(n: String) extends Exception("Inputs of package “$n” cannot be file system-dependent.")

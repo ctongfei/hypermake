@@ -43,36 +43,35 @@ class RuntimeConfig private (
 
   lazy val tempDir = tempPath.toString
 
-  lazy val nullFile = {
-    if (System.getProperty("os.name").toLowerCase contains "win")
-      "NUL"
-    else "/dev/null"
-  }
+  lazy val isWindows = System.getProperty("os.name").toLowerCase contains "win"
+
+  lazy val nullFile = if (isWindows) "NUL" else "/dev/null"
 
   def newTempFile(prefix: String = "", suffix: String = "") =
     JFiles.createTempFile(tempPath, prefix, suffix).toAbsolutePath.toString
 
   /**
-   * Resolves a script file from `HYPERMAKE_PATH`.
+   * Resolves a script file and read it into lines. The order of resolution is:
+   *  - Current working directory
+   *  - Paths in `HYPERMAKE_PATH` environment variable
+   *  - Resource directory encoded in the JAR file
    * @param fn File name to resolve
-   * @return The file
    */
-  def resolveFile(fn: String): File = {
+  def resolveFileThenRead(fn: String): Seq[String] = {
     resolutionPaths.collectFirst {
-      case path if File(path, fn).exists => File(path, fn)
+      case path if File(path, fn).exists => File(path, fn).lines.toSeq
     } getOrElse {
-      val newFn = fn.replace('.', JFile.separatorChar) + ".hm"
-      resolutionPaths.collectFirst {
-        case path if File(path, newFn).exists => File(path, newFn)
-      } getOrElse {
-        throw new FileNotFoundException(s"Hypermake script ${O(fn)} not found.")
+      // find the file in the resource directory
+      getClass.getClassLoader.getResourceAsStream(fn) match {
+        case null => throw new FileNotFoundException(s"HyperMake script ${O(fn)} not found.")
+        case is   => scala.io.Source.fromInputStream(is).getLines().toSeq
       }
     }
   }
 
-  def resolveModule(name: String): File = {
+  def resolveModuleThenRead(name: String): Seq[String] = {
     val fn = name.replace('.', JFile.separatorChar) + ".hm"
-    resolveFile(fn)
+    resolveFileThenRead(fn)
   }
 
   override def toString = {
@@ -83,6 +82,7 @@ class RuntimeConfig private (
        |numParallelJobs = $numParallelJobs
        |keepGoing = $keepGoing
        |silent = $silent
+       |verbose = $verbose
        |yes = $yes
        |""".stripMargin
   }

@@ -33,7 +33,7 @@ docs:
 	mdbook build
 
 # Credit to https://github.com/kg4zow/mdbook-template/blob/main/Makefile
-gh-deploy-docs: build-docs
+gh-deploy-docs: docs
 	set -ex ; \
 	WORK="$$( mktemp -d )" ; \
 	VER="$$( git describe --always --tags --dirty )" ; \

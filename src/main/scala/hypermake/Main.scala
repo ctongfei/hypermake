@@ -74,7 +74,7 @@ object Main extends App {
         // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
         // Imports files specified with the -I switch
         runtime.includePaths foreach { f =>
-          parser.semanticParseFile(runtime.resolveFile(f), scope = ctx.root)
+          parser.semanticParseLines(runtime.resolveFileThenRead(f), scope = ctx.root)
         }
         parser.semanticParseFile(File(scriptFile), scope = ctx.root)
         parser.addFallbackLocalFsDefs()

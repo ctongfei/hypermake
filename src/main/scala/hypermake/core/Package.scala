@@ -5,6 +5,7 @@ import scala.collection._
 import cats.implicits._
 
 import hypermake.collection._
+import hypermake.exception.PackageInputException
 import hypermake.semantics.Context
 import hypermake.util._
 
@@ -29,6 +30,7 @@ class Package(
     inputFs = inputs.mapValuesE {
       case _: Value.Pure          => FileSys("")
       case _: Value.PackageOutput => fs
+      case _                      => throw PackageInputException(name)
     },
     outputFileNames = Args(Map(outputFileName)),
     outputFs = Map(outputFileName._1 -> fs),

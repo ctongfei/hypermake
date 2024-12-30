@@ -384,7 +384,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
     stmts foreach {
       case ImportFile(fileName, moduleName) =>
-        val obj = semanticParseFile(resolveFile(fileName), scope)
+        val obj = semanticParseLines(resolveFileThenRead(fileName), scope)
         moduleName match {
           case Some(name) => scope.addDef(name.! := obj)
           case None       => scope.merge(obj)
@@ -395,7 +395,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
           case None       => modulePath.!.toString
         }
         val newObj = new Obj(scope.prefix / newModuleName)
-        val obj = semanticParseFile(resolveModule(modulePath.!.toString), newObj)
+        val obj = semanticParseLines(resolveModuleThenRead(modulePath.!.toString), newObj)
         scope.addDef(newModuleName := obj)
       case d: Def =>
         scope.addDef(d.!)
@@ -445,12 +445,15 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     syntacticParse(content)
   }
 
+  def semanticParseLines(lines: Iterable[String], scope: Obj = ctx.root): Obj =
+    semanticParse(readLinesToStmts(lines), scope)
+
   def semanticParseFile(file: File, scope: Obj = ctx.root): Obj = {
-    import hypermake.util.printing._
     try {
-      semanticParse(readFileToStmts(file), scope)
+      semanticParseLines(file.lines, scope)
     } catch {
       case e: java.nio.file.NoSuchFileException =>
+        import hypermake.util.printing._
         System.err.println(s"Workflow file ${K(file.pathAsString)} does not exist.")
         System.exit(1)
         throw e
