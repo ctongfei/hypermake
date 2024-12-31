@@ -13,6 +13,7 @@ import hypermake.exception.DataTransferFailedException
 import hypermake.semantics.Context
 import hypermake.util.Escaper.Shell
 import hypermake.util._
+import hypermake.util.logging._
 
 /**
  * Encapsulates a file system that could be local, or some remote grid (e.g. SFTP, or AWS S3).
@@ -269,7 +270,7 @@ object FileSys {
         err = std.err
       )
       for {
-        _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.read $f"))
+        _ <- logCall(s"$name.read", f)
         process <- getScriptByName(s"${name}.read")
           .withArgs("file" -> f)
           .executeLocally(ctx.runtime.workDir)(ctx.runtime, sinks)
@@ -279,7 +280,7 @@ object FileSys {
     def write(f: String, content: String)(implicit std: StdSinks) = {
       val tempScriptFile = runtime.newTempFile()
       for {
-        _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.write $f"))
+        _ <- logCall(s"$name.write", f)
         _ <- IO {
           File(tempScriptFile).writeText(content)
         }
@@ -288,7 +289,7 @@ object FileSys {
     }
 
     def mkdir(f: String)(implicit std: StdSinks) = for {
-      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.mkdir $f"))
+      _ <- logCall(s"$name.mkdir", f)
       process <- getScriptByName(s"$name.mkdir")
         .withArgs("dir" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -296,7 +297,7 @@ object FileSys {
     } yield u
 
     def exists(f: String)(implicit std: StdSinks) = for {
-      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.exists $f"))
+      _ <- logCall(s"$name.exists", f)
       process <- getScriptByName(s"$name.exists")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -305,7 +306,7 @@ object FileSys {
 
     def link(src: String, dst: String)(implicit std: StdSinks) = {
       (for {
-        _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.link $src $dst"))
+        _ <- logCall(s"$name.link", src, dst)
         process <- getScriptByName(s"${name}.link")
           .withArgs("src" -> src, "dst" -> dst)
           .executeLocally(ctx.runtime.workDir)
@@ -314,7 +315,7 @@ object FileSys {
     }
 
     def touch(f: String)(implicit std: StdSinks) = for {
-      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.touch $f"))
+      _ <- logCall(s"$name.touch", f)
       process <- getScriptByName(s"$name.touch")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -322,7 +323,7 @@ object FileSys {
     } yield u
 
     def remove(f: String)(implicit std: StdSinks) = for {
-      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.remove $f"))
+      _ <- logCall(s"$name.remove", f)
       process <- getScriptByName(s"$name.remove")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
@@ -330,7 +331,7 @@ object FileSys {
     } yield u
 
     def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
-      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.upload $src $dst"))
+      _ <- logCall(s"$name.upload", src, dst)
       process <- ctx.root
         .functions(s"${name}.upload")
         .partial(Args.from("src" -> src, "dst" -> dst))
@@ -341,7 +342,7 @@ object FileSys {
     } yield u
 
     def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = for {
-      _ <- ZIO.when(ctx.runtime.verbose)(zio.console.putStrLnErr(s"$name.download $src $dst"))
+      _ <- logCall(s"$name.download", src, dst)
       process <- ctx.root
         .functions(s"${name}.download")
         .partial(Args.from("src" -> src, "dst" -> dst))
@@ -365,7 +366,7 @@ object FileSys {
       exitCode <- process.exitCode
     } yield exitCode
 
-    def asService: Service = Service(getTaskByName(s"${name}.setup"), getTaskByName(s"${name}.teardown"))
+    def asService: Service = Service(getTaskByName(s"${name}.start"), getTaskByName(s"${name}.stop"))
 
   }
 
@@ -374,6 +375,7 @@ object FileSys {
       ctx: Context,
       std: StdSinks
   ): HIO[Unit] = for {
+    _ <- logCall(s"copy_from_${srcFs}_to_${dstFs}", src, dst)(ctx.runtime)
     process <- getScriptByName(s"copy_from_${srcFs}_to_${dstFs}")
       .withArgs("src" -> src, "dst" -> dst)
       .executeLocally(ctx.runtime.workDir)(ctx.runtime, std)

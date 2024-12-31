@@ -49,4 +49,4 @@ case class ObjectIsNotServiceException(obj: Obj)
 
 case class PackageOutputException(n: String) extends Exception(s"Package “$n” can only have exactly 1 output.")
 
-case class PackageInputException(n: String) extends Exception("Inputs of package “$n” cannot be file system-dependent.")
+case class PackageInputException(n: String) extends Exception(s"Inputs of package “$n” cannot be file system-dependent.")

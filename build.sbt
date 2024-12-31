@@ -32,3 +32,11 @@ libraryDependencies ++= Seq(
   "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0",
   "io.chrisdavenport" %% "cats-scalacheck" % "0.3.2"
 ).map(_ % Test)
+
+def prop(name: String, default: String) = Option(System.getProperty(name)).getOrElse(default)
+
+Compile / resourceDirectory := {
+  if (prop("hypermake.stdlibasresource", "false") == "true")
+    baseDirectory.value / "src" / "main" / "hypermake"
+  else baseDirectory.value / "src" / "main" / "resources"
+}

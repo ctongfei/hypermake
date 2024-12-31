@@ -5,9 +5,10 @@ SCALA_VERSION = 2.13
 HYPERMAKE_VERSION = 0.1.0
 JAR = target/scala-$(SCALA_VERSION)/hypermake-assembly-${HYPERMAKE_VERSION}.jar
 NATIVE_IMAGE = target/graalvm-native-image/hypermake
+STDLIB_AS_RESOURCE = false
 
 $(JAR):
-	$(SBT) assembly
+	$(SBT) -Dhypermake.stdlibasresource=$(STDLIB_AS_RESOURCE) assembly
 
 $(NATIVE_IMAGE):
 	$(SBT) 'show GraalVMNativeImage/packageBin'
