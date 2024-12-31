@@ -5,9 +5,12 @@ import java.nio.file.{Files => JFiles, _}
 import scala.jdk.CollectionConverters._
 
 import better.files.File
+import zio._
+import zio.process._
 
 import hypermake.cli.CmdLineAST
 import hypermake.cli.CmdLineAST._
+import hypermake.util._
 import hypermake.util.printing._
 
 /**
@@ -92,32 +95,50 @@ object RuntimeConfig {
 
   private val defaultShell = "bash -e"
 
+  def cloneRepoToTempDir(repo: String): HIO[String] = {
+    val tempDir = JFiles.createTempDirectory("hypermake").toAbsolutePath.toString
+    val std = StdSinks.default
+    (for {
+      clone <- Command("git", "clone", repo, tempDir)
+        .stderr(ProcessOutput.Pipe)
+        .stdout(ProcessOutput.Pipe)
+        .run
+      _ <- clone.stdout.stream.run(std.out) <&> clone.stderr.stream.run(std.err)
+      u <- clone.successfulExitCode.unit
+    } yield u).as(tempDir)
+  }
+
   def create(
       definedVars: Map[String, String] = Map(),
       includePaths: Seq[String] = Seq(),
+      includedGitRepos: Seq[String] = Seq(),
       shell: String = defaultShell,
       numParallelJobs: Int = 1,
       keepGoing: Boolean = false,
       silent: Boolean = false,
       verbose: Boolean = false,
       yes: Boolean = false
-  ): RuntimeConfig =
+  ): RuntimeConfig = {
+    val allGitRepos = ZIO.foreach(includedGitRepos)(cloneRepoToTempDir)
+    val allClonedPath = Runtime.default.unsafeRun(allGitRepos)
     new RuntimeConfig(
       workDir = System.getProperty("user.dir"),
       envVars = System.getenv().asScala.toMap,
       definedVars = definedVars,
       shell = shell,
-      includePaths = includePaths,
+      includePaths = includePaths ++ allClonedPath,
       numParallelJobs = numParallelJobs,
       keepGoing = keepGoing,
       silent = silent,
       verbose = verbose,
       yes = yes
     )
+  }
 
   def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) =
     create(
       includePaths = options.collect { case Opt.Include(f) => f },
+      includedGitRepos = options.collect { case Opt.IncludeGit(r) => r },
       shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse(defaultShell),
       numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
       keepGoing = runOptions contains RunOpt.KeepGoing,

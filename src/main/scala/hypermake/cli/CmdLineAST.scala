@@ -24,6 +24,7 @@ object CmdLineAST {
   object Opt {
     case class Define(name: String, value: String) extends Opt // -D name=value
     case class Include(path: String) extends Opt // I
+    case class IncludeGit(repo: String) extends Opt // G
     case class Output(path: String) extends Opt // O
     case class Shell(shell: String) extends Opt // S
   }

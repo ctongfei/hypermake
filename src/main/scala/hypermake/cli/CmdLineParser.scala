@@ -6,9 +6,7 @@ import hypermake.exception._
 import hypermake.syntax.Lexical.identifier
 import hypermake.syntax._
 
-/**
- * Command line parser of Hypermake.
- */
+/** Command line parser of Hypermake. */
 object CmdLineParser {
 
   import hypermake.cli.CmdLineAST._
@@ -24,6 +22,11 @@ object CmdLineParser {
     P {
       ("-I" | "--include") ~ string
     } map Opt.Include
+
+  def includeGit[$: P] =
+    P {
+      ("-G" | "--include-git") ~ string
+    } map Opt.IncludeGit
 
   def shell[$: P] =
     P {
@@ -49,7 +52,7 @@ object CmdLineParser {
     } map { _ => out }
 
   def opt[$: P]: P[Opt] = P {
-    define | include | shell
+    define | include | includeGit | shell
   }
 
   def runtimeOpts[$: P] = P {

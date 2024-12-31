@@ -29,7 +29,7 @@ object Main extends App {
        |
        | ${B("Options:")}
        |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
-       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific Hypermake script ${V("file")} to parse.
+       |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific directories ${V("file")} when resolving imports.
        |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
        |  -H, --help                 : Prints this message and exit.
        |  -V, --version              : Shows HyperMake version and exit.
@@ -72,10 +72,7 @@ object Main extends App {
         val parser = new SemanticParser(ctx.root)
         // TODO: Defines variables specified with the -D switch
         // parser.semanticParse(parser.readLinesToStmts(runtime.definedVars.map { case (k, v) => s"$k = $v" }))
-        // Imports files specified with the -I switch
-        runtime.includePaths foreach { f =>
-          parser.semanticParseLines(runtime.resolveFileThenRead(f), scope = ctx.root)
-        }
+
         parser.semanticParseFile(File(scriptFile), scope = ctx.root)
         parser.addFallbackLocalFsDefs()
 
