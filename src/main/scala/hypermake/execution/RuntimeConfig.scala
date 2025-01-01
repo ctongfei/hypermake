@@ -11,6 +11,7 @@ import zio.process._
 import hypermake.cli.CmdLineAST
 import hypermake.cli.CmdLineAST._
 import hypermake.util._
+import hypermake.util.git.cloneRepoToTempDir
 import hypermake.util.printing._
 
 /**
@@ -94,19 +95,6 @@ class RuntimeConfig private (
 object RuntimeConfig {
 
   private val defaultShell = "bash -e"
-
-  def cloneRepoToTempDir(repo: String): HIO[String] = {
-    val tempDir = JFiles.createTempDirectory("hypermake").toAbsolutePath.toString
-    val std = StdSinks.default
-    (for {
-      clone <- Command("git", "clone", repo, tempDir)
-        .stderr(ProcessOutput.Pipe)
-        .stdout(ProcessOutput.Pipe)
-        .run
-      _ <- clone.stdout.stream.run(std.out) <&> clone.stderr.stream.run(std.err)
-      u <- clone.successfulExitCode.unit
-    } yield u).as(tempDir)
-  }
 
   def create(
       definedVars: Map[String, String] = Map(),

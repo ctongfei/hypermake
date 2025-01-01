@@ -83,4 +83,8 @@ object Lexical {
     (letter | digit | CharPred(c => !(" *?<>\"".contains(c)))).rep(1).!
   }
 
+  def noSpaceString[$: P] = P {
+    CharPred(c => !(" \n\t\r".contains(c))).rep(1).!
+  }
+
 }

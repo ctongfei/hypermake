@@ -25,7 +25,7 @@ object CmdLineParser {
 
   def includeGit[$: P] =
     P {
-      ("-G" | "--include-git") ~ string
+      ("-G" | "--include-git") ~ (Lexical.noSpaceString | Lexical.quotedString)
     } map Opt.IncludeGit
 
   def shell[$: P] =
