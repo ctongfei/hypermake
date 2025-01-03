@@ -11,7 +11,7 @@ $(JAR):
 	$(SBT) -Dhypermake.stdlibasresource=$(STDLIB_AS_RESOURCE) assembly
 
 $(NATIVE_IMAGE):
-	$(SBT) 'show GraalVMNativeImage/packageBin'
+	$(SBT) GraalVMNativeImage/packageBin
 
 jar: $(JAR)
 

@@ -32,7 +32,7 @@ case class Script(
     val tempScriptFile = runtime.newTempFile(prefix = "hypermake_temp_script")
     // allows the case where the interpreter has arguments: python -v ...
     // TODO: proper handling of bash quotes
-    val command = s"${runtime.shell} $tempScriptFile".split(' ')
+    val command = s"${runtime.shell} $tempScriptFile".split(' ').toIndexedSeq
     for {
       _ <- IO { File(tempScriptFile).write(script) }
       process <- Command(command.head, command.tail: _*)

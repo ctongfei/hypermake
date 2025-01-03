@@ -149,6 +149,8 @@ object FileSys {
 
   def getTaskByName(name: String)(implicit ctx: Context) = ctx.root.tasks(name).default
 
+  def getTaskByNameOpt(str: String)(implicit ctx: Context) = ctx.root.tasks.get(str).map(_.default)
+
   def getScriptByNames(names: String*)(implicit ctx: Context) =
     names.foldLeft[Option[Script]](None) { (acc, name) =>
       acc.orElse(ctx.root.functions.get(name).map(_.impl.default))
@@ -366,7 +368,10 @@ object FileSys {
       exitCode <- process.exitCode
     } yield exitCode
 
-    def asService: Service = Service(getTaskByName(s"${name}.start"), getTaskByName(s"${name}.stop"))
+    def asService: Option[Service] = for {
+      start <- getTaskByNameOpt(s"${name}.start")
+      stop <- getTaskByNameOpt(s"${name}.stop")
+    } yield Service(start, stop)
 
   }
 

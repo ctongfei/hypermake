@@ -1,8 +1,11 @@
 package hypermake.semantics
 
+import java.nio.file.{Files => JFiles, Paths => JPaths}
 import scala.collection._
 
 import better.files._
+import cats.implicits._
+import cats.syntax.unorderedTraverse._
 
 import hypermake.collection._
 import hypermake.core._
@@ -34,7 +37,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
   }
 
   implicit object ParseFileSys extends ContextualDenotation[FileSys, FileSysModifier, FileSys] {
-    override def defaultContext = FileSys("local")
+    override def defaultContext = FileSys.local
 
     def denotation(fsm: FileSysModifier, parent: FileSys) =
       fsm.optFs.fold(parent)(e => FileSys(e.str))
@@ -123,7 +126,8 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
             }
             .orElse { // package outputs in scope or global
               for (pack <- (scope.packages ++ root.packages).get(name))
-                yield pack.output.map(_.on(fs))
+                // FileSys("") denotes a package output yet instantiated on a specific file system
+                yield if (fs.name != "") pack.output.map(_.on(fs)) else pack.output
             }
             .orElse { // output of service.setup
               for (serviceObj <- (scope.objects ++ root.objects).get(name))
@@ -167,8 +171,10 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     }
   }
 
-  implicit def ParseAssignments: Denotation[Assignments, PointedArgsTensor[Value]] = { as =>
-    PointedArgsTensor(as.map { case (k, (_, v)) => k.! -> v.!! })
+  implicit object ParseAssignments extends ContextualDenotation[(PointedArgsTensor[Value], FileSys), Assignments, PointedArgsTensor[Value]] {
+    def defaultContext = (PointedArgsTensor(Map()), FileSys.local)
+    def denotation(as: Assignments, localParamsFs: (PointedArgsTensor[Value], FileSys)) =
+      PointedArgsTensor(as.map { case (k, (_, v)) => k.! -> v.!(localParamsFs) })
   }
 
   implicit object ParseFuncCallImpl
@@ -213,7 +219,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
   implicit def ParseFuncCall: Denotation[ast.Call, Func] = { (fc: ast.Call) =>
     val f = root.functions(fc.name.!)
-    val args = fc.args.!
+    val args = fc.args.!!
     f.partial(args)
   }
 
@@ -224,34 +230,38 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
         PointedDecoratorTensor.fromObj(obj)
       case Some(args) =>
         val cls = root.classes(clsName.!)
-        val obj = cls.instantiate(args.!, "<anon-obj>")
+        val obj = cls.instantiate(args.!!, "<anon-obj>")
         PointedDecoratorTensor.fromObj(obj)
     }
   }
 
   implicit def ParseFuncDef: Denotation[FuncDef, Definition[Func]] = { case fd @ FuncDef(name, params, outputs, impl) =>
-    val ps = Params.fromArgs(params.!)
-    val os = Params.fromArgs(outputs.!)
+    val ps = Params.fromArgs(params.!!)
+    val os = Params.fromArgs(outputs.!!)
     val implTensor = impl.!().impl
     name.! := new Func((scope.prefix / name.!).toString, ps, os, implTensor)
   }
 
   implicit def ParsePackageDef: Denotation[PackageDef, Definition[PointedPackageTensor]] = { case PackageDef(decorators, name, inputs, output, impl) =>
-    val inputArgs = inputs.!
-    val definedOutputArgs = Assignments(output.toList).!
-    val localArgs = inputArgs ++ definedOutputArgs
+    val definedOutputArgs = Assignments(output.toList).!!
+
+    val explicitInputArgs = inputs.!((PointedArgsTensor(Map()), FileSys("")))
+    val localArgs = explicitInputArgs ++ definedOutputArgs
     val axes =
-      (inputArgs ++ definedOutputArgs).args.values
+      (explicitInputArgs ++ definedOutputArgs).args.values
         .map(_.shape.vars)
         .fold(Set())(_ union _)
     val script = impl.!((localArgs, FileSys("")))
     val scriptOutputParams = script.outputs
+    val explicitlyDefinedOutput = definedOutputArgs.args.size == 1 && scriptOutputParams.params.isEmpty
+    val inheritedFromCallingFunc = definedOutputArgs.args.isEmpty && scriptOutputParams.params.size == 1
+
+    val inputArgs = if (explicitlyDefinedOutput) explicitInputArgs else script.inputs.toArgsIfBound(Some(name.name))
+
     val outputParams = {
-      // explicitly defined single output
-      if (definedOutputArgs.args.size == 1 && scriptOutputParams.params.isEmpty) {
+      if (explicitlyDefinedOutput) {
         definedOutputArgs.args.head._1 -> definedOutputArgs.args.head._2.map(_.asIfPure)
-        // no output defined, but inherited from calling function
-      } else if (definedOutputArgs.args.isEmpty && scriptOutputParams.params.size == 1)
+      } else if (inheritedFromCallingFunc)
         scriptOutputParams.params.head match {
           case (name, None)    => name -> PointedTensor.Singleton(Value.Pure(name))
           case (name, Some(v)) => name -> v.map(_.asIfPure)
@@ -320,7 +330,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
   implicit def ParseInstantiationImpl: Denotation[InstantiationImpl, Cls] = { impl =>
     val cls = root.classes(impl.instantiation.name.!)
-    cls.partial(impl.instantiation.args.!)
+    cls.partial(impl.instantiation.args.!!)
   }
 
   implicit def ParseObjectDef: Denotation[ObjectDef, Definition[Obj]] = { case ObjectDef(name, impl) =>
@@ -336,7 +346,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
       case impl: MembersImpl       => impl.!(name.name)
       case impl: InstantiationImpl => impl.!.instantiate(PointedArgsTensor(Map()), name.name)
     }
-    name.! := Cls(name.!, Params.fromArgs(inputs.!), cls)
+    name.! := Cls(name.!, Params.fromArgs(inputs.!!), cls)
   }
 
   implicit def ParsePlanDef: Denotation[PlanDef, Definition[Plan]] = { case PlanDef(name, taskRefs) =>
@@ -421,7 +431,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
 
     if (!local.values.contains(Path("root")))
       local.addDef(
-        "root" := PointedTensor.Singleton(Value.Pure("out"))
+        "root" := PointedTensor.Singleton(Value.Pure(JPaths.get("out").toAbsolutePath.toString))
       )
   }
 

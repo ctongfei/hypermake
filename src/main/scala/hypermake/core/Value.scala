@@ -47,7 +47,10 @@ object Value {
 
     def dependencies = Set()
 
-    def on(fs: FileSys): Output = Output(value, fs, pack.on(fs))
+    def on(fs: FileSys): Output = {
+      val task = pack.on(fs)
+      Output(value, fs, task)
+    }
   }
 
   sealed trait FileSysDependent extends Value {

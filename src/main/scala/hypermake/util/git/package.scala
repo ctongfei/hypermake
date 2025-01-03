@@ -4,7 +4,6 @@ import java.io.{File => JFile}
 import java.net.URI
 import java.nio.file.{Files => JFiles}
 
-import zio._
 import zio.process.{Command, ProcessOutput}
 
 package object git {

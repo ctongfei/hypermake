@@ -41,7 +41,7 @@ class PrefixedOutputStream(os: OutputStream, prefix: String) extends FilterOutpu
 
 class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
 
-  def setup = ZIO.succeed()
+  def setup = ZIO.unit
 
   def globalSinks: StdSinks = {
     if (runtime.silent)
@@ -53,9 +53,7 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     }
   }
 
-  /**
-   * Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams.
-   */
+  /** Returns two sinks for consuming the standard output (stdout) and the standard error (stderr) streams. */
   def sinks(job: Job) = {
     val os =
       ZSink.fromOutputStream(new PrefixedOutputStream(StdStreams.out, style.render(job)))
@@ -70,7 +68,7 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     else StdSinks((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
   }
 
-  def println(s: String) = if (runtime.silent) ZIO.succeed() else putStrLn(s)
+  def println(s: String) = putStrLn(s).unless(runtime.silent)
 
   def show(job: Job, status: Status) = ZIO.succeed(style.render(job, status))
 
@@ -83,7 +81,8 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
     response <- getStrLn
   } yield response.trim.toLowerCase == "y"
 
-  def teardown = ZIO.succeed()
+  def teardown = ZIO.unit
+
 }
 
 object PlainCLI {

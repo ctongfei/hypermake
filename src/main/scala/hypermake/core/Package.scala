@@ -26,7 +26,10 @@ class Package(
     name = s"$name@$fs",
     fileSys = fs,
     `case` = `case`,
-    inputs = inputs,
+    inputs = Args(inputs.mapValuesE {
+      case x: Value.PackageOutput => x.on(fs)
+      case x                      => x
+    }),
     inputFs = inputs.mapValuesE {
       case _: Value.Pure          => FileSys("")
       case _: Value.PackageOutput => fs

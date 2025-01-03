@@ -87,7 +87,7 @@ trait Graph[A] {
 
       def next: Graph[A] = {
         while (nodeIter.hasNext) {
-          val a = nodeIter.next
+          val a = nodeIter.next()
           if (!visited.contains(a)) {
             val subgraphNodes = traverseAsIfUndirected(a).toSet
             visited ++= subgraphNodes

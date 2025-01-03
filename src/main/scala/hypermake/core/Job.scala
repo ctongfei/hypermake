@@ -45,8 +45,10 @@ abstract class Job(implicit ctx: Context) {
 
   def services: Seq[Service] = {
     val servicesReferredByInputs = inputs.values.collect { case Value.Output(_, _, _, Some(service)) => service }
-    val servicesFromFileSys = (inputFs.values ++ outputs.values.map(_.fileSys) ++ Seq(fileSys))
-      .collect { case fs: FileSys.Custom => fs.asService }
+    val fileSystems = (inputFs.values ++ outputs.values.map(_.fileSys) ++ Seq(fileSys)).toSet
+    val servicesFromFileSys = fileSystems
+      .collect { case fs: FileSys.Custom if fs.name != "" => fs.asService }
+      .collect { case Some(service) => service }
     (servicesReferredByInputs ++ servicesFromFileSys).toSeq
   }
 
@@ -56,6 +58,7 @@ abstract class Job(implicit ctx: Context) {
   lazy val jobCaseArgs = Map(
     "HYPERMAKE_JOB_ID" -> id,
     "HYPERMAKE_JOB_NAME" -> name,
+    "HYPERMAKE_JOB_CASE" -> caseString,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
     "HYPERMAKE_JOB_WD" -> path
   )
@@ -158,7 +161,7 @@ abstract class Job(implicit ctx: Context) {
     } yield (exitCode.code == 0) && hasOutputs
     val potentiallyAbsolvedEffect =
       if (runtime.keepGoing) effect.catchAll(_ => ZIO.succeed(false)) else effect
-    potentiallyAbsolvedEffect.ensuring(fileSys.unlock(path).orElseSucceed())
+    potentiallyAbsolvedEffect.ensuring(fileSys.unlock(path).orElseSucceed(()))
   }
 
   def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = {
@@ -182,7 +185,7 @@ abstract class Job(implicit ctx: Context) {
       _ <- fileSys.write(f"$path${fileSys./}exitcode", "0")
       hasOutputs <- checkOutputs
     } yield hasOutputs
-    effect.ensuring(fileSys.unlock(path).orElseSucceed())
+    effect.ensuring(fileSys.unlock(path).orElseSucceed(()))
   }
 
   def printStatus(cli: CLI.Service): HIO[Unit] = {
