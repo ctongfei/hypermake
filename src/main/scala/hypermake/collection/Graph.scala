@@ -29,7 +29,7 @@ trait Graph[A] {
   def incomingNodes(a: A): Set[A] = revAdjMap(a)
 
   /** Lazily traverses the nodes of this graph in topological order. */
-  def topologicalSort: Iterable[A] = new Iterable[A] {
+  def topologicalSort(implicit A: Ordering[A]): Iterable[A] = new Iterable[A] {
     def iterator: Iterator[A] = new Iterator[A] {
       private[this] val inDegrees = mutable.HashMap.from(nodes.makeMap(incomingNodes(_).size))
       private[this] val zeroInDegrees = mutable.Queue.from(inDegrees.view.filter(_._2 == 0).keys)
@@ -40,7 +40,7 @@ trait Graph[A] {
       def next() = {
         if (zeroInDegrees.isEmpty) throw CyclicWorkflowException()
         val i = zeroInDegrees.dequeue()
-        for (j <- outgoingNodes(i)) {
+        for (j <- outgoingNodes(i).toSeq.sorted) {
           inDegrees(j) -= 1
           if (inDegrees(j) == 0)
             zeroInDegrees.enqueue(j)
@@ -85,7 +85,7 @@ trait Graph[A] {
 
       def hasNext = visited.size < nodes.size
 
-      def next: Graph[A] = {
+      def next(): Graph[A] = {
         while (nodeIter.hasNext) {
           val a = nodeIter.next()
           if (!visited.contains(a)) {
@@ -123,7 +123,7 @@ trait Graph[A] {
     (rows, nodeToRow, indents)
   }
 
-  def toStringIfAcyclic(display: A => HIO[String], indent: Int = 0): HIO[String] = {
+  def toStringIfAcyclic(display: A => HIO[String], indent: Int = 0)(implicit A: Ordering[A]): HIO[String] = {
     import hypermake.util.printing.BoxDrawing._
     import zio._
     val prefixSpaces = " " * indent

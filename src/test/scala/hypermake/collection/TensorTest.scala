@@ -39,8 +39,8 @@ object TensorGen {
     a <- Gen.listOfN(s.numElements, Gen.function1[String, String](Gen.alphaNumStr))
   } yield genTensor(s, a)
 
-  implicit val arbPointedTensor = Arbitrary(pointedTensor)
-  implicit val arbPointedTensorF = Arbitrary(pointedTensorF)
+  implicit val arbPointedTensor: Arbitrary[PointedTensor[String]] = Arbitrary(pointedTensor)
+  implicit val arbPointedTensorF: Arbitrary[PointedTensor[String => String]] = Arbitrary(pointedTensorF)
 }
 
 class TensorTest extends AnyFunSuite with FunSuiteDiscipline with Checkers {

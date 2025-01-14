@@ -96,3 +96,7 @@ class PointedTaskTensor(
   override def hashCode() = name.hashCode()
 
 }
+
+object PointedTaskTensor {
+  implicit val ordering: Ordering[PointedTaskTensor] = Ordering.by(_.name)
+}

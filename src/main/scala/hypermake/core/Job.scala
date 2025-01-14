@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import scala.collection._
 import scala.collection.decorators._
+import scala.math._
 
 import zio._
 
@@ -247,4 +248,8 @@ abstract class Job(implicit ctx: Context) {
     case _         => false
   }
 
+}
+
+object Job {
+  implicit val ordering: Ordering[Job] = Ordering.by(_.id)
 }

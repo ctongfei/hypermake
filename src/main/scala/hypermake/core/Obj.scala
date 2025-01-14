@@ -33,7 +33,7 @@ class Obj(private[hypermake] var prefix: Path) {
           val Array(packageName, packageFs) = key.split("@")
           val fs = FileSys(packageFs)
           Some(packages(packageName).on(fs))
-        } catch { _ => taskTable.get(key) }
+        } catch { case _: Throwable => taskTable.get(key) }
       def iterator = taskTable.iterator
     }
 
