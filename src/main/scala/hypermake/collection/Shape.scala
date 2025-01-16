@@ -63,9 +63,7 @@ class Shape(val underlying: Map[Axis, Set[String]]) {
         private[this] val indices = Array.fill(n)(0)
         if (n > 0) indices(0) = -1
         private[this] var finished = false
-
-        def hasNext = !finished
-
+        def hasNext: Boolean = !finished
         def next(): Case = {
           if (n == 0) {
             finished = true

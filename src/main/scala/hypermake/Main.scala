@@ -92,12 +92,15 @@ object Main extends App {
               case Subcommand.List =>
                 for {
                   _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(B("Workflow file: ") + O(scriptFile))
+                  _ <- putStrLn(B("Pipeline file: ") + O(scriptFile))
                   _ <- putStrLn(B("\nVariables:"))
                   _ <- putStrLn(
                     ctx.allCases.assignments
                       .map { case (name, values) =>
-                        s"  • ${K(name.name)}: { ${V(values.default)} ${values.diff(Set(values.default)).map(Vx).mkString(" ")} }"
+                        val valuesStr = if (values.size == 1)
+                          V(values.default)
+                        else V(values.default) + " " + values.diff(Set(values.default)).map(Vx).mkString(" ")
+                        s"  • ${K(name.name)}: { $valuesStr }"
                       }
                       .mkString("\n")
                   )
