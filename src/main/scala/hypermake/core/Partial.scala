@@ -2,7 +2,8 @@ package hypermake.core
 
 import hypermake.collection.PointedTensor
 
-trait Partial[A] {
+/** Represents an object that takes a set of arguments, and can be partially applied. */
+trait Partial[+A] {
 
   /** Partial application of `this`. */
   def partial(args: PointedArgsTensor[Value]): A

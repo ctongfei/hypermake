@@ -44,7 +44,7 @@ abstract class Job(implicit ctx: Context) {
 
   def decorators: Seq[Decorator]
 
-  def services: Seq[Service] = {
+  lazy val services: Seq[Service] = {
     val servicesReferredByInputs = inputs.values.collect { case Value.Output(_, _, _, Some(service)) => service }
     val fileSystems = (inputFs.values ++ outputs.values.map(_.fileSys) ++ Seq(fileSys)).toSet
     val servicesFromFileSys = fileSystems
@@ -56,8 +56,12 @@ abstract class Job(implicit ctx: Context) {
   def rawScript: Script
 
   /** HyperMake environment variables provided to each job. */
-  lazy val jobCaseArgs = Map(
+  lazy val jobEnvVars = Map(
     "HYPERMAKE_JOB_ID" -> id,
+    "HYPERMAKE_JOB_DISPLAY_ID" -> {
+      val caseString = ctx.caseString(`case`)
+      if (caseString.isEmpty) name else s"$name[$caseString]"
+    },
     "HYPERMAKE_JOB_NAME" -> name,
     "HYPERMAKE_JOB_CASE" -> caseString,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
@@ -80,7 +84,7 @@ abstract class Job(implicit ctx: Context) {
     if (argsStr.isEmpty) taskStr else s"$taskStr?$argsStr"
   }
 
-  lazy val url = s"hypermake://${fileSys}/$id"
+  lazy val url = s"hypermake:${fileSys}/$id"
 
   /** Set of dependent jobs that this job depends on. */
   lazy val dependentJobs: Set[Job] =
@@ -91,14 +95,23 @@ abstract class Job(implicit ctx: Context) {
   lazy val outputAbsolutePaths =
     outputs.keySet.makeMap { x => s"$path${fileSys./}${outputs(x).value}" }
 
+  /** The exit code of this job. If the job is not done, returns a failed effect. */
+  def exitCode(implicit std: StdSinks): HIO[Int] = fileSys.read(s"$path${fileSys./}exitcode").mapEffect(_.toInt)
+
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
-  def isDone(implicit std: StdSinks): HIO[Boolean] = for {
-    exitCode <- fileSys
-      .read(s"$path${fileSys./}exitcode")
-      .mapEffect(_.toInt)
-      .catchAll(_ => IO.succeed(-1))
-    outputsExist <- checkOutputs
-  } yield exitCode == 0 && outputsExist
+  def checkStatus(implicit std: StdSinks): HIO[Status] = {
+    val check = for {
+      exitCode <- fileSys
+        .read(s"$path${fileSys./}exitcode")
+        .mapEffect(_.toInt)
+        .catchAll(_ => IO.succeed(-1))
+      outputStatus <- checkOutputs
+    } yield if (exitCode == 0) outputStatus else Status.Failure.NonZeroExitCode(exitCode)
+    for {
+      attempted <- fileSys.exists(path)
+      status <- if (attempted) check else ZIO.succeed(Status.Pending)
+    } yield status
+  }
 
   /** An operation that prepares output of dependent jobs to the file system of this job. */
   def prepareInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
@@ -115,14 +128,18 @@ abstract class Job(implicit ctx: Context) {
   }
 
   /** An operation that checks the output of this job and the exit status of this job. */
-  def checkOutputs(implicit std: StdSinks): HIO[Boolean] = {
-    ZIO
+  def checkOutputs(implicit std: StdSinks): HIO[Status.Result] = {
+    val outputStatuses = ZIO
       .collectAll {
-        for ((_, (outputPath, outputFs)) <- outputAbsolutePaths zipByKey outputs.mapValuesE(_.fileSys))
-          yield outputFs.exists(outputPath)
+        for ((outputName, (outputPath, outputFs)) <- outputAbsolutePaths zipByKey outputs.mapValuesE(_.fileSys))
+          yield outputFs.exists(outputPath).map((outputName, _))
       }
-      .map(_.forall(identity))
-      .catchAll(_ => IO.succeed(false))
+    val missingOutputs = outputStatuses.map(_.filterNot(_._2).map(_._1).toSet)
+    missingOutputs
+      .map { missing =>
+        if (missing.isEmpty) Status.Success else Status.Failure.MissingOutputs(missing)
+      }
+      .catchAll(_ => ZIO.succeed(Status.Failure.FileSysError))
   }
 
   /** Writes the script and decorating calls to the working directory. */
@@ -141,14 +158,14 @@ abstract class Job(implicit ctx: Context) {
       jobArgs = finalScript.args.toStrMap ++ linkedArgs
       _ <- fileSys.write(
         f"$path${fileSys./}args",
-        (jobArgs.toArray.sortBy(_._1) ++ jobCaseArgs.toArray)
+        (jobArgs.toArray.sortBy(_._1) ++ jobEnvVars.toArray)
           .map { case (k, v) => s"""$k=${Shell.escape(v)}""" }
           .mkString("", "\n", "\n")
       )
-    } yield jobArgs ++ jobCaseArgs
+    } yield jobArgs ++ jobEnvVars
   }
 
-  def execute(cli: CLI.Service)(implicit std: StdSinks): HIO[Boolean] = {
+  def execute(cli: CLI.Service)(implicit std: StdSinks): HIO[Status.Result] = {
     val effect = for {
       _ <- removeOutputs.ignore // may fail, but we don't care, proceed
       _ <- fileSys.mkdir(path)
@@ -158,19 +175,20 @@ abstract class Job(implicit ctx: Context) {
       args <- writeScript(preparedArgs)
       _ <- cli.update(this, Status.Running)
       exitCode <- fileSys.execute(path, runtime.shell, Seq("script"), args)
-      hasOutputs <- checkOutputs
-    } yield (exitCode.code == 0) && hasOutputs
-    val potentiallyAbsolvedEffect =
-      if (runtime.keepGoing) effect.catchAll(_ => ZIO.succeed(false)) else effect
-    potentiallyAbsolvedEffect.ensuring(fileSys.unlock(path).orElseSucceed(()))
+      outputStatus <- checkOutputs
+    } yield {
+      if (exitCode.code != 0) Status.Failure.NonZeroExitCode(exitCode.code)
+      else outputStatus
+    }
+    effect.ensuring(fileSys.unlock(path).orElseSucceed(()))
   }
 
-  def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Boolean)] = {
+  def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Status.Result)] = {
     implicit val std: StdSinks = cli.sinks(this)
     for {
-      done <- isDone
+      status <- checkStatus
       (hasRun, successful) <-
-        if (done) ZIO.succeed((false, true))
+        if (status.isSuccess) ZIO.succeed((false, Status.Success))
         else execute(cli).map((true, _))
     } yield (hasRun, successful)
   }
@@ -182,26 +200,26 @@ abstract class Job(implicit ctx: Context) {
       _ <- cli.update(this, Status.Waiting)
       _ <- fileSys.lock(path)
       _ <- cli.update(this, Status.Running)
-      _ <- ZIO.foreach_(outputs) { case (_, o) => o.fileSys.touch(o.value) }
+      _ <- ZIO.foreach_(outputs) { case (_, o) => o.fileSys.touch(o.value) } // pretends the outputs exist
       _ <- fileSys.write(f"$path${fileSys./}exitcode", "0")
-      hasOutputs <- checkOutputs
-    } yield hasOutputs
+      outputStatus <- checkOutputs
+    } yield outputStatus.isSuccess
     effect.ensuring(fileSys.unlock(path).orElseSucceed(()))
   }
 
   def printStatus(cli: CLI.Service): HIO[Unit] = {
     implicit val std: StdSinks = cli.globalSinks
     for {
-      done <- isDone
-      _ <- cli.update(this, if (done) Status.Complete else Status.Pending)
+      status <- checkStatus
+      _ <- cli.update(this, if (status.isSuccess) Status.Complete else status)
     } yield ()
   }
 
   def statusString(cli: CLI.Service): HIO[String] = {
     implicit val std: StdSinks = cli.globalSinks
     for {
-      done <- isDone
-      r <- cli.showInGraph(this, if (done) Status.Complete else Status.Pending)
+      status <- checkStatus
+      r <- cli.showInGraph(this, if (status.isSuccess) Status.Complete else status)
     } yield r
   }
 

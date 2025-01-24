@@ -36,21 +36,21 @@ object Style {
 
   object Powerline extends Style {
     def bg(s: Status) = s match {
-      case Status.Pending   => Back.DarkGray
-      case Status.Waiting   => Back.Yellow
-      case Status.Running   => Back.Blue
-      case Status.Succeeded => Back.Green
-      case Status.Failed    => Back.Red
-      case Status.Complete  => Back.Cyan
+      case Status.Pending    => Back.DarkGray
+      case Status.Waiting    => Back.Yellow
+      case Status.Running    => Back.Blue
+      case Status.Success    => Back.Green
+      case _: Status.Failure => Back.Red
+      case Status.Complete   => Back.Cyan
     }
 
     def bgAsFg(s: Status) = s match {
-      case Status.Pending   => Color.DarkGray
-      case Status.Waiting   => Color.Yellow
-      case Status.Running   => Color.Blue
-      case Status.Succeeded => Color.Green
-      case Status.Failed    => Color.Red
-      case Status.Complete  => Color.Cyan
+      case Status.Pending    => Color.DarkGray
+      case Status.Waiting    => Color.Yellow
+      case Status.Running    => Color.Blue
+      case Status.Success    => Color.Green
+      case _: Status.Failure => Color.Red
+      case Status.Complete   => Color.Cyan
     }
 
     def nameFg(s: Status) = Bold.On ++ Color.White
