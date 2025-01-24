@@ -51,18 +51,18 @@ object Executor {
       effects = sortedJobs map { j =>
         for {
           _ <- ZIO.foreach_(jobs.incomingNodes(j))(i => promises(i).await)
-          (hasRun, successful) <- semaphore.withPermit(j.executeIfNotDone(cli))
+          (hasRun, status) <- semaphore.withPermit(j.executeIfNotDone(cli))
           u <-
             if (!hasRun)
               promises(j).succeed(()) // do not print anything to the CLI
-            else if (successful)
-              cli.update(j, Status.Succeeded) *> promises(j).succeed(())
-            else
-              cli.update(j, Status.Failed) *> (
-                if (runtime.keepGoing)
-                  promises(j).succeed(()) // if keep-going, ignore failure and carry on
-                else promises(j).fail(JobFailedException(j))
-              )
+            else status match {
+              case Status.Success => cli.update(j, Status.Success) *> promises(j).succeed(())
+              case failure: Status.Failure => cli.update(j, failure) *> (
+                  if (runtime.keepGoing)
+                    promises(j).succeed(()) // if keep-going, ignore failure and carry on
+                  else promises(j).fail(JobFailedException(j))
+                )
+            }
         } yield u
       }
       allFibers <- ZIO.forkAll(effects)

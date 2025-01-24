@@ -28,7 +28,9 @@ object Main extends App {
        |   ${CC("hypermake")} [${O("options")}] [Hypermake script] <${C("command")}> [${RO("running options")}] [targets]
        |
        | ${B("Options:")}
-       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V("v")} in the script.
+       |  -D ${K("$k")}=${V("$v")}, --define ${K("$k")}=${V("$v")}   : Defines an additional variable ${K("k")} = ${V(
+        "v"
+      )} in the script.
        |  -I ${V("$file")}, --include ${V("$file")}  : Includes the specific directories ${V("file")} when resolving imports.
        |  -S ${V("$path")}, --shell ${V("$path")}    : Specifies default shell to use. By default this is "${V("bash -e")}".
        |  -H, --help                 : Prints this message and exit.
@@ -137,11 +139,7 @@ object Main extends App {
                   s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
                   _ <- putStrLn(s)
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
-                  u <- {
-                    if (yes)
-                      Executor.recordJobsRun(sortedJobs, cli) *> Executor.runDAG(jobGraph, cli)
-                    else ZIO.succeed(())
-                  }
+                  u <- (Executor.recordJobsRun(sortedJobs, cli) *> Executor.runDAG(jobGraph, cli)).when(yes)
                   _ <- ZIO.foreach_(ephemeralJobs)(_.removeOutputs)
                 } yield u
 
