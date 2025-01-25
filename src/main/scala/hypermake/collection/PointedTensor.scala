@@ -112,11 +112,8 @@ object PointedTensor {
   }
 
   case class OfNestedMap[A](a: Axis, outerCase: PointedMap[String, PointedTensor[A]]) extends PointedTensor[A] {
-    val innerCases = outerCase.head._2.shape
-    val innerAxes = innerCases.vars
-    assert(outerCase.forall { case (_, c) =>
-      c.vars == innerAxes
-    }) // make sure inner axes are identical
+    // supports broadcasting
+    val innerCases = outerCase.values.map(_.shape).fold(PointedShape.singleton)(_ outerJoin _)
 
     def shape = PointedShape(Map(a -> outerCase.keySet) ++ innerCases.assignments)
 
