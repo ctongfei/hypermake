@@ -295,7 +295,6 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     name.! :=
       new PointedTaskTensor(
         (scope.prefix / name.!).toString,
-        taskFs,
         allCases.filterVars(axes),
         inputArgs,
         inputFs,
@@ -470,11 +469,12 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     }
   }
 
-  def parseTask(tr: TaskRef) = try {
-    Some(tr.!.allElements.head.default)
-  } catch {
-    case e: Exception => None
-  }
+  def parseTask(tr: TaskRef) =
+    try {
+      Some(tr.!.allElements.head.default)
+    } catch {
+      case e: Exception => None
+    }
   // TODO: make sure that there is only 1 in the tensor
 
   def parseTarget(tr: TaskRef) =

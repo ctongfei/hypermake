@@ -4,5 +4,23 @@ def symlink(path) -> out:
 
 ## Execute the script with the given interpreter.
 class run(interpreter):
-  def run(_interal_interpreter_script):
-    $interpreter $_interal_interpreter_script
+  def run(_internal_interpreter_script):
+    $interpreter $_internal_interpreter_script
+
+## Executes the script in the background.
+object async:
+  def submit(_interal_interpreter_script) -> pid:
+    . _interal_interpreter_script &
+    echo $! > $pid
+
+  def alive(pid):
+    ps -p $pid > /dev/null
+    # write exitcode of pid if terminated
+    if [ $? -ne 0 ]
+    then
+      wait $pid
+      echo $? > exitcode
+    fi
+
+  def kill(pid):
+    kill -9 $pid
