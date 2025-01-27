@@ -38,6 +38,8 @@ trait FileSys {
 
   def refreshInterval: Duration
 
+  def maxFileNameLength: Int
+
   def supportsSymLinks: Boolean
 
   /** Resolves a path relative to the given root directory. */
@@ -84,9 +86,7 @@ trait FileSys {
     else FileSys.copy(src, srcFs, dst, this)
   }
 
-  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
-      std: StdSinks
-  ): HIO[ExitCode]
+  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks): HIO[ExitCode]
 
   def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
 
@@ -177,6 +177,7 @@ object FileSys {
     val separator = java.io.File.separatorChar
     val pathSeparator = java.io.File.pathSeparatorChar
     lazy val root = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
+    lazy val maxFileNameLength = ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
     val refreshInterval = 100.milliseconds
     val supportsSymLinks = true
 
@@ -253,6 +254,9 @@ object FileSys {
       getValueByNameOpt(s"${name}.path_separator")
         .map(_.head)
         .getOrElse(java.io.File.pathSeparatorChar)
+
+    lazy val maxFileNameLength =
+      getValueByNameOpt(s"${name}.max_file_name_length").map(_.toInt).getOrElse(255)
 
     lazy val root = getValueByName(s"${name}.root")
 

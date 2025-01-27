@@ -11,7 +11,6 @@ import hypermake.util._
 /** A task is the atomic unit of scripts that is executed by HyperMake. */
 class Task(
     val name: String,
-    val fileSys: FileSys,
     val `case`: Case,
     val inputs: Args[Value],
     val inputFs: Map[String, FileSys],
@@ -24,13 +23,12 @@ class Task(
     extends Job()(ctx) {
 
   def outputs: Args[Value.Output] = Args(outputFileNames.keys.map { k =>
-    k -> Value.Output(outputFileNames(k).value, outputFs.getOrElse(k, fileSys), this)
+    k -> Value.Output(outputFileNames(k).value, outputFs.getOrElse(k, FileSys.local), this)
   }.toMap)
 }
 
 class PointedTaskTensor(
     val name: String,
-    val fs: FileSys,
     val shape: PointedShape,
     val inputs: PointedArgsTensor[Value],
     val inputFs: Map[String, FileSys],
@@ -51,7 +49,7 @@ class PointedTaskTensor(
       val os = outputFileNames(c)
       val decs = decorators.map(_(c))
       val scr = script(c)
-      Some(new Task(name, fs, cc, is, inputFs, os, outputFs, decs, scr, ephemeral))
+      Some(new Task(name, cc, is, inputFs, os, outputFs, decs, scr, ephemeral))
     } else None
   }
 
@@ -76,7 +74,6 @@ class PointedTaskTensor(
     val outScript = script.productWith(args)(_ withNewArgs _)
     new PointedTaskTensor(
       name,
-      fs,
       shape,
       inputs,
       inputFs,

@@ -13,7 +13,6 @@ object Service {
   class ServiceEphemeralTask(raw: Task, service: Service)(implicit ctx: Context)
       extends Task(
         raw.name,
-        raw.fileSys,
         raw.`case`,
         raw.inputs,
         raw.inputFs,
@@ -24,7 +23,7 @@ object Service {
         ephemeral = true
       ) {
     override def outputs: Args[Value.Output] = Args(raw.outputFileNames.keys.map { k =>
-      k -> Value.Output(outputFileNames(k).value, outputFs.getOrElse(k, fileSys), this, Some(service))
+      k -> Value.Output(outputFileNames(k).value, outputFs.getOrElse(k, FileSys.local), this, Some(service))
     }.toMap)
   }
 }

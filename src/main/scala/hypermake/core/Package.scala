@@ -24,7 +24,6 @@ class Package(
 )(implicit ctx: Context) {
   def on(fs: FileSys): Task = new Task(
     name = s"$name@$fs",
-    fileSys = fs,
     `case` = `case`,
     inputs = Args(inputs.mapValuesE {
       case x: Value.PackageOutput => x.on(fs)
@@ -74,7 +73,6 @@ case class PointedPackageTensor(
   /** Returns a task that builds this package on a specific file system. */
   def on(fs: FileSys)(implicit ctx: Context) = new PointedTaskTensor(
     s"$name@${fs.name}", // package@ec2
-    fs,
     shape,
     inputs,
     Map(),
