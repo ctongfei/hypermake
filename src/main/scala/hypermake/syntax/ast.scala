@@ -268,14 +268,13 @@ object ast {
       decorators: DecoratorCalls,
       ephemeral: Boolean,
       name: Identifier,
-      fsModifier: FileSysModifier,
       inputs: Assignments,
       outputs: Assignments,
       impl: TaskImpl
   ) extends Def {
-    def str = s"${decorators}${if (ephemeral) "ephemeral " else ""}task $name$fsModifier($inputs) -> ($outputs)$impl"
+    def str = s"${decorators}${if (ephemeral) "ephemeral " else ""}task $name($inputs) -> ($outputs)$impl"
 
-    def children = decorators.calls ++ Iterable(fsModifier, name, inputs, outputs, impl)
+    def children = decorators.calls ++ Iterable(name, inputs, outputs, impl)
   }
 
   case class PackageDef(
