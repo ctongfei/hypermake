@@ -280,14 +280,13 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
       )
   }
 
-  implicit def ParseTaskDef: Denotation[TaskDef, Definition[PointedTaskTensor]] = { case TaskDef(decorators, ephemeral, name, fs, inputs, outputs, impl) =>
-    val taskFs = fs.!!
+  implicit def ParseTaskDef: Denotation[TaskDef, Definition[PointedTaskTensor]] = { case TaskDef(decorators, ephemeral, name, inputs, outputs, impl) =>
     val inputFs = inputs.map { case (k, (em, _)) => k.! -> em.!! }
     val outputFs = outputs.map { case (k, (em, _)) => k.! -> em.!! }
-    val inputArgs = PointedArgsTensor(inputs.map { case (k, (_, v)) => k.! -> v.!((PointedArgsTensor(Map()), taskFs)) })
+    val inputArgs = PointedArgsTensor(inputs.map { case (k, (_, v)) => k.! -> v.!((PointedArgsTensor(Map()), FileSys.local)) })
     val outputArgs = PointedArgsTensor(outputs.map { case (k, (_, v)) => k.! -> v.!!.map(_.asIfPure) })
     val localArgs = inputArgs ++ outputArgs
-    val script = impl.!((localArgs, taskFs))
+    val script = impl.!((localArgs, FileSys.local))
     val calls = decorators.calls.map(_.!)
     val inputArgsAxes = inputArgs.args.values.map(_.shape.vars)
     val decoratorAxes = calls.map(_.script.shape.vars)
