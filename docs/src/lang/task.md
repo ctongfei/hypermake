@@ -10,29 +10,28 @@ The task script is executed in a **child process**, and the inputs and outputs a
 ### Syntax
 To define a task, write
 ```shell
-task taskName@fsT(
-  $param1@fsI1=$arg1, 
-  $param2@fsI2=$arg2, 
+task taskName(
+  $param₀@fsI₀=$arg₀, 
+  $param₁@fsI₁=$arg₁, 
   ...
-) -> ($out1@fsO1, $out@fsO2, ...):
+) -> ($out₀@fsO₀, $out@fsO₁, ...):
   # task script
 ```
 where 
  - `taskName` is the name of the task.
- - `fsT` is the file system in which the task is executed. If omitted, the task is executed in the `local` file system.
- - `$param1`, `$param2`, ... are the parameters of the task.
- - `$arg1`, `$arg2`, ... are the input arguments of the task, and has to be specified.
+ - `$param₀`, `$param₁`, ... are the parameters of the task.
+ - `$arg₀`, `$arg₁`, ... are the input arguments of the task, and has to be specified.
     - If not, the task will be considered **abstract**, and it is a [function](./function.md).
- - `$fsI1`, `$fsI2`, ... are the file systems that expect the input arguments to be in. If not, HyperMake will automatically transfer the files to the specified file system. If omitted, default to `$fsT`.
- - `$out1`, `$out2`, ... are the output files of the task.
+ - `$fsI₀`, `$fsI₁`, ... are the file systems that expect the input arguments to be in. If not, HyperMake will automatically transfer the files to the specified file system. If omitted, default to `local`.
+ - `$out₀`, `$out₁`, ... are the output files of the task.
     - Can be files or directories.
- - `$fsO1`, `$fsO2`, ... are the file systems that the output files are in. If omitted, default to `$fsT`.
+ - `$fsO₀`, `$fsO₁`, ... are the file systems that the output files are in. If omitted, default to `local`.
 
 ### Behavior
 To run a task, HyperMake works by
  - **Checking the cache**: If the outputs of the task are already in the cache and are successful, the task is considered **up-to-date** and is not run.
  - **Removing the outputs**: If the outputs exists but corrupted (e.g. task not finish successfully), the outputs are removed.
- - **Creating a working directory**: HyperMake creates a working directory for the task, at `${fileSys.root}/$taskName/$taskParams`.
+ - **Creating a working directory**: HyperMake creates a working directory for the task, at `${local.root}/$taskName/$taskParams`.
  - **Locks this directory**: HyperMake locks this directory to prevent other HyperMake instances from running this task.
  - **Linking the inputs**: HyperMake links the input files (outputs of other dependent tasks) to the working directory.
  - **Running the task script**: HyperMake runs the task script in the working directory as a child process.
