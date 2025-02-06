@@ -1,6 +1,7 @@
 package hypermake
 
 import better.files.File
+import upickle.default._
 import zio._
 import zio.console._
 
@@ -38,6 +39,7 @@ object Main extends App {
        |
        | ${B("Commands:")}
        |  list                       : Lists the variables and tasks in this pipeline.
+       |  inspect-job ${V("$job")}           : Describes the specific job.
        |  get-path ${V("$targets")}          : Prints the path of the given tasks.
        |  run ${V("$targets")}               : Runs the given tasks or plans (space delimited).
        |  dry-run ${V("$targets")}           : Lists all dependent tasks implicated by the given tasks or plans.
@@ -118,7 +120,11 @@ object Main extends App {
                 for {
                   u <- ZIO.foreach_(jobs.map(_.absolutePath))(putStrLn(_))
                 } yield u
-
+              case Subcommand.InspectJob =>
+                for {
+                  jobDescriptions <- ZIO.foreach(jobs)(_.describe)
+                  u <- putStrLn(write(jobDescriptions, indent = 2))
+                } yield u
               case Subcommand.Run =>
                 val jobGraph = Graph.exploreBidirectionally[Job](
                   jobs,

@@ -44,6 +44,7 @@ object CmdLineAST {
   object Subcommand {
     case object List extends Subcommand
     case object GetPath extends Subcommand
+    case object InspectJob extends Subcommand
     case object Run extends Subcommand
     case object DryRun extends Subcommand
     case object Invalidate extends Subcommand

@@ -4,6 +4,7 @@ import fansi.Attr._
 import fansi.Color._
 import fansi._
 
+
 package object printing {
 
   def O(s: String) = Green(s).render

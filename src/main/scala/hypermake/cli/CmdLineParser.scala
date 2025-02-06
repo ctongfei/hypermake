@@ -70,9 +70,10 @@ object CmdLineParser {
   }
 
   def command[$: P]: P[Subcommand] = P {
-    "list".! | "get-path".! | "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! // "export-shell".!
+    "list".! | "inspect-job".! | "get-path".! | "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! // "export-shell".!
   } map {
     case "list"         => Subcommand.List
+    case "inspect-job"  => Subcommand.InspectJob
     case "get-path"     => Subcommand.GetPath
     case "run"          => Subcommand.Run
     case "dry-run"      => Subcommand.DryRun

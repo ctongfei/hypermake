@@ -6,6 +6,7 @@ import scala.collection._
 import scala.collection.decorators._
 import scala.math._
 
+import upickle.default._
 import zio._
 
 import hypermake.cli.CLI
@@ -233,6 +234,26 @@ abstract class Job(implicit ctx: Context) {
   def invalidate(implicit std: StdSinks): HIO[Unit] =
     local.remove(f"$path${local./}exitcode")
 
+  def describe(implicit std: StdSinks): HIO[Job.Description] = {
+    implicit val runtime = ctx.runtime
+    for {
+      status <- checkStatus
+    } yield {
+      val statusDescription = status.describe
+      val inputs = this.inputs.args.mapValuesE(_.absValue)
+      val outputs = this.outputs.args.mapValuesE(_.absValue)
+      Job.Description(
+        id = this.id,
+        name = this.name,
+        args = this.`case`.underlying.map { case (a, k) => a.name -> k },
+        status = statusDescription.status,
+        failureReason = statusDescription.failureReason,
+        inputs = inputs,
+        outputs = outputs
+      )
+    }
+  }
+
   def canonicalCase = ctx.canonicalizeCase(`case`)
 
   def percentEncodedCaseStringPath = ctx.percentEncodedCaseStringPath(`case`)
@@ -268,4 +289,17 @@ abstract class Job(implicit ctx: Context) {
 
 object Job {
   implicit val ordering: Ordering[Job] = Ordering.by(_.id)
+
+  case class Description(
+      id: String,
+      name: String,
+      args: Map[String, String],
+      status: String,
+      failureReason: Option[String],
+      inputs: Map[String, String],
+      outputs: Map[String, String]
+  )
+  object Description {
+    implicit val rw: ReadWriter[Description] = macroRW
+  }
 }

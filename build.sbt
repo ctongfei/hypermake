@@ -14,11 +14,9 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % "2.12.0",
   "dev.zio" %% "zio" % "1.0.18",
   "dev.zio" %% "zio-process" % "0.6.1",
-  "io.circe" %% "circe-core" % "0.14.9",
-  "io.circe" %% "circe-generic" % "0.14.9",
-  "io.circe" %% "circe-parser" % "0.14.9",
   "com.lihaoyi" %% "fastparse" % "3.1.1",
   "com.lihaoyi" %% "fansi" % "0.5.0",
+  "com.lihaoyi" %% "upickle" % "3.1.0",
   "com.github.pathikrit" %% "better-files" % "3.9.2",
   "org.jline" % "jline" % "3.26.2"
 )
