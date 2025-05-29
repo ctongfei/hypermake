@@ -6,11 +6,9 @@ import scala.jdk.CollectionConverters._
 
 import better.files.File
 import zio._
-import zio.process._
 
 import hypermake.cli.CmdLineAST
 import hypermake.cli.CmdLineAST._
-import hypermake.util._
 import hypermake.util.git.cloneRepoToTempDir
 import hypermake.util.printing._
 
@@ -20,6 +18,7 @@ import hypermake.util.printing._
  * @param envVars Inherited environment variables from the parent process
  */
 class RuntimeConfig private (
+    val pipelineFile: String,
     val workDir: String,
     val shell: String,
     val envVars: Map[String, String],
@@ -79,7 +78,8 @@ class RuntimeConfig private (
   }
 
   override def toString = {
-    s"""workDir = $workDir
+    s"""pipelineFile = $pipelineFile
+       |workDir = $workDir
        |shell = $shell
        |definedVars = ${definedVars.map { case (k, v) => s"$k = $v" }.mkString("{", ", ", "}")}
        |includePaths = ${includePaths.mkString("[", ", ", "]")}
@@ -97,6 +97,7 @@ object RuntimeConfig {
   private val defaultShell = "bash -e"
 
   def create(
+      pipelineFile: String,
       definedVars: Map[String, String] = Map(),
       includePaths: Seq[String] = Seq(),
       includedGitRepos: Seq[String] = Seq(),
@@ -110,6 +111,7 @@ object RuntimeConfig {
     val allGitRepos = ZIO.foreach(includedGitRepos)(cloneRepoToTempDir)
     val allClonedPath = Runtime.default.unsafeRun(allGitRepos)
     new RuntimeConfig(
+      pipelineFile = pipelineFile,
       workDir = System.getProperty("user.dir"),
       envVars = System.getenv().asScala.toMap,
       definedVars = definedVars,
@@ -123,9 +125,16 @@ object RuntimeConfig {
     )
   }
 
-  def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) =
+  def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = {
+    val workDir = System.getProperty("user.dir")
+    val pipelineFile = options.collectFirst { case Opt.File(f) => f }.getOrElse {
+      val files = File(workDir).list.filter(_.extension.contains(".hm")).toArray
+      if (files.length == 1) files.head.pathAsString
+      else throw new IllegalArgumentException("No pipeline file specified.")
+    }
     create(
-      includePaths = options.collect { case Opt.Include(f) => f },
+      pipelineFile = pipelineFile,
+      includePaths = options.collect { case Opt.IncludeDir(f) => f },
       includedGitRepos = options.collect { case Opt.IncludeGit(r) => r },
       shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse(defaultShell),
       numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
@@ -134,5 +143,6 @@ object RuntimeConfig {
       verbose = runOptions contains RunOpt.Verbose,
       yes = runOptions contains RunOpt.Yes
     )
+  }
 
 }

@@ -13,7 +13,7 @@ class Obj(private[hypermake] var prefix: Path) {
   private[hypermake] val valueTable = mutable.HashMap[String, PointedTensor[Value]]()
   private[hypermake] val funcTable = mutable.HashMap[String, Func]()
   private[hypermake] val taskTable = mutable.HashMap[String, PointedTaskTensor]()
-  private[hypermake] val packageTable = mutable.HashMap[String, PointedPackageTensor]()
+  private[hypermake] val packageTable = mutable.HashMap[String, PointedTaskTensor]()
   private[hypermake] val planTable = mutable.HashMap[String, Plan]()
   private[hypermake] val classTable = mutable.HashMap[String, Cls]()
   private[hypermake] val objTable = mutable.HashMap[String, Obj]()
@@ -22,20 +22,9 @@ class Obj(private[hypermake] var prefix: Path) {
   def functions = PathMap[Obj, Func](this, _.objTable, _.funcTable)
   def tasks = PathMap[Obj, PointedTaskTensor](this, _.objTable, _.taskTable)
   def plans = PathMap[Obj, Plan](this, _.objTable, _.planTable)
-  def packages = PathMap[Obj, PointedPackageTensor](this, _.objTable, _.packageTable)
+  def packages = PathMap[Obj, PointedTaskTensor](this, _.objTable, _.packageTable)
   def classes = PathMap[Obj, Cls](this, _.objTable, _.classTable)
   def objects = PathMap[Obj, Obj](this, _.objTable, _.objTable)
-
-  def packageAwareTasks(implicit ctx: Context): Map[String, PointedTaskTensor] =
-    new DefaultMapBase[String, PointedTaskTensor] {
-      def get(key: String) =
-        try {
-          val Array(packageName, packageFs) = key.split("@")
-          val fs = FileSys(packageFs)
-          Some(packages(packageName).on(fs))
-        } catch { case _: Throwable => taskTable.get(key) }
-      def iterator = taskTable.iterator
-    }
 
   def addDef(defn: Definition[_]): Unit = {
     val Definition(path, value) = defn
@@ -55,9 +44,6 @@ class Obj(private[hypermake] var prefix: Path) {
       case value: Func =>
         if (target.funcTable.contains(name)) throw DuplicateDefinitionException("Function", name)
         else target.funcTable += name -> value
-      case value: PointedPackageTensor =>
-        if (target.packageTable.contains(name)) throw DuplicateDefinitionException("Package", name)
-        else target.packageTable += name -> value
       case value: PointedTensor[Value] =>
         if (target.valueTable.contains(name)) throw DuplicateDefinitionException("Value", name)
         else target.valueTable += name -> value

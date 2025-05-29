@@ -12,7 +12,6 @@ import zio._
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.execution._
-import hypermake.semantics.Context
 import hypermake.util.Escaper._
 import hypermake.util._
 
@@ -28,6 +27,8 @@ abstract class Job(implicit ctx: Context) {
   def name: String
 
   def ephemeral: Boolean
+
+  def isPackage: Boolean
 
   def `case`: Case
 

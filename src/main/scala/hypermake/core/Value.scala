@@ -6,8 +6,13 @@ import hypermake.collection._
 import hypermake.exception.ValueNotPureException
 import hypermake.execution._
 
-/** This is essentially a string potentially paired with its dependent tasks. */
+/**
+ *  A string value in HyperMake.
+ * Essentially a string potentially paired with its dependent tasks.
+ */
 sealed trait Value {
+
+  /** The string value. If it is a path, it is relative to the root of the file system. */
   def value: String
 
   def absValue(implicit runtime: RuntimeConfig): String
@@ -36,21 +41,6 @@ object Value {
     def optFs = None
 
     def dependencies = Set()
-  }
-
-  case class PackageOutput(pack: Package) extends FileSysAgnostic {
-    def value = pack.outputFileName._2.value
-
-    def absValue(implicit runtime: RuntimeConfig) = ???
-
-    def optFs = None
-
-    def dependencies = Set()
-
-    def on(fs: FileSys): Output = {
-      val task = pack.on(fs)
-      Output(value, fs, task)
-    }
   }
 
   sealed trait FileSysDependent extends Value {

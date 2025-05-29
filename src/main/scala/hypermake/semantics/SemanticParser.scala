@@ -126,8 +126,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
             }
             .orElse { // package outputs in scope or global
               for (pack <- (scope.packages ++ root.packages).get(name))
-                // FileSys("") denotes a package output yet instantiated on a specific file system
-                yield if (fs.name != "") pack.output.map(_.on(fs)) else pack.output
+                yield selectPotentiallyMultipleValues[Task](pack, indices, _.outputs.head._2)
             }
             .orElse { // output of service.setup
               for (serviceObj <- (scope.objects ++ root.objects).get(name))
@@ -242,7 +241,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     name.! := new Func((scope.prefix / name.!).toString, ps, os, implTensor)
   }
 
-  implicit def ParsePackageDef: Denotation[PackageDef, Definition[PointedPackageTensor]] = { case PackageDef(decorators, name, inputs, output, impl) =>
+  implicit def ParsePackageDef: Denotation[PackageDef, Definition[PointedTaskTensor]] = { case PackageDef(decorators, name, inputs, output, impl) =>
     val definedOutputArgs = Assignments(output.toList).!!
 
     val explicitInputArgs = inputs.!((PointedArgsTensor(Map()), FileSys("")))
@@ -257,6 +256,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     val inheritedFromCallingFunc = definedOutputArgs.args.isEmpty && scriptOutputParams.params.size == 1
 
     val inputArgs = if (explicitlyDefinedOutput) explicitInputArgs else script.inputs.toArgsIfBound(Some(name.name))
+    // TODO: check if there is a dependency to a non-package
 
     val outputParams = {
       if (explicitlyDefinedOutput) {
@@ -270,13 +270,16 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
     }
 
     name.! :=
-      PointedPackageTensor(
+      new PointedTaskTensor(
         name = (scope.prefix / name.!).toString,
         shape = allCases.filterVars(axes),
         inputs = inputArgs,
-        outputFileName = outputParams,
+        inputFs = inputs.map { case (k, (em, _)) => k.! -> em.!! },
+        outputFileNames = PointedArgsTensor(Map(outputParams)),
+        outputFs = Map(outputParams._1 -> output.map { a => a.param.fsModifier.!! }.getOrElse(FileSys.local)),
         decorators = decorators.calls.map(_.!),
-        rawScript = script.impl
+        script = script.impl,
+        isPackage = true
       )
   }
 

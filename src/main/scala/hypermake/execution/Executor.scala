@@ -10,7 +10,6 @@ import hypermake.cli._
 import hypermake.collection._
 import hypermake.core._
 import hypermake.exception.JobFailedException
-import hypermake.semantics.Context
 import hypermake.util._
 
 object Executor {

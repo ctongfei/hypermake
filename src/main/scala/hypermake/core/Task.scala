@@ -5,7 +5,6 @@ import scala.collection._
 import cats.implicits._
 
 import hypermake.collection._
-import hypermake.semantics.Context
 import hypermake.util._
 
 /** A task is the atomic unit of scripts that is executed by HyperMake. */
@@ -18,7 +17,8 @@ class Task(
     val outputFs: Map[String, FileSys],
     val decorators: Seq[Decorator],
     val rawScript: Script,
-    val ephemeral: Boolean = false
+    val ephemeral: Boolean = false,
+    val isPackage: Boolean = false
 )(implicit val ctx: Context)
     extends Job()(ctx) {
 
@@ -36,7 +36,8 @@ class PointedTaskTensor(
     val outputFs: Map[String, FileSys],
     val decorators: Seq[PointedDecoratorTensor],
     val script: PointedTensor[Script],
-    val ephemeral: Boolean = false
+    val ephemeral: Boolean = false,
+    val isPackage: Boolean = false
 )(implicit ctx: Context)
     extends PointedTensor[Task]
     with Partial[PointedTaskTensor] {
@@ -49,7 +50,7 @@ class PointedTaskTensor(
       val os = outputFileNames(c)
       val decs = decorators.map(_(c))
       val scr = script(c)
-      Some(new Task(name, cc, is, inputFs, os, outputFs, decs, scr, ephemeral))
+      Some(new Task(name, cc, is, inputFs, os, outputFs, decs, scr, ephemeral, isPackage))
     } else None
   }
 
@@ -62,12 +63,7 @@ class PointedTaskTensor(
         j.name
       })
     }
-    (allTaskNames ++ decoratorTaskNames).map { k =>
-      ctx.root.tasks.get(k).getOrElse {
-        val Array(pack, fs) = k.split("@")
-        ctx.root.packages(pack).on(FileSys(fs))
-      }
-    }
+    (allTaskNames ++ decoratorTaskNames) map ctx.root.tasks.apply
   }
 
   def partial(args: PointedArgsTensor[Value]): PointedTaskTensor = {
@@ -81,7 +77,8 @@ class PointedTaskTensor(
       outputFs,
       decorators,
       outScript,
-      ephemeral
+      ephemeral,
+      isPackage
     )
   }
 

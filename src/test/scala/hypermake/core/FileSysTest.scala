@@ -14,7 +14,7 @@ import zio.console.putStrLn
 import zio.stream.ZSink
 
 import hypermake.execution.RuntimeConfig
-import hypermake.semantics.{Context, SemanticParser}
+import hypermake.semantics.SemanticParser
 import hypermake.util.StdSinks
 
 object FileSysGen {

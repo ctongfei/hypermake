@@ -2,15 +2,21 @@ package hypermake.core
 
 import hypermake.collection.{Case, PointedShape, PointedTensor}
 import hypermake.exception.ObjectIsNotServiceException
-import hypermake.semantics.Context
 import hypermake.util.StdSinks
 
 case class Service(rawStart: Task, stop: Task) {
-  val start: Task = new Service.ServiceEphemeralTask(rawStart, this)(rawStart.ctx)
+  val start: Task = new Service.EphemeralTask(rawStart, this)(rawStart.ctx)
 }
 
 object Service {
-  class ServiceEphemeralTask(raw: Task, service: Service)(implicit ctx: Context)
+
+  /**
+   * The ephemeral task that is used to start a service.
+   * @param raw The raw task that is used to start the service.
+   * @param service The service that this task belongs to.
+   * @param ctx The context.
+   */
+  class EphemeralTask(raw: Task, service: Service)(implicit ctx: Context)
       extends Task(
         raw.name,
         raw.`case`,
