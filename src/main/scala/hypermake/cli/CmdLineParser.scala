@@ -18,11 +18,11 @@ object CmdLineParser {
 
   def file[$: P] = P {
     ("-F" | "--file") ~ fileNameString
-  }
+  } map Opt.File
 
   def include[$: P] =
     P {
-      ("-I" | "--include-dir") ~ string
+      ("-I" | "--include-dir") ~ fileNameString
     } map Opt.IncludeDir
 
   def includeGit[$: P] =
@@ -59,7 +59,7 @@ object CmdLineParser {
     } map { _ => out }
 
   def opt[$: P]: P[Opt] = P {
-    define | include | includeGit | shell
+    file | define | include | includeGit | shell
   }
 
   def runtimeOpts[$: P] = P {

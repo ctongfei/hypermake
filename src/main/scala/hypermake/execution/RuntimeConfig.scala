@@ -128,6 +128,7 @@ object RuntimeConfig {
   def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = {
     val workDir = System.getProperty("user.dir")
     val pipelineFile = options.collectFirst { case Opt.File(f) => f }.getOrElse {
+      // If no pipeline file is specified, look for a unique *.hm file in the current directory.
       val files = File(workDir).list.filter(_.extension.contains(".hm")).toArray
       if (files.length == 1) files.head.pathAsString
       else throw new IllegalArgumentException("No pipeline file specified.")

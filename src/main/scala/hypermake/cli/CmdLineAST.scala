@@ -11,10 +11,10 @@ object CmdLineAST {
     case object Help extends Cmd // H
     case object Version extends Cmd // V
     case class RunTarget(
-                          subcommand: SubcommandType,
-                          options: Seq[Opt],
-                          runOptions: Seq[RunOpt],
-                          targets: Seq[TaskRef]
+        subcommand: SubcommandType,
+        options: Seq[Opt],
+        runOptions: Seq[RunOpt],
+        targets: Seq[TaskRef]
     ) extends Cmd
     case class DescribeTarget(
         options: Seq[Opt],
