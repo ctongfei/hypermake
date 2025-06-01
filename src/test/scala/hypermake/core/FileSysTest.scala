@@ -161,7 +161,11 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
   import FileSysGen._
 
   implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 1, maxDiscardedFactor = 0.1)
-  implicit val runtime: RuntimeConfig = RuntimeConfig.create(shell = "bash -eux", verbose = true)
+  implicit val runtime: RuntimeConfig = RuntimeConfig.create(
+    shell = "bash -eux",
+    verbose = true,
+    includePaths = Seq("src/main/hypermake")
+  )
   implicit val ctx: Context = new Context()
 
   val parser = new SemanticParser(ctx.root)
@@ -169,7 +173,7 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
   val local = FileSys.local
   val s3 = FileSys("my_s3")
   val asb = FileSys("my_asb")
-  val sftp = FileSys("my_sftp")
+//  val sftp = FileSys("my_sftp")
   val gcs = FileSys("my_gcs")
   implicit val stdSinks: StdSinks = StdSinks.default
 

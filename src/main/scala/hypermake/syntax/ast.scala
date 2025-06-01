@@ -84,6 +84,7 @@ object ast {
     def children = optFs.toList
   }
 
+  // TODO: should this even be in the AST?
   case class InlineCommand(command: String) extends Node {
     def str = command
 
