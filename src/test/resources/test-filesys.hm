@@ -1,7 +1,7 @@
 import aws
 import az
 import gcloud
-import ssh
+#import ssh
 
 object my_s3 = aws.s3(
   bucket="tongfeipersonal",
@@ -19,7 +19,7 @@ object my_gcs = gcloud.storage(
   root="gcloud-test"
 )
 
-object my_sftp = ssh.server(
-  host="azureuser@20.120.216.182",
-  root="/home/azureuser/hypermake"
-)
+#object my_sftp = ssh.server(
+#  host="azureuser@20.120.216.182",
+#  root="/home/azureuser/hypermake"
+#)

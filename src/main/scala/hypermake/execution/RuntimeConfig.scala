@@ -13,7 +13,7 @@ import hypermake.util.git.cloneRepoToTempDir
 import hypermake.util.printing._
 
 /**
- * Encapsulates the runtime environment of a Hypermake run.
+ * Encapsulates the runtime environment of a HyperMake run.
  * @param workDir Working directory
  * @param envVars Inherited environment variables from the parent process
  */
@@ -40,7 +40,7 @@ class RuntimeConfig private (
   lazy val paths =
     envVars.get(HYPERMAKE_PATH).map(_.split(JFile.pathSeparatorChar)).getOrElse(Array[String]())
 
-  lazy val resolutionPaths = workDir +: paths
+  lazy val resolutionPaths = Seq(workDir) ++ includePaths ++ paths
 
   private lazy val tempPath = JFiles.createTempDirectory("hypermake").toAbsolutePath
 
@@ -97,7 +97,7 @@ object RuntimeConfig {
   private val defaultShell = "bash -e"
 
   def create(
-      pipelineFile: String,
+      pipelineFile: String = "",
       definedVars: Map[String, String] = Map(),
       includePaths: Seq[String] = Seq(),
       includedGitRepos: Seq[String] = Seq(),

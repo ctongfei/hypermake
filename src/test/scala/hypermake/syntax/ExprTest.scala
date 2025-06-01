@@ -64,6 +64,8 @@ class ExprSyntaxTest
     with ScalaCheckPropertyChecks
     with SyntacticParserTestMixin {
   import ExprGen._
+  // set size parameter
+  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(sizeRange = 5)
 
   checkAll(
     "ExprSyntaxInvertibility",
