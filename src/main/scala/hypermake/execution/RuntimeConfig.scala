@@ -125,7 +125,7 @@ object RuntimeConfig {
     )
   }
 
-  def createFromCLIOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = {
+  def createFromCliOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = {
     val workDir = System.getProperty("user.dir")
     val pipelineFile = options.collectFirst { case Opt.File(f) => f }.getOrElse {
       // If no pipeline file is specified, look for a unique *.hm file in the current directory.
