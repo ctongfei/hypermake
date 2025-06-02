@@ -67,7 +67,7 @@ object Main extends App {
 
       case Cmd.RunTarget(subtask, options, runOptions, targets) =>
         implicit val runtime: RuntimeConfig =
-          RuntimeConfig.createFromCLIOptions(options, runOptions)
+          RuntimeConfig.createFromCliOptions(options, runOptions)
         val cli = PlainCLI.create(style = Style.Plain)
 
         // Constructs a semantic parser and its accompanying parsing context
