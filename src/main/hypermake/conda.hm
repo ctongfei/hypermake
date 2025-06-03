@@ -1,5 +1,5 @@
 # Creates a Conda environment with a list of packages.
-def create(packages, extra_args="", extra_pip_packages="") -> out:
+def create(packages="", extra_args="", extra_pip_packages="") -> out:
   mkdir -p $out
   conda create -y -p $out $extra_args $packages
   if [ ! -z "$extra_pip_packages" ]
@@ -27,7 +27,13 @@ class activate(environment):
     eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
     if [ -d $environment ]
     then  # local environment
-      conda activate ./$environment
+      # Test if $environment starts with `/`
+      if [[ $environment == /* ]]
+      then
+        conda activate $environment
+      else
+        conda activate ./$environment
+      fi
     else  # global environment
       conda activate $environment
     fi
