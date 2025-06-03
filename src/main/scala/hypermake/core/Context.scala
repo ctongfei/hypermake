@@ -2,11 +2,12 @@ package hypermake.core
 
 import scala.collection._
 
+import upickle.default._
+
 import hypermake.collection._
 import hypermake.exception._
 import hypermake.execution.RuntimeConfig
 import hypermake.util.Escaper._
-import upickle.default._
 
 /** Contexts kept for each parsing run. */
 class Context(implicit val runtime: RuntimeConfig) {
@@ -38,8 +39,10 @@ class Context(implicit val runtime: RuntimeConfig) {
     }
   }
 
-  def caseInJson(args: Case) =
-    write(immutable.SeqMap.from(canonicalizeCase(args)))
+  def caseInJson(args: Case) = {
+    val caseAsMap = canonicalizeCase(args).toMap
+    write(caseAsMap)
+  }
 
   def caseString(args: Case) =
     canonicalizeCase(args).map { case (a, k) => s"$a: $k" }.mkString(", ")

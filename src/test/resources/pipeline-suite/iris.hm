@@ -4,7 +4,7 @@ import conda
 local.root = "test-out"
 
 
-package env = conda.create(args="-c conda-forge python=3.10 scikit-learn pandas joblib")
+package env = conda.create(packages="-c conda-forge python=3.10 scikit-learn pandas joblib")
 
 classifier = {Classifier: knn svc maxent}
 
