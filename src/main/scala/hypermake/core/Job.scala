@@ -137,7 +137,7 @@ abstract class Job(implicit ctx: Context) {
     val missingOutputs = outputStatuses.map(_.filterNot(_._2).map(_._1).toSet)
     missingOutputs
       .map { missing =>
-        if (missing.isEmpty) Status.Success else Status.Failure.MissingOutputs(missing)
+        if (missing.isEmpty) Status.Success else Status.Failure.MissingOutputs(outputs.args.filterKeysE(missing))
       }
       .catchAll(_ => ZIO.succeed(Status.Failure.FileSysError))
   }
