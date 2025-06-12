@@ -5,15 +5,14 @@ import java.security.MessageDigest
 import scala.collection._
 import scala.collection.decorators._
 import scala.math._
-
 import upickle.default._
 import zio._
-
 import hypermake.cli.CLI
 import hypermake.collection._
 import hypermake.execution._
 import hypermake.util.Escaper._
 import hypermake.util._
+import hypermake.util.logging.logTaskCall
 
 /**
  * A job is the atomic unit of scripts that is executed by HyperMake.
@@ -174,6 +173,7 @@ abstract class Job(implicit ctx: Context) {
       preparedArgs <- prepareInputs
       args <- writeScript(preparedArgs)
       _ <- cli.update(this, Status.Running)
+      _ <- logTaskCall(this)(ctx.runtime)
       exitCode <- local.execute(path, runtime.shell, Seq("script"), args)
       outputStatus <- checkOutputs
     } yield {

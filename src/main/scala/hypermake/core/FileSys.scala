@@ -181,7 +181,7 @@ object FileSys {
     val pathSeparator = java.io.File.pathSeparatorChar
     lazy val root = {
       val relRoot = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
-      s"${ctx.runtime.workDir}$separator$relRoot"
+      resolvePath(relRoot, ctx.runtime.workDir)
     }
     lazy val maxFileNameLength = ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
     val refreshInterval = 100.milliseconds
@@ -314,6 +314,7 @@ object FileSys {
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
       exitCode <- process.exitCode
+      _ <- logResult(s"$name.exists", exitCode.code.toString)
     } yield exitCode.code == 0
 
     def link(src: String, dst: String)(implicit std: StdSinks) = {
@@ -329,7 +330,7 @@ object FileSys {
         // When symlink is not supported, mimics git's behavior when encountering symlinks:
         // Create a text file with the source path as content.
         for {
-          u <- write(dst, src)
+          u <- ctx.local.write(dst, src)
         } yield u
       }
     }
