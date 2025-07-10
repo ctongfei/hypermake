@@ -12,16 +12,18 @@ object CmdLineParser {
   import hypermake.cli.CmdLineAST._
   import hypermake.syntax.Expressions._
 
-  def define[$: P] =
-    P {
-      ("-D" | "--define") ~ Expressions.identifierPath ~ "=" ~ string
-    }
-      .map { case (name, value) => Opt.Define(name.str, value) }
+  def define[$: P] = P {
+    ("-D" | "--define") ~ Expressions.identifierPath ~ "=" ~ string
+  } map { case (name, value) => Opt.Define(name.str, value) }
+
+  def file[$: P] = P {
+    ("-F" | "--file") ~ fileNameString
+  }
 
   def include[$: P] =
     P {
-      ("-I" | "--include") ~ string
-    } map Opt.Include
+      ("-I" | "--include-dir") ~ string
+    } map Opt.IncludeDir
 
   def includeGit[$: P] =
     P {
@@ -46,6 +48,11 @@ object CmdLineParser {
       ("-j" | "--jobs") ~ Lexical.digit.rep.!
     } map { j => RunOpt.NumJobs(j.toInt) }
 
+  def outputFormat[$: P] =
+    P {
+      ("-o" | "--output") ~ ("json".! | "sh".!)
+    } map DescribeOpt.OutputFormat
+
   def switch[$: P](short: String, long: String, out: RunOpt): P[RunOpt] =
     P {
       long | short
@@ -63,35 +70,41 @@ object CmdLineParser {
       switch("-y", "--yes", RunOpt.Yes)
   }
 
+  def describeOpts[$: P] = P {
+    outputFormat
+  }
+
   def target[$: P] = Expressions.taskRef
 
   def fileNameString[$: P] = P {
     Lexical.quotedString | Lexical.pathString
   }
 
-  def command[$: P]: P[Subcommand] = P {
-    "list".! | "inspect-job".! | "get-path".! | "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "mark-as-done".! // "export-shell".!
+  def runSubcommand[$: P]: P[RunSubcommandType] = P {
+    "run".! | "dry-run".! | "invalidate".! | "unlock".! | "remove".! | "touch".!
   } map {
-    case "list"         => Subcommand.List
-    case "inspect-job"  => Subcommand.InspectJob
-    case "get-path"     => Subcommand.GetPath
-    case "run"          => Subcommand.Run
-    case "dry-run"      => Subcommand.DryRun
-    case "invalidate"   => Subcommand.Invalidate
-    case "unlock"       => Subcommand.Unlock
-    case "remove"       => Subcommand.Remove
-    case "mark-as-done" => Subcommand.MarkAsDone
-    // case "export-shell" => Subcommand.ExportShell
+    case "run"        => SubcommandType.Run
+    case "dry-run"    => SubcommandType.DryRun
+    case "invalidate" => SubcommandType.Invalidate
+    case "unlock"     => SubcommandType.Unlock
+    case "remove"     => SubcommandType.Remove
+    case "touch"      => SubcommandType.Touch
   }
 
-  def run[$: P] = P {
-    opt.rep ~ fileNameString ~ command ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
-  }.map { case (opt, scriptFile, subcommand, runOpts1, targets, runOpts2) =>
-    Cmd.Run(opt, scriptFile, runOpts1 ++ runOpts2, subcommand, targets)
+  def runTarget[$: P] = P {
+    opt.rep ~ runSubcommand ~ runtimeOpts.rep ~ target.rep ~ runtimeOpts.rep
+  }.map { case (opt, subcommand, runOpts1, targets, runOpts2) =>
+    Cmd.RunTarget(subcommand, opt, runOpts1 ++ runOpts2, targets)
+  }
+
+  def describe[$: P] = P {
+    opt.rep ~ "describe" ~ describeOpts.rep ~ target.rep ~ describeOpts.rep
+  }.map { case (opt, descOpts1, targets, descOpts2) =>
+    Cmd.DescribeTarget(opt, descOpts1 ++ descOpts2, targets)
   }
 
   def cmdArgs[$: P] = P {
-    (version | help | run) ~ End
+    (version | help | runTarget) ~ End
   }
 
   def cmdLineParse(args: String): Cmd = {

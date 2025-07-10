@@ -1,6 +1,7 @@
 package hypermake.semantics
 
 import better.files._
+import hypermake.core.Context
 import hypermake.execution.RuntimeConfig
 import org.scalatest.funsuite.AnyFunSuite
 

@@ -4,7 +4,7 @@ import scala.collection._
 
 import hypermake.collection._
 import hypermake.exception.ParametersUnboundException
-import hypermake.semantics.{Context, Definition}
+import hypermake.semantics.Definition
 import hypermake.syntax.ast._
 import hypermake.util._
 

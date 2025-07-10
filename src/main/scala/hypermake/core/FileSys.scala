@@ -10,7 +10,6 @@ import zio.stream.ZSink
 import zio.{Task => _, _}
 
 import hypermake.exception.DataTransferFailedException
-import hypermake.semantics.Context
 import hypermake.util.Escaper.Shell
 import hypermake.util._
 import hypermake.util.logging._
@@ -109,9 +108,6 @@ trait FileSys {
           link(path, s"$wd${/}$name") as Some(resolvePath(path)) // for debugging purposes
         else
           copyFrom(path, fs, s"$wd${/}$name") as Some(resolvePath(s"$wd${/}$name"))
-      case Value.PackageOutput(pack) =>
-        val p = pack.output.on(this).value
-        link(p, s"$wd${/}$name") as Some(resolvePath(p))
       case Value.Output(path, fs, job, _) =>
         if (fs == this)
           link(s"${job.path}${/}$path", s"$wd${/}$name") as Some(resolvePath(s"${job.path}${/}$path"))

@@ -1,14 +1,12 @@
-package hypermake.semantics
+package hypermake.core
 
 import scala.collection._
 
-import upickle.default._
-
 import hypermake.collection._
-import hypermake.core._
 import hypermake.exception._
 import hypermake.execution.RuntimeConfig
 import hypermake.util.Escaper._
+import upickle.default._
 
 /** Contexts kept for each parsing run. */
 class Context(implicit val runtime: RuntimeConfig) {
@@ -53,7 +51,10 @@ class Context(implicit val runtime: RuntimeConfig) {
     clauses
   }
 
-  /** Encodes the arguments as a percent-encoded string. This is the name of the output directory in the file system. */
+  /**
+   * Encodes the arguments as a percent-encoded string.
+   * This is the name of the output directory in the file system.
+   */
   def percentEncodedCaseStringPath(args: Case) = {
     val clauses = percentEncodedClauses(args)
     if (clauses.isEmpty) "default" else clauses.mkString("&") // URL style ID
@@ -74,10 +75,5 @@ class Context(implicit val runtime: RuntimeConfig) {
         .map { case (a, k) => s"${Color.Yellow(a)}: ${Bold.On(Color.LightGreen(k))}" }
         .mkString(", ")
   }
-
-//  def envOutputRoot(envName: Name): String = {
-//    val path = table.getValueOpt(Name(s"${envName}_root")).map(_.default.value).getOrElse("out")
-//    path
-//  }
 
 }
