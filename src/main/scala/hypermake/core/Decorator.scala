@@ -21,7 +21,8 @@ case class Decorator(
       script.script,
       input.args ++ script.args ++ Args(
         Map(
-          innerFileArg -> Value.Input(s"script.${input.nestingLevel}", fs)
+          // relative path to the working directory, not to the output root
+          innerFileArg -> Value.Pure(s"script.${input.nestingLevel}")
         )
       ),
       input.nestingLevel + 1

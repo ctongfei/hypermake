@@ -22,7 +22,7 @@ package object logging {
 
   def logTaskCall(j: Job)(implicit runtime: RuntimeConfig): HIO[Unit] = {
     ZIO.when(runtime.verbose) {
-      val args = j.inputs.args.mapValuesE(_.absValue).map { case (k, v) => s"${K(k)}=${V(v)}" }.mkString("\n  ")
+      val args = j.inputs.args.mapValuesE(_.absValue).map { case (k, v) => s"${Kx(k)}=${Vx(v)}" }.mkString("\n  ")
       val msg = s"❯❯ Calling task ${K(j.name)}(\n  $args\n)"
       zio.console.putStrLnErr(msg)
     }

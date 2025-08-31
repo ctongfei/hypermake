@@ -66,7 +66,8 @@ abstract class Job(implicit ctx: Context) {
     "HYPERMAKE_JOB_NAME" -> name,
     "HYPERMAKE_JOB_CASE" -> caseString,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
-    "HYPERMAKE_JOB_WD" -> path
+    "HYPERMAKE_JOB_WD" -> path,
+    "HYPERMAKE_JOB_WRAPPED_SCRIPTS" -> decorators.indices.map(i => s"script.$i").mkString(" ")
   )
 
   /** Path relative to the output root of the job file system. */
@@ -157,13 +158,14 @@ abstract class Job(implicit ctx: Context) {
 
       // Linked args are of the highest precedence since they are resolved from envs
       jobArgs = finalScript.args.toStrMap ++ linkedArgs
+      allArgs = jobArgs ++ jobEnvVars
       _ <- local.write(
         f"$path${local./}args",
-        (jobArgs.toArray.sortBy(_._1) ++ jobEnvVars.toArray)
+        allArgs.toSeq.sortBy(_._1)
           .map { case (k, v) => s"""$k=${Shell.escape(v)}""" }
           .mkString("", "\n", "\n")
       )
-    } yield jobArgs ++ jobEnvVars
+    } yield allArgs
   }
 
   def execute(cli: CLI.Service)(implicit std: StdSinks): HIO[Status.Result] = {
@@ -202,7 +204,9 @@ abstract class Job(implicit ctx: Context) {
       _ <- cli.update(this, Status.Waiting)
       _ <- local.lock(path)
       _ <- cli.update(this, Status.Running)
-      _ <- ZIO.foreach_(outputs) { case (_, o) => o.fileSys.touch(s"$path${o.fileSys./}${o.value}") } // pretends the outputs exist
+      _ <- ZIO.foreach_(outputs) { case (_, o) =>
+        o.fileSys.touch(s"$path${o.fileSys./}${o.value}")
+      } // pretends the outputs exist
       _ <- local.write(f"$path${local./}exitcode", "0")
       outputStatus <- checkOutputs
     } yield outputStatus.isSuccess
