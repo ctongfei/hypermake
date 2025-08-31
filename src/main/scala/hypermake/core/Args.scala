@@ -17,10 +17,10 @@ case class Args[+V <: Value](args: Map[String, V]) extends DefaultMapBase[String
   def withArgs(newArgs: (String, String)*) =
     Args(newArgs.toMap.mapValuesE(Value.Pure))
 
-  def toStrMap = args.map { case (k, v) => k -> v.value }
+  def toStrMap = args.map { case (k, v) => k -> v.absValue }
 
   /** Converts this to a shell string that can be prepended to a Shell command. */
-  def toShell = args.map { case (k, v) => s"$k=${Escaper.Shell.escape(v.value)}" }.mkString("\n")
+  def toShell = args.map { case (k, v) => s"$k=${Escaper.Shell.escape(v.absValue)}" }.mkString("\n")
 
 }
 

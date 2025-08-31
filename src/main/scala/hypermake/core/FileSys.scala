@@ -181,7 +181,7 @@ object FileSys {
     val pathSeparator = java.io.File.pathSeparatorChar
     lazy val root = {
       val relRoot = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
-      s"${ctx.runtime.workDir}$separator$relRoot"
+      resolvePath(relRoot, ctx.runtime.workDir)
     }
     lazy val maxFileNameLength = ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
     val refreshInterval = 100.milliseconds
@@ -286,6 +286,7 @@ object FileSys {
         process <- getScriptByName(s"${name}.read")
           .withArgs("file" -> f)
           .executeLocally(ctx.runtime.workDir)(ctx.runtime, sinks)
+        _ <- logExitCode(s"$name.read", f)(process)
       } yield baos.toString()
     }
 
@@ -305,6 +306,7 @@ object FileSys {
       process <- getScriptByName(s"$name.mkdir")
         .withArgs("dir" -> f)
         .executeLocally(ctx.runtime.workDir)
+      _ <- logExitCode(s"$name.mkdir", f)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -314,6 +316,7 @@ object FileSys {
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
       exitCode <- process.exitCode
+      _ <- logExitCode(s"$name.exists", f)(process)
     } yield exitCode.code == 0
 
     def link(src: String, dst: String)(implicit std: StdSinks) = {
@@ -323,13 +326,14 @@ object FileSys {
           process <- getScriptByName(s"${name}.link")
             .withArgs("src" -> src, "dst" -> dst)
             .executeLocally(ctx.runtime.workDir)
+          _ <- logExitCode(s"$name.link", src, dst)(process)
           u <- process.successfulExitCode.unit
         } yield u
       } else {
         // When symlink is not supported, mimics git's behavior when encountering symlinks:
         // Create a text file with the source path as content.
         for {
-          u <- write(dst, src)
+          u <- ctx.local.write(dst, src)
         } yield u
       }
     }
@@ -339,6 +343,7 @@ object FileSys {
       process <- getScriptByName(s"$name.touch")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
+      _ <- logExitCode(s"$name.touch", f)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -347,6 +352,7 @@ object FileSys {
       process <- getScriptByName(s"$name.remove")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
+      _ <- logExitCode(s"$name.remove", f)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -358,6 +364,7 @@ object FileSys {
         .reify
         .default
         .executeLocally(ctx.local.root)
+      _ <- logExitCode(s"$name.upload", src, dst)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -369,6 +376,7 @@ object FileSys {
         .reify
         .default
         .executeLocally(ctx.local.root)
+      _ <- logExitCode(s"$name.download", src, dst)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -383,6 +391,7 @@ object FileSys {
         )
         .executeLocally(FileSys.local.resolvePath(wd))
       _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
+      _ <- logExitCode(command, args.mkString(" "))(process)
       exitCode <- process.exitCode
     } yield exitCode
 

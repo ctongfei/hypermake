@@ -148,7 +148,7 @@ trait Graph[A] {
       }
     }
     ZIO
-      .foreach(a zip rows)({ case (row, x) =>
+      .foreachPar(a zip rows)({ case (row, x) =>
         display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s")
       })
       .map(_.mkString("\n"))
