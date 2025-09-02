@@ -38,7 +38,7 @@ trait Graph[A] {
       def hasNext = n < nodes.size
 
       def next() = {
-        if (zeroInDegrees.isEmpty) throw CyclicWorkflowException()
+        if (zeroInDegrees.isEmpty) throw CyclicPipelineException()
         val i = zeroInDegrees.dequeue()
         for (j <- outgoingNodes(i).toSeq.sorted) {
           inDegrees(j) -= 1

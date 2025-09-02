@@ -15,6 +15,8 @@ case class Params[+V <: Value](params: Map[String, Option[PointedTensor[V]]]) {
 
   def hasUnboundVars = params.values.exists(_.isEmpty)
 
+  def boundVars = params.collect { case (k, Some(v)) => k -> v }.toMap
+
   def unboundVars = params.collect { case (k, None) => k }.toSet
 
   def ++[W >: V <: Value](that: Params[W]) = Params(this.params ++ that.params)

@@ -8,29 +8,70 @@ class server(host, root):
   ephemeral task stop(sock=$start.sock):
     ssh -S $sock -O exit $host
 
-  def read(file, sock=$setup.sock):
+  def read(file, sock=$start.sock):
     ssh -S $sock $host "cat $root/$file"
 
-  def exists(file, sock=$setup.sock):
+  def exists(file, sock=$start.sock):
     ssh -S $sock $host "test -e $root/$file"
 
-  def execute(command, sock=$setup.sock):
+  def execute(command, sock=$start.sock):
     ssh -S $sock $host "cd $root; $command"
 
-  def mkdir(dir, sock=$setup.sock):
+  def mkdir(dir, sock=$start.sock):
     ssh -S $sock $host "mkdir -p $root/$dir"
 
-  def link(src, dst, sock=$setup.sock):
+  def link(src, dst, sock=$start.sock):
     ssh -S $sock $host "ln -sf $root/$src $root/$dst"
 
-  def touch(file, sock=$setup.sock):
+  def touch(file, sock=$start.sock):
     ssh -S $sock $host "touch $root/$file"
 
-  def remove(file, sock=$setup.sock):
+  def remove(file, sock=$start.sock):
     ssh -S $sock $host "rm -rf $root/$file"
 
-  def upload(src, dst, sock=$setup.sock):
+  def upload(src, dst, sock=$start.sock):
     scp -r -o "ControlPath=$sock" $src $host:$root/$dst
 
-  def download(src, dst, sock=$setup.sock):
+  def download(src, dst, sock=$start.sock):
     scp -r -o "ControlPath=$sock" $host:$root/$src $dst
+
+
+## Runs a job on a remote server by keeping a tmux session.
+class remote_tmux(host, extra_ssh_args="", interpreter="bash"):
+  def run(_internal_script_remote):
+    timestamp=$(date +%s)
+    session_name="$HYPERMAKE_JOB_ID/$timestamp"
+    job_dir="/tmp/hypermake/$session_name"
+    ssh $extra_ssh_args $host "mkdir -p $job_dir"
+    scp $_internal_script_remote $host:$job_dir/script
+    for wrapped_script in $HYPERMAKE_JOB_WRAPPED_SCRIPTS
+    do
+      scp $wrapped_script $host:$job_dir/
+    done
+
+    remote_command="cd $job_dir && $HYPERMAKE_JOB_ENV_VARS $interpreter script > stdout 2> stderr && echo \$? > exitcode"
+    ssh $extra_ssh_args $host "tmux new-session -d -s $session_name \"$remote_command\""
+
+    return_code=$?
+    if [ $return_code -ne 0 ]
+    then
+      echo "Failed to start remote job."
+      exit 1
+    fi
+
+    pid=$(ssh $extra_ssh_args $host "tmux list-panes -s -t $session_name -F '#{pane_pid}'")
+    echo "Remote job started at $host:$job_dir on tmux session \"$session_name\" with PID $pid."
+
+    while ssh $extra_ssh_args $host "tmux has-session -t $session_name" > /dev/null 2>&1
+    do
+      ssh $extra_ssh_args $host "tail --pid=$pid -f -q -n+1 $job_dir/stdout $job_dir/stderr"
+      sleep 1
+    done
+    echo "Remote job finished."
+
+    scp $host:$job_dir/exitcode ./exitcode
+    scp $host:$job_dir/stdout ./stdout
+    scp $host:$job_dir/stderr ./stderr
+    #echo "Cleaning up..."
+    #ssh $extra_ssh_args $host "rm -r $job_dir"
+    exit $(cat ./exitcode)

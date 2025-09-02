@@ -13,27 +13,25 @@ import hypermake.util._
  * @param name Name of this class, from root
  * @param params Constructor parameters, with their default values
  * @param obj The object definition of this class
- * @param inheritedArgs Arguments inherited from a partial instantiation
  */
 case class Cls(
     name: String,
     params: Params[Value],
-    obj: Obj,
-    inheritedArgs: PointedArgsTensor[Value] = PointedArgsTensor(Map())
+    obj: Obj
 ) extends Partial[Cls] {
   def partial(args: PointedArgsTensor[Value]): Cls = {
-    val newArgs = PointedArgsTensor(inheritedArgs.args ++ args.args)
+    val newParams = params.bind(args)
     val newObj = Obj.fromDefs(
       obj.prefix,
       (obj.defs.map {
         case Definition(name, p: Partial[_]) => name -> Definition(name, p.partial(args))
         case d: Definition[_]                => d.name -> d // values and objects do not take arguments
-      }.toMap ++ newArgs.args.map { case (k, v) =>
+      }.toMap ++ newParams.boundVars.map { case (k, v) =>
         val d = Definition(k, v)
         d.name -> d
       }.toMap).values
     )
-    Cls(name, params, newObj, newArgs)
+    Cls(name, newParams, newObj)
   }
 
   /**

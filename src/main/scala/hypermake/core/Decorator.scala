@@ -35,11 +35,9 @@ case class Decorator(
  * and wraps around the input script to produce the output script.
  * This is used to decorate tasks.
  */
-// TODO: do we add `alive` functions to submitters?
 case class PointedDecoratorTensor(
     innerFileArg: String,
     script: PointedTensor[Script]
-    // alive: Option[PointedTensor[Script]]
 ) extends PointedTensor[Decorator] {
 
   def shape: PointedShape = script.shape
@@ -69,15 +67,9 @@ object PointedDecoratorTensor {
     val runFunc = obj.funcTable.getOrElse("run", throw ObjectIsNotDecoratorException(obj))
     if (runFunc.inputs.params.size != 1) throw ObjectIsNotDecoratorException(obj)
 
-    // TODO: alive
-//    val aliveFunc = obj.funcTable.get("alive")
-//    if (aliveFunc.nonEmpty && aliveFunc.get.params.nonEmpty)
-//      throw ObjectIsNotDecoratorException(obj)
-
     PointedDecoratorTensor(
       runFunc.inputs.params.head._1,
       runFunc.impl
-      // aliveFunc.map(_.impl)
     )
   }
 }
