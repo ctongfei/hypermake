@@ -65,7 +65,11 @@ abstract class Job(implicit ctx: Context) {
     "HYPERMAKE_JOB_CASE" -> caseString,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
     "HYPERMAKE_JOB_WD" -> path,
-    "HYPERMAKE_JOB_ENV_VARS" -> script.args.toStrMap.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" "),
+    "HYPERMAKE_JOB_ENV_VARS" -> {
+      val scriptArgs = script.args.toStrMap
+      val allArgs = decorators.map(_.script.args).foldLeft(scriptArgs)(_ ++ _.toStrMap)
+      allArgs.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")
+    },
     "HYPERMAKE_JOB_WRAPPED_SCRIPTS" -> decorators.indices.map(i => s"script.$i").mkString(" ")
   )
 
