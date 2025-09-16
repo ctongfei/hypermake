@@ -63,16 +63,23 @@ trait FileSys {
   /** Checks if a file exists on this file system. */
   def exists(f: String)(implicit std: StdSinks): HIO[Boolean]
 
-  /** Creates a symbolic link from `src` to `dst`. If symlink not supported, noop. */
+  /**
+   * Creates a symbolic link from `src` to `dst`.
+   * If symlink not supported, create a text file with the source path as content.
+   * This behavior is consistent with git's behavior when encountering symlinks.
+   */
   def link(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
   /** Creates an empty file at the given path. */
   def touch(f: String)(implicit std: StdSinks): HIO[Unit]
 
+  /** Removes a file or directory. If a directory, recursively remove all its contents. */
   def remove(f: String)(implicit std: StdSinks): HIO[Unit]
 
+  /** Uploads a file or directory from the local file system to this file system. */
   def upload(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
+  /** Downloads a file or directory from this file system to the local file system. */
   def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
   def copyFrom(src: String, srcFs: FileSys, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Unit] = {
@@ -97,7 +104,7 @@ trait FileSys {
 
   def forceUnlock(f: String)(implicit std: StdSinks): HIO[Unit] = for {
     isLocked <- isLocked(f)
-    u <- if (isLocked) remove(s"$f${/}.lock") else ZIO.succeed(())
+    u <- if (isLocked) remove(s"$f${/}.lock") else ZIO.unit
   } yield u
 
   def prepareInput(name: String, x: Value, wd: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] =
@@ -115,11 +122,11 @@ trait FileSys {
           copyFrom(s"${job.path}${/}$path", fs, s"$wd${/}$name") as Some(resolvePath(s"$wd${/}$name"))
       case Value.Multiple(values, _) =>
         for {
-          _ <- mkdir(s"$wd${/}$name")
+          dir <- mkdir(s"$wd${/}$name")
           r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
             prepareInput(ctx.percentEncodedCaseStringPath(c), v, resolvePath(s"$wd${/}$name"))
           }
-        } yield Some(r.collect(x => x).mkString(" "))
+        } yield Some(resolvePath(s"$wd${/}$name"))
     }
 
   override def toString = name
@@ -172,7 +179,10 @@ object FileSys {
     final val name = "local"
     val separator = java.io.File.separatorChar
     val pathSeparator = java.io.File.pathSeparatorChar
-    lazy val root = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
+    lazy val root = {
+      val relRoot = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
+      resolvePath(relRoot, ctx.runtime.workDir)
+    }
     lazy val maxFileNameLength = ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
     val refreshInterval = 100.milliseconds
     val supportsSymLinks = true
@@ -276,6 +286,7 @@ object FileSys {
         process <- getScriptByName(s"${name}.read")
           .withArgs("file" -> f)
           .executeLocally(ctx.runtime.workDir)(ctx.runtime, sinks)
+        _ <- logExitCode(s"$name.read", f)(process)
       } yield baos.toString()
     }
 
@@ -295,6 +306,7 @@ object FileSys {
       process <- getScriptByName(s"$name.mkdir")
         .withArgs("dir" -> f)
         .executeLocally(ctx.runtime.workDir)
+      _ <- logExitCode(s"$name.mkdir", f)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -304,16 +316,26 @@ object FileSys {
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
       exitCode <- process.exitCode
+      _ <- logExitCode(s"$name.exists", f)(process)
     } yield exitCode.code == 0
 
     def link(src: String, dst: String)(implicit std: StdSinks) = {
-      (for {
-        _ <- logCall(s"$name.link", src, dst)
-        process <- getScriptByName(s"${name}.link")
-          .withArgs("src" -> src, "dst" -> dst)
-          .executeLocally(ctx.runtime.workDir)
-        u <- process.successfulExitCode.unit
-      } yield u).when(supportsSymLinks)
+      if (supportsSymLinks) {
+        for {
+          _ <- logCall(s"$name.link", src, dst)
+          process <- getScriptByName(s"${name}.link")
+            .withArgs("src" -> src, "dst" -> dst)
+            .executeLocally(ctx.runtime.workDir)
+          _ <- logExitCode(s"$name.link", src, dst)(process)
+          u <- process.successfulExitCode.unit
+        } yield u
+      } else {
+        // When symlink is not supported, mimics git's behavior when encountering symlinks:
+        // Create a text file with the source path as content.
+        for {
+          u <- ctx.local.write(dst, src)
+        } yield u
+      }
     }
 
     def touch(f: String)(implicit std: StdSinks) = for {
@@ -321,6 +343,7 @@ object FileSys {
       process <- getScriptByName(s"$name.touch")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
+      _ <- logExitCode(s"$name.touch", f)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -329,6 +352,7 @@ object FileSys {
       process <- getScriptByName(s"$name.remove")
         .withArgs("file" -> f)
         .executeLocally(ctx.runtime.workDir)
+      _ <- logExitCode(s"$name.remove", f)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -340,6 +364,7 @@ object FileSys {
         .reify
         .default
         .executeLocally(ctx.local.root)
+      _ <- logExitCode(s"$name.upload", src, dst)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -351,6 +376,7 @@ object FileSys {
         .reify
         .default
         .executeLocally(ctx.local.root)
+      _ <- logExitCode(s"$name.download", src, dst)(process)
       u <- process.successfulExitCode.unit
     } yield u
 
@@ -365,6 +391,7 @@ object FileSys {
         )
         .executeLocally(FileSys.local.resolvePath(wd))
       _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
+      _ <- logExitCode(command, args.mkString(" "))(process)
       exitCode <- process.exitCode
     } yield exitCode
 

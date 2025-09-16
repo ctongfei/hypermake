@@ -3,6 +3,8 @@ package hypermake.execution
 import fansi._
 import upickle.default._
 
+import hypermake.core._
+
 // TODO: split into 2 types; one for display before running; the other for display after querying
 sealed abstract class Status(val text: String, val symbol: Char, val color: Attr) {
   override def toString = text
@@ -47,8 +49,10 @@ object Status {
     case class NonZeroExitCode(exitCode: Int)
         extends Failure(s"exit code $exitCode ≠ 0")
 
-    case class MissingOutputs(missingOutputs: Set[String])
-        extends Failure(s"output${if (missingOutputs.size == 1) "" else "s"} {${missingOutputs.mkString(", ")}} missing")
+    case class MissingOutputs(missingOutputs: Map[String, Value.Output])
+        extends Failure(
+          s"output${if (missingOutputs.size == 1) "" else "s"} {${missingOutputs.map { case (k, v) => s"$k = \"${v.value}\"@${v.fileSys.name}"}.mkString(", ")}} missing"
+        )
 
     case object FileSysError
         extends Failure("error encountered when checking status of outputs")

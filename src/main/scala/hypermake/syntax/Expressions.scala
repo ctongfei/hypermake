@@ -110,6 +110,7 @@ object Expressions {
     parameter ~ "=" ~ "$"
   } map RefAssignment
 
+  // TODO: only appears at output positions
   def sameNameAssignment[$: P] = P {
     parameter
   } map { param => ExplicitAssignment(param, StringLiteral(param.name.name)) }

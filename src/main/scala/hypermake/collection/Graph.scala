@@ -38,7 +38,7 @@ trait Graph[A] {
       def hasNext = n < nodes.size
 
       def next() = {
-        if (zeroInDegrees.isEmpty) throw CyclicWorkflowException()
+        if (zeroInDegrees.isEmpty) throw CyclicPipelineException()
         val i = zeroInDegrees.dequeue()
         for (j <- outgoingNodes(i).toSeq.sorted) {
           inDegrees(j) -= 1
@@ -148,7 +148,7 @@ trait Graph[A] {
       }
     }
     ZIO
-      .foreach(a zip rows)({ case (row, x) =>
+      .foreachPar(a zip rows)({ case (row, x) =>
         display(x).map(s => prefixSpaces + s"${String.valueOf(row)}$s")
       })
       .map(_.mkString("\n"))

@@ -15,7 +15,7 @@ sealed trait Value {
   /** The string value. If it is a path, it is relative to the root of the file system. */
   def value: String
 
-  def absValue(implicit runtime: RuntimeConfig): String
+  def absValue: String
 
   def isPath: Boolean = optFs.isDefined
 
@@ -36,7 +36,7 @@ object Value {
   sealed trait FileSysAgnostic extends Value
 
   case class Pure(value: String) extends FileSysAgnostic {
-    def absValue(implicit runtime: RuntimeConfig) = value
+    def absValue = value
 
     def optFs = None
 
@@ -50,21 +50,22 @@ object Value {
   }
 
   case class Input(value: String, fileSys: FileSys) extends FileSysDependent {
-    def absValue(implicit runtime: RuntimeConfig) = value
+    def absValue = value
 
     def dependencies = Set()
   }
 
   case class Output(value: String, fileSys: FileSys, job: Job, service: Option[Service] = None) extends FileSysDependent {
-    def absValue(implicit runtime: RuntimeConfig) = s"${job.absolutePath}${fileSys.separator}$value"
+    def absValue =
+      s"${fileSys.root}${fileSys./}${job.path}${fileSys./}$value"
 
     def dependencies = Set(job)
   }
 
-  case class Multiple(cases: Tensor[Value], fileSys: FileSys)(implicit runtime: RuntimeConfig) extends FileSysDependent {
+  case class Multiple(cases: Tensor[Value], fileSys: FileSys) extends FileSysDependent {
     override def value = cases.map(_.value).allElements.mkString(" ")
 
-    def absValue(implicit runtime: RuntimeConfig) =
+    def absValue =
       cases.map(_.absValue).allElements.mkString(" ")
 
     override def dependencies = cases.map(_.dependencies).allElements.reduce(_ union _)

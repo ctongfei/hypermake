@@ -1,11 +1,12 @@
 # Creates a Conda environment with a list of packages.
-def create(packages, extra_args="", extra_pip_packages="") -> out:
+def create(packages="", extra_args="", extra_pip_packages="") -> out:
   mkdir -p $out
   conda create -y -p $out $extra_args $packages
   if [ ! -z "$extra_pip_packages" ]
   then
     $out/bin/pip install $extra_pip_packages
   fi
+
 
 ## Builds a Conda environment from a YAML file or requirements.txt.
 def env_create(file, extra_pip_packages="") -> out:
@@ -18,19 +19,6 @@ def env_create(file, extra_pip_packages="") -> out:
     $out/bin/pip install $extra_pip_packages
   fi
 
-## Builds a Conda environment from a Python package that contains an environment.yml file at its root.
-def env_create_from_python_package_yaml(path) -> out:
-  mkdir -p $out
-  conda env create \
-    --file $path/environment.yml \
-    --prefix $out
-
-## Builds a Conda environment from a Python package that contains an requirements.txt file at its root.
-def env_create_from_python_package_requirements_txt(path) -> out:
-  mkdir -p $out
-  conda create -y \
-    --file $path/requirements.txt \
-    --prefix $out
 
 ## Executes the given script in a specific Conda environment.
 class activate(environment):
@@ -39,7 +27,13 @@ class activate(environment):
     eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
     if [ -d $environment ]
     then  # local environment
-      conda activate ./$environment
+      # Test if $environment starts with `/`
+      if [[ $environment == /* ]]
+      then
+        conda activate $environment
+      else
+        conda activate ./$environment
+      fi
     else  # global environment
       conda activate $environment
     fi

@@ -41,6 +41,7 @@ class Obj(private[hypermake] var prefix: Path) {
       case value: PointedTaskTensor =>
         if (target.taskTable.contains(name)) throw DuplicateDefinitionException("Task", name)
         else target.taskTable += name -> value
+        if (value.isPackage) target.packageTable += name -> value
       case value: Func =>
         if (target.funcTable.contains(name)) throw DuplicateDefinitionException("Function", name)
         else target.funcTable += name -> value

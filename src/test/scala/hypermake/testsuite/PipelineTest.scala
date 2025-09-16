@@ -8,9 +8,17 @@ import hypermake.Main
 class PipelineTest extends AnyFunSuite {
 
   def run(filename: String, target: String): Unit = {
-    zio.Runtime.default.unsafeRun(
-      Main.run(List(s"src/test/resources/pipeline-suite/$filename", "run", target, "-y"))
+    val args = List(
+      "-F",
+      s"src/test/resources/pipeline-suite/$filename",
+      "-I",
+      "src/main/hypermake",
+      "run",
+      target,
+      "-y"
     )
+    println("Running: hypermake " + args.mkString(" "))
+    zio.Runtime.default.unsafeRun(Main.run(args))
   }
 
   test("interpreter") {

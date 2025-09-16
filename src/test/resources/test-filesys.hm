@@ -14,10 +14,7 @@ object my_asb = az.storage_blob(
   extra_args="--account-name tongfeipersonal"
 )
 
-object my_gcs = gcloud.storage(
-  bucket="hypermake",
-  root="gcloud-test"
-)
+object my_gcs = gcloud.storage(root="gs://hypermake/gcloud-test")
 
 #object my_sftp = ssh.server(
 #  host="azureuser@20.120.216.182",
