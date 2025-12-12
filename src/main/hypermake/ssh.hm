@@ -37,7 +37,7 @@ class server(host, root):
 
 
 ## Runs a job on a remote server by keeping a tmux session.
-class remote_tmux(host, extra_ssh_args="", interpreter="bash"):
+class remote_tmux(host, extra_ssh_args=""):
   def run(_internal_script_remote):
     timestamp=$(date +%s)
     session_name="$HYPERMAKE_JOB_ID/$timestamp"
@@ -49,7 +49,7 @@ class remote_tmux(host, extra_ssh_args="", interpreter="bash"):
       scp $wrapped_script $host:$job_dir/
     done
 
-    remote_command="cd $job_dir && $HYPERMAKE_JOB_ENV_VARS $interpreter script > stdout 2> stderr && echo \$? > exitcode"
+    remote_command="cd $job_dir && $HYPERMAKE_JOB_ENV_VARS source script > stdout 2> stderr && echo \$? > exitcode"
     ssh $extra_ssh_args $host "tmux new-session -d -s $session_name \"$remote_command\""
 
     return_code=$?

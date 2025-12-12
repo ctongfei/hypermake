@@ -100,7 +100,10 @@ object Main extends App {
                   _ <- putStrLn(
                     ctx.allCases.assignments
                       .map { case (name, values) =>
-                        s"  • ${K(name.name)}: { ${V(values.default)} ${values.diff(Set(values.default)).map(Vx).mkString(" ")} }"
+                        val valuesStr = if (values.size == 1)
+                          V(values.default)
+                        else V(values.default) + " " + values.diff(Set(values.default)).map(Vx).mkString(" ")
+                        s"  • ${K(name.name)}: { $valuesStr }"
                       }
                       .mkString("\n")
                   )

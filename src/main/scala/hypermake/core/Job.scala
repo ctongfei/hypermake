@@ -55,19 +55,21 @@ abstract class Job(implicit ctx: Context) {
   }
 
   def rawScript: Script
-
+ 
   /** HyperMake environment variables provided to each job. */
   lazy val jobEnvVars = Map(
     "HYPERMAKE_JOB_ID" -> id,
-    "HYPERMAKE_JOB_DISPLAY_ID" -> {
-      val caseString = ctx.caseString(`case`)
-      if (caseString.isEmpty) name else s"$name[$caseString]"
-    },
+    "HYPERMAKE_JOB_DISPLAY_ID" -> displayId,
     "HYPERMAKE_JOB_NAME" -> name,
+    "HYPERMAKE_JOB_UUID" -> uuid,
     "HYPERMAKE_JOB_CASE" -> caseString,
     "HYPERMAKE_JOB_CASE_JSON" -> caseInJson,
     "HYPERMAKE_JOB_WD" -> path,
-    "HYPERMAKE_JOB_ENV_VARS" -> script.args.toStrMap.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" "),
+    "HYPERMAKE_JOB_ENV_VARS" -> {
+      val scriptArgs = script.args.toStrMap
+      val allArgs = decorators.map(_.script.args).foldLeft(scriptArgs)(_ ++ _.toStrMap)
+      allArgs.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")
+    },
     "HYPERMAKE_JOB_WRAPPED_SCRIPTS" -> decorators.indices.map(i => s"script.$i").mkString(" ")
   )
 
@@ -86,6 +88,17 @@ abstract class Job(implicit ctx: Context) {
     val argsStr = percentEncodedCaseStringUrl
     if (argsStr.isEmpty) taskStr else s"$taskStr?$argsStr"
   }
+
+  lazy val displayId = {
+    val caseString = ctx.caseString(`case`)
+    if (caseString.isEmpty) name else s"$name[$caseString]"
+  }
+
+  /**
+    * A unique identifier for this job provided as an environment variable to the job script.
+    * This is provided for users -- HyperMake itself does not use this.
+    */
+  lazy val uuid = java.util.UUID.randomUUID().toString
 
   lazy val url = s"hypermake:$id"
 
