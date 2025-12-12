@@ -4,7 +4,7 @@ import hypermake.syntax.ast._
 import hypermake.util.Escaper
 
 /**
- * The lexical part of the grammar of Hypermake.
+ * The lexical part of the grammar of HyperMake.
  * The following non-terminal definitions are sensitive to whitespace.
  */
 object Lexical {

@@ -192,7 +192,8 @@ object ast {
     def children = Iterable(param)
   }
 
-  case class Assignments(assignments: Seq[Assignment]) extends MapWrapper[Identifier, (FileSysModifier, Expr)] with Node {
+  case class Assignments(assignments: Seq[Assignment]) extends MapWrapper[Identifier, (FileSysModifier, Expr)]
+      with Node {
     def str = assignments.mkString(", ")
 
     def children = assignments
@@ -221,10 +222,16 @@ object ast {
     def children = Iterable(cls) ++ args
   }
 
-  case class DecoratorCalls(calls: Seq[Decoration]) extends Node {
-    def str = calls.reverse.mkString("")
+  case class DecoratorCalls(calls: Seq[Decoration], runner: Option[RunnerDecoration]) extends Node {
+    def str = runner.fold("")(_.str) + calls.reverse.mkString("")
 
-    def children = calls
+    def children = calls ++ runner.toSeq
+  }
+
+  case class RunnerDecoration(cls: IdentifierPath, args: Option[Assignments]) extends Node {
+    def str = args.fold(s"@@$cls\n") { a => s"@$cls($a)\n" }
+
+    def children = Iterable(cls) ++ args
   }
 
   sealed trait TaskImpl extends Node
@@ -269,11 +276,13 @@ object ast {
       decorators: DecoratorCalls,
       ephemeral: Boolean,
       name: Identifier,
+      host: FileSysModifier,
       inputs: Assignments,
       outputs: Assignments,
       impl: TaskImpl
   ) extends Def {
-    def str = s"${decorators}${if (ephemeral) "ephemeral " else ""}task $name($inputs) -> ($outputs)$impl"
+    def str = s"${decorators}${if (ephemeral) "ephemeral "
+      else ""}task $name$host($inputs) -> ($outputs)$impl"
 
     def children = decorators.calls ++ Iterable(name, inputs, outputs, impl)
   }

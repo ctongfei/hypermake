@@ -1,0 +1,19 @@
+class session:
+
+    def submit(script_file, wd):
+        session_id="$HYPERMAKE_JOB_ID"
+        tmux new-session -d -s $session_id
+        tmux set-option -t $session_id remain-on-exit on
+        tmux respawn-window -t $session_id -k "bash -c 'cd $wd && source $script_file > stdout 2> stderr'"
+
+    def poll(session_id):
+        is_dead=$(tmux list-panes -t $session_id -F '#{pane_dead}')
+        if [ "$is_dead" = "1" ]; then
+            exit_code=$(tmux list-panes -t $session_id -F '#{pane_dead_status}')
+            echo $exit_code
+        else
+            echo ""
+        fi
+
+    def kill(session_id):
+        tmux kill-session -t $session_id

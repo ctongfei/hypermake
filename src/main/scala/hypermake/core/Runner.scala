@@ -20,14 +20,13 @@ trait AsyncRunner {
   def refreshDuration: Duration
 
   def submit(scriptFile: String, wd: String): HIO[String] // returns the pid
-  def alive(pid: String): HIO[Boolean]
+  def poll(pid: String): HIO[Option[ExitCode]]
   def kill(pid: String): HIO[Unit]
 
   def execute(scriptFile: String, wd: String)(implicit ctx: Context, std: StdSinks): HIO[ExitCode] = {
     for {
       pid <- submit(scriptFile, wd)
-      _ <- alive(pid).delay(refreshDuration).repeatUntilEquals(false)
-      exitCode <- local.read(s"$wd${local./}exitcode").mapEffect(_.toInt)
-    } yield ExitCode(exitCode)
+      exitCode <- poll(pid).delay(refreshDuration).repeatUntil(_.isDefined)
+    } yield exitCode.get
   }
 }

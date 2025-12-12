@@ -138,6 +138,12 @@ object Expressions {
   def decoratorCalls[$: P] =
     decoratorCall.rep map (cs => DecoratorCalls(cs.reverse)) // reverse so that the first decorator is the outermost
 
+  def runnerDecoratorCall[$: P] = P {
+    "@@" ~ identifierPath ~ assignments.?
+  } map { case (cls, args) =>
+    RunnerDecoration(cls, args)
+  }
+
   def funcCallImpl[$: P] = P {
     "=" ~ call
   } map FuncCallImpl
