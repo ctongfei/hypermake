@@ -4,7 +4,7 @@ import java.nio.file.{Files => JFiles, Paths}
 import scala.collection._
 
 import better.files._
-import zio.duration._
+import zio._
 import zio.process._
 import zio.stream.ZSink
 import zio.{Task => _, _}
@@ -92,7 +92,9 @@ trait FileSys {
     else FileSys.copy(src, srcFs, dst, this)
   }
 
-  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit std: StdSinks): HIO[ExitCode]
+  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
+      std: StdSinks
+  ): HIO[ExitCode]
 
   def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
 
@@ -183,35 +185,36 @@ object FileSys {
       val relRoot = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
       resolvePath(relRoot, ctx.runtime.workDir)
     }
-    lazy val maxFileNameLength = ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
+    lazy val maxFileNameLength =
+      ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
     val refreshInterval = 100.milliseconds
     val supportsSymLinks = true
 
-    def read(f: String)(implicit std: StdSinks) = IO {
+    def read(f: String)(implicit std: StdSinks) = ZIO.attempt {
       File(resolvePath(f)).contentAsString
     }
 
-    def write(f: String, content: String)(implicit std: StdSinks) = IO {
+    def write(f: String, content: String)(implicit std: StdSinks) = ZIO.attempt {
       File(resolvePath(f)).writeText(content)
     }
 
-    def mkdir(f: String)(implicit std: StdSinks) = IO {
+    def mkdir(f: String)(implicit std: StdSinks) = ZIO.attempt {
       File(resolvePath(f)).createDirectoryIfNotExists(createParents = true)
     }
 
-    def exists(f: String)(implicit std: StdSinks) = IO {
+    def exists(f: String)(implicit std: StdSinks) = ZIO.attempt {
       File(resolvePath(f)).exists
     }
 
-    def touch(f: String)(implicit std: StdSinks) = IO {
+    def touch(f: String)(implicit std: StdSinks) = ZIO.attempt {
       File(resolvePath(f)).touch()
     }
 
-    def remove(f: String)(implicit std: StdSinks) = IO {
+    def remove(f: String)(implicit std: StdSinks) = ZIO.attempt {
       File(resolvePath(f)).delete(swallowIOExceptions = true)
     }
 
-    def link(src: String, dst: String)(implicit std: StdSinks) = IO {
+    def link(src: String, dst: String)(implicit std: StdSinks) = ZIO.attempt {
       val dstPath = Paths.get(resolvePath(dst))
       val relativePath = dstPath.getParent.relativize(Paths.get(resolvePath(src)))
       JFiles.deleteIfExists(dstPath)
@@ -232,8 +235,7 @@ object FileSys {
     ) = {
       val interpreter :: interpreterArgs = command.split(' ').toList
       val resolvedWd = resolvePath(wd)
-      val pb = zio.process
-        .Command(interpreter, (interpreterArgs ++ args): _*)
+      val pb = zio.process.Command(interpreter, (interpreterArgs ++ args): _*)
         .workingDirectory(File(resolvedWd).toJava.getAbsoluteFile)
         .env(envArgs.toMap)
         .stderr(ProcessOutput.Pipe)
@@ -294,7 +296,7 @@ object FileSys {
       val tempScriptFile = runtime.newTempFile()
       for {
         _ <- logCall(s"$name.write", f)
-        _ <- IO {
+        _ <- ZIO.attempt {
           File(tempScriptFile).writeText(content)
         }
         u <- upload(tempScriptFile, f)
@@ -380,20 +382,21 @@ object FileSys {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) = for {
-      process <- getScriptByName(s"${name}.execute")
-        .withArgs(
-          "command" ->
-            s"""cd ${resolvePath(wd)};
-               | ${envVars.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")}
-               | $command ${args.mkString(" ")} > stdout 2> stderr
-               |""".stripMargin.replace("\n", "")
-        )
-        .executeLocally(FileSys.local.resolvePath(wd))
-      _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
-      _ <- logExitCode(command, args.mkString(" "))(process)
-      exitCode <- process.exitCode
-    } yield exitCode
+    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) =
+      for {
+        process <- getScriptByName(s"${name}.execute")
+          .withArgs(
+            "command" ->
+              s"""cd ${resolvePath(wd)};
+                 | ${envVars.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")}
+                 | $command ${args.mkString(" ")} > stdout 2> stderr
+                 |""".stripMargin.replace("\n", "")
+          )
+          .executeLocally(FileSys.local.resolvePath(wd))
+        _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
+        _ <- logExitCode(command, args.mkString(" "))(process)
+        exitCode <- process.exitCode
+      } yield exitCode
 
     def asService: Option[Service] = for {
       start <- getTaskByNameOpt(s"${name}.start")

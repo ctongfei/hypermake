@@ -1,12 +1,13 @@
 package hypermake.core
 
 import zio._
-import zio.duration._
+
 import zio.process._
 
 import hypermake.core.FileSys.local
 import hypermake.execution._
 import hypermake.util._
+import zio._
 
 /** Encapsulates how a script file is executed. */
 trait Runner {

@@ -34,7 +34,7 @@ case class Script(
     // TODO: proper handling of bash quotes
     val command = s"${runtime.shell} $tempScriptFile".split(' ').toIndexedSeq
     for {
-      _ <- IO { File(tempScriptFile).write(script) }
+      _ <- ZIO.attempt { File(tempScriptFile).write(script) }
       process <- Command(command.head, command.tail: _*)
         .workingDirectory(new JFile(workDir))
         .env(runtime.envVars ++ args.toStrMap) // Hypermake args are injected as environment vars;

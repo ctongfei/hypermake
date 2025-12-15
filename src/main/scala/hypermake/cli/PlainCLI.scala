@@ -5,8 +5,9 @@ import java.nio.charset.StandardCharsets
 import java.nio.file._
 
 import better.files._
+import zio.Console.{print, printLine, readLine, _}
 import zio._
-import zio.console._
+import zio.managed._
 import zio.stream._
 
 import hypermake.core.Job
@@ -61,24 +62,24 @@ class PlainCLI(style: Style, runtime: RuntimeConfig) extends CLI.Service {
       ZSink.fromOutputStream(new PrefixedOutputStream(StdStreams.err, style.render(job)))
     if (!File(job.absolutePath).exists)
       File(job.absolutePath).createDirectories() // mkdir -p ${job.absolutePath}
-    val ofs = ZSink.fromFile(Paths.get(job.absolutePath, "stdout"))
-    val efs = ZSink.fromFile(Paths.get(job.absolutePath, "stderr"))
+    val ofs = ZSink.fromPath(Paths.get(job.absolutePath, "stdout"))
+    val efs = ZSink.fromPath(Paths.get(job.absolutePath, "stderr"))
     if (runtime.silent)
       StdSinks(ofs, efs)
     else StdSinks((os zipWithPar ofs)((a, _) => a), (es zipWithPar efs)((a, _) => a))
   }
 
-  def println(s: String) = putStrLn(s).unless(runtime.silent)
+  def println(s: String) = printLine(s).unless(runtime.silent).unit
 
   def show(job: Job, status: Status) = ZIO.succeed(style.render(job, status))
 
   def showInGraph(job: Job, status: Status) = ZIO.succeed(style.renderInGraph(job, status))
 
-  def update(job: Job, status: Status) = putStrLn(style.render(job, status))
+  def update(job: Job, status: Status) = printLine(style.render(job, status))
 
   def ask: HIO[Boolean] = for {
-    _ <- putStr("Continue? [y/n]: ")
-    response <- getStrLn
+    _ <- print("Continue? [y/n]: ")
+    response <- readLine
   } yield response.trim.toLowerCase == "y"
 
   def teardown = ZIO.unit
@@ -89,8 +90,8 @@ object PlainCLI {
 
   def create(
       style: Style = Style.Powerline
-  )(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = IO {
-    Managed.succeed(new PlainCLI(style, runtime))
+  )(implicit runtime: RuntimeConfig): HIO[Managed[Throwable, PlainCLI]] = ZIO.attempt {
+    ZManaged.succeed(new PlainCLI(style, runtime))
   }
 
 }

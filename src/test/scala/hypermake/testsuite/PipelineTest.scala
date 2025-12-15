@@ -2,6 +2,7 @@ package hypermake.testsuite
 
 import better.files.File
 import org.scalatest.funsuite.AnyFunSuite
+import zio.{Chunk, Runtime, Unsafe, ZIOAppArgs, ZLayer}
 
 import hypermake.Main
 
@@ -18,7 +19,9 @@ class PipelineTest extends AnyFunSuite {
       "-y"
     )
     println("Running: hypermake " + args.mkString(" "))
-    zio.Runtime.default.unsafeRun(Main.run(args))
+    Unsafe.unsafe { implicit unsafe =>
+      Runtime.default.unsafe.run(Main.run.provide(ZLayer.succeed(ZIOAppArgs(Chunk.fromIterable(args)))))
+    }
   }
 
   test("interpreter") {

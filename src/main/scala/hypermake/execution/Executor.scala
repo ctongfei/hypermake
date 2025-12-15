@@ -34,7 +34,7 @@ object Executor {
   )(action: Job => HIO[Boolean])(implicit runtime: RuntimeConfig): HIO[Unit] = {
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
-      u <- ZIO.foreach_(jobs) { j => semaphore.withPermit(action(j)).orElseSucceed(()) }
+      u <- ZIO.foreachDiscard(jobs) { j => semaphore.withPermit(action(j)).orElseSucceed(()) }
     } yield u
   }
 
@@ -44,13 +44,14 @@ object Executor {
     val emptyMap = immutable.Map[Job, Promise[Throwable, Unit]]()
     for {
       semaphore <- Semaphore.make(runtime.numParallelJobs)
-      promises: Map[Job, Promise[Throwable, Unit]] <- ZIO.foldLeft(sortedJobs)(emptyMap) { (m, j) =>
+      promises <- ZIO.foldLeft(sortedJobs)(emptyMap) { (m, j) =>
         Promise.make[Throwable, Unit] map { p => m + (j -> p) }
       }
       effects = sortedJobs map { j =>
         for {
-          _ <- ZIO.foreach_(jobs.incomingNodes(j))(i => promises(i).await)
-          (hasRun, status) <- semaphore.withPermit(j.executeIfNotDone(cli))
+          _ <- ZIO.foreachDiscard(jobs.incomingNodes(j))(i => promises(i).await)
+          t <- semaphore.withPermit(j.executeIfNotDone(cli))
+          (hasRun, status) = t
           u <-
             if (!hasRun)
               promises(j).succeed(()) // do not print anything to the CLI

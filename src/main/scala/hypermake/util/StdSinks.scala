@@ -10,4 +10,9 @@ object StdSinks {
     ZSink.fromOutputStream(System.out),
     ZSink.fromOutputStream(System.err)
   )
+
+  val devNull: StdSinks = StdSinks(
+    ZSink.drain.map(_ => 0),
+    ZSink.drain.map(_ => 0)
+  )
 }

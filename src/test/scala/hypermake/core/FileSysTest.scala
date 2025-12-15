@@ -1,5 +1,6 @@
 package hypermake.core
 
+import java.lang.{System => JSystem}
 import java.nio.file.{Path => JPath, Paths => JPaths}
 
 import better.files.File
@@ -10,12 +11,11 @@ import org.scalatestplus.scalacheck.Checkers
 import org.typelevel.discipline.Laws
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 import zio._
-import zio.console.putStrLn
 import zio.stream.ZSink
 
 import hypermake.execution.RuntimeConfig
 import hypermake.semantics.SemanticParser
-import hypermake.util.StdSinks
+import hypermake.util.{HIO, StdSinks}
 
 object FileSysGen {
 
@@ -39,12 +39,17 @@ object FileSysGen {
 
 }
 
-class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[JPath], arbString: Arbitrary[String]) extends Laws {
+class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[JPath], arbString: Arbitrary[String])
+    extends Laws {
 
   implicit val testSinks: StdSinks = StdSinks(
-    ZSink.fromOutputStream(System.out),
-    ZSink.fromOutputStream(System.err)
+    ZSink.fromOutputStream(JSystem.out),
+    ZSink.fromOutputStream(JSystem.err)
   )
+
+  def unsafeRun[A](io: HIO[A]): A = Unsafe.unsafe { implicit unsafe =>
+    Runtime.default.unsafe.run(io).getOrThrow()
+  }
 
   def fileSys = new DefaultRuleSet(
     "fileSys",
@@ -55,14 +60,14 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         _ <- remote.write(path.toString, content)
         c <- remote.read(path.toString)
       } yield c == content
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     },
     "mkdir" -> Prop.forAll { path: JPath =>
       val eff = for {
         _ <- remote.mkdir(path.toString)
         e <- remote.exists(path.toString)
       } yield e
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     },
     "removeEmptyDir" -> Prop.forAll { path: JPath =>
       val eff = for {
@@ -71,7 +76,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         _ <- remote.remove(path.toString)
         b <- remote.exists(path.toString)
       } yield a && !b
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     },
     "removeNonEmptyDir" -> Prop.forAll { (path: JPath, a: String, b: String) =>
       val eff = for {
@@ -82,7 +87,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         _ <- remote.remove(path.toString)
         b <- remote.exists(path.toString)
       } yield a && !b
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     },
     "deleteFile" -> Prop.forAll { path: JPath =>
       val eff = for {
@@ -92,7 +97,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         _ <- remote.remove(path.toString)
         b <- remote.exists(path.toString)
       } yield a && !b
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     }
   )
 
@@ -107,7 +112,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         _ <- remote.link(src.toString, dst.toString)
         c <- remote.read(dst.toString)
       } yield c == content
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     },
     "linkDir" -> Prop.forAll { (src: JPath, dst: JPath, a: String, b: String) =>
       val eff = for {
@@ -119,7 +124,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         c <- remote.read(s"${dst.toString}${remote./}a")
         d <- remote.read(s"${dst.toString}${remote./}b")
       } yield (a == c) && (b == d)
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     }
   )
 
@@ -137,7 +142,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         _ <- remote.download(q.toString, r.toString)
         b <- local.read(r.toString)
       } yield (a == content) && (b == content)
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     },
     "uploadThenDownloadDir" -> Prop.forAll { (p: JPath, q: JPath, r: JPath, a: String, b: String) =>
       val eff = for {
@@ -151,7 +156,7 @@ class FileSysLaws(local: FileSys, remote: FileSys)(implicit arbPath: Arbitrary[J
         c <- local.read(s"${r.toString}${local./}a")
         d <- local.read(s"${r.toString}${local./}b")
       } yield (a == c) && (b == d)
-      Runtime.default.unsafeRun(eff)
+      unsafeRun(eff)
     }
   )
 }
@@ -160,7 +165,8 @@ class FileSysTest extends AnyFunSuite with FunSuiteDiscipline with Checkers with
 
   import FileSysGen._
 
-  implicit val config: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 1, maxDiscardedFactor = 0.1)
+  implicit val config: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 1, maxDiscardedFactor = 0.1)
   implicit val runtime: RuntimeConfig = RuntimeConfig.create(
     shell = "bash -eux",
     verbose = true,

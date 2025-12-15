@@ -1,7 +1,7 @@
 package hypermake
 
-import zio._
-import zio.console._
+import zio.Console.{printLine, _}
+import zio.{Executor => _, _}
 
 import hypermake.cli._
 import hypermake.collection.Graph
@@ -31,15 +31,15 @@ class Run(targetJobs: Seq[Job])(implicit ctx: Context, cli: CLI.Service) extends
     val ephemeralJobs = sortedJobs.filter(_.ephemeral)
 
     for {
-      _ <- putStrLn(headerMessage)
-      _ <- putStrLn(
+      _ <- printLine(headerMessage)
+      _ <- printLine(
         s"The following ${graph.numNodes} jobs are implied in the given target:"
       )
       s <- graph.toStringIfAcyclic(_.statusString(cli))
-      _ <- putStrLn(s)
+      _ <- printLine(s)
       yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
       u <- (Executor.recordJobsRun(sortedJobs, cli) *> Executor.runDAG(graph, cli)).when(yes)
-      _ <- ZIO.foreach_(ephemeralJobs)(_.removeOutputs)
+      _ <- ZIO.foreachDiscard(ephemeralJobs)(_.removeOutputs)
     } yield u
   }
 }
@@ -48,12 +48,12 @@ class DryRun(targetJobs: Seq[Job])(implicit ctx: Context, cli: CLI.Service) exte
   def run = {
     val graph = jobGraph
     for {
-      _ <- putStrLn(headerMessage)
-      _ <- putStrLn(
+      _ <- printLine(headerMessage)
+      _ <- printLine(
         s"The following ${jobGraph.numNodes} jobs are implied in the given target:"
       )
       s <- jobGraph.toStringIfAcyclic(_.statusString(cli))
-      u <- putStrLn(s)
+      u <- printLine(s)
     } yield u
   }
 }

@@ -1,6 +1,7 @@
 package hypermake.execution
 
 import java.io.{File => JFile, _}
+import java.lang.{Runtime => JRuntime, System => JSystem, _}
 import java.nio.file.{Files => JFiles, _}
 import scala.jdk.CollectionConverters._
 
@@ -46,7 +47,7 @@ class RuntimeConfig private (
 
   lazy val tempDir = tempPath.toString
 
-  lazy val isWindows = System.getProperty("os.name").toLowerCase contains "win"
+  lazy val isWindows = JSystem.getProperty("os.name").toLowerCase contains "win"
 
   lazy val nullFile = if (isWindows) "NUL" else "/dev/null"
 
@@ -109,11 +110,13 @@ object RuntimeConfig {
       yes: Boolean = false
   ): RuntimeConfig = {
     val allGitRepos = ZIO.foreach(includedGitRepos)(cloneRepoToTempDir)
-    val allClonedPath = Runtime.default.unsafeRun(allGitRepos)
+    val allClonedPath = Unsafe.unsafe { implicit unsafe =>
+      Runtime.default.unsafe.run(allGitRepos)
+    }.getOrElse(_ => Seq())
     new RuntimeConfig(
       pipelineFile = pipelineFile,
-      workDir = System.getProperty("user.dir"),
-      envVars = System.getenv().asScala.toMap,
+      workDir = JSystem.getProperty("user.dir"),
+      envVars = JSystem.getenv().asScala.toMap,
       definedVars = definedVars,
       shell = shell,
       includePaths = includePaths ++ allClonedPath,
@@ -126,7 +129,7 @@ object RuntimeConfig {
   }
 
   def createFromCliOptions(options: Seq[CmdLineAST.Opt], runOptions: Seq[CmdLineAST.RunOpt]) = {
-    val workDir = System.getProperty("user.dir")
+    val workDir = JSystem.getProperty("user.dir")
     val pipelineFile = options.collectFirst { case Opt.File(f) => f }.getOrElse {
       // If no pipeline file is specified, look for a unique *.hm file in the current directory.
       val files = File(workDir).list.filter(_.extension.contains(".hm")).toArray

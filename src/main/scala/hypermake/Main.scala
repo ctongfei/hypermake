@@ -2,8 +2,8 @@ package hypermake
 
 import better.files.File
 import upickle.default._
-import zio._
-import zio.console._
+import zio.Console.{printLine, _}
+import zio.{Executor => _, ExitCode, ZIOAppDefault, _}
 
 import hypermake.cli.CmdLineAST._
 import hypermake.cli._
@@ -16,7 +16,7 @@ import hypermake.util.StdSinks
 import hypermake.util.printing._
 
 /** Entrypoint of Hypermake. */
-object Main extends App {
+object Main extends ZIOAppDefault {
 
   val version = "0.1.0"
 
@@ -57,13 +57,11 @@ object Main extends App {
     // TODO: timestamp (-t) and checksum (-c)
   }
 
-  def run(args: List[String]) = {
-
-    val cmd = CmdLineParser.cmdLineParse(args.mkString(" "))
-
-    cmd match {
-      case Cmd.Help    => putStrLn(helpMessage).orDie as ExitCode(0)
-      case Cmd.Version => putStrLn(s"HyperMake $version").orDie as ExitCode(0)
+  def run = for {
+    args <- getArgs
+    _ <- CmdLineParser.cmdLineParse(args.mkString(" ")) match {
+      case Cmd.Help    => printLine(helpMessage).orDie as ExitCode(0)
+      case Cmd.Version => printLine(s"HyperMake $version").orDie as ExitCode(0)
 
       case Cmd.RunTarget(subtask, options, runOptions, targets) =>
         implicit val runtime: RuntimeConfig =
@@ -94,10 +92,10 @@ object Main extends App {
             val effect = subtask match {
               case SubcommandType.List =>
                 for {
-                  _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(B("Pipeline file: ") + O(runtime.pipelineFile))
-                  _ <- putStrLn(B("\nVariables:"))
-                  _ <- putStrLn(
+                  _ <- printLine(headerMessage)
+                  _ <- printLine(B("Pipeline file: ") + O(runtime.pipelineFile))
+                  _ <- printLine(B("\nVariables:"))
+                  _ <- printLine(
                     ctx.allCases.assignments
                       .map { case (name, values) =>
                         val valuesStr = if (values.size == 1)
@@ -107,7 +105,7 @@ object Main extends App {
                       }
                       .mkString("\n")
                   )
-                  _ <- putStrLn(B("\nTasks:"))
+                  _ <- printLine(B("\nTasks:"))
                   s <- {
                     val g = Graph.explore[PointedTaskTensor](
                       ctx.root.tasks.values,
@@ -115,17 +113,17 @@ object Main extends App {
                     )
                     g.toStringIfAcyclic(t => ZIO.succeed(showTaskCube(t)), indent = 2)
                   }
-                  u <- putStrLn(s)
+                  u <- printLine(s)
                 } yield u
 
               case SubcommandType.GetPath =>
                 for {
-                  u <- ZIO.foreach_(targetJobs.map(_.absolutePath))(putStrLn(_))
+                  u <- ZIO.foreachDiscard(targetJobs.map(_.absolutePath))(printLine(_))
                 } yield u
               case SubcommandType.Describe =>
                 for {
                   jobDescriptions <- ZIO.foreach(targetJobs)(_.describe)
-                  u <- putStrLn(write(jobDescriptions, indent = 2))
+                  u <- printLine(write(jobDescriptions, indent = 2))
                 } yield u
               case SubcommandType.Run => new Run(targetJobs).run
 
@@ -140,11 +138,11 @@ object Main extends App {
                 val jobsToBeInvalidated = Graph.explore[Job](targetJobs, jobGraph.outgoingNodes)
                 val sortedJobsToBeInvalidated = jobsToBeInvalidated.topologicalSort
                 for {
-                  _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(
+                  _ <- printLine(headerMessage)
+                  _ <- printLine(
                     s"The following ${jobsToBeInvalidated.numNodes} jobs will be invalidated:"
                   )
-                  _ <- ZIO.foreach_(sortedJobsToBeInvalidated)(_.printStatus(cli))
+                  _ <- ZIO.foreachDiscard(sortedJobsToBeInvalidated)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <-
                     Executor.run(sortedJobsToBeInvalidated)(_.invalidate as true) when yes
@@ -152,30 +150,30 @@ object Main extends App {
 
               case SubcommandType.Unlock =>
                 for {
-                  _ <- putStrLn(headerMessage)
-                  _ <- putStrLn("The following jobs will be unlocked:")
-                  _ <- ZIO.foreach_(targetJobs)(_.printStatus(cli))
+                  _ <- printLine(headerMessage)
+                  _ <- printLine("The following jobs will be unlocked:")
+                  _ <- ZIO.foreachDiscard(targetJobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- Executor.run(targetJobs)(_.forceUnlock as true) when yes
                 } yield u
 
               case SubcommandType.Remove =>
                 for {
-                  _ <- putStrLn(headerMessage)
-                  _ <- putStrLn(s"The output of the following jobs will be removed:")
-                  _ <- ZIO.foreach_(targetJobs)(_.printStatus(cli))
+                  _ <- printLine(headerMessage)
+                  _ <- printLine(s"The output of the following jobs will be removed:")
+                  _ <- ZIO.foreachDiscard(targetJobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <-
                     Executor.run(targetJobs) { j =>
-                      putStrLn(s"Removing job at ${j.absolutePath}") *> j.removeOutputs as true
+                      printLine(s"Removing job at ${j.absolutePath}") *> j.removeOutputs as true
                     } when yes
                 } yield u
 
               case SubcommandType.Touch =>
                 for {
-                  _ <- putStrLn(headerMessage)
-                  _ <- putStrLn("The following jobs will be marked as done:")
-                  _ <- ZIO.foreach_(targetJobs)(_.printStatus(cli))
+                  _ <- printLine(headerMessage)
+                  _ <- printLine("The following jobs will be marked as done:")
+                  _ <- ZIO.foreachDiscard(targetJobs)(_.printStatus(cli))
                   yes <- if (runtime.yes) ZIO.succeed(true) else cli.ask
                   u <- Executor.run(targetJobs)(_.markAsDone(cli)) when yes
                 } yield u
@@ -188,9 +186,8 @@ object Main extends App {
             } yield u
           }
         } yield task
-
-        eff.exitCode
+        eff
     }
-  }
+  } yield ()
 
 }

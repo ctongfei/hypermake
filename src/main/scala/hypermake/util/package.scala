@@ -14,8 +14,8 @@ import hypermake.semantics.Definition
 
 package object util {
 
-  type HIO[+A] = ZIO[ZEnv, Throwable, A]
-  type HSink[A] = ZSink[ZEnv, Throwable, A, A, Long]
+  type HIO[+A] = ZIO[Any, Throwable, A]
+  type HSink[A] = ZSink[Any, Throwable, A, A, Long]
 
   private def mapViewAsMap[A, B](m: MapView[A, B]): IMap[A, B] = new DefaultMapBase[A, B] {
     override def get(key: A) = m.get(key)

@@ -55,7 +55,7 @@ abstract class Job(implicit ctx: Context) {
   }
 
   def rawScript: Script
- 
+
   /** HyperMake environment variables provided to each job. */
   lazy val jobEnvVars = Map(
     "HYPERMAKE_JOB_ID" -> id,
@@ -95,9 +95,9 @@ abstract class Job(implicit ctx: Context) {
   }
 
   /**
-    * A unique identifier for this job provided as an environment variable to the job script.
-    * This is provided for users -- HyperMake itself does not use this.
-    */
+   * A unique identifier for this job provided as an environment variable to the job script.
+   * This is provided for users -- HyperMake itself does not use this.
+   */
   lazy val uuid = java.util.UUID.randomUUID().toString
 
   lazy val url = s"hypermake:$id"
@@ -112,15 +112,15 @@ abstract class Job(implicit ctx: Context) {
     outputs.keySet.makeMap { x => s"$path${local./}${outputs(x).value}" }
 
   /** The exit code of this job. If the job is not done, returns a failed effect. */
-  def exitCode(implicit std: StdSinks): HIO[Int] = local.read(s"$path${local./}exitcode").mapEffect(_.toInt)
+  def exitCode(implicit std: StdSinks): HIO[Int] = local.read(s"$path${local./}exitcode").mapAttempt(_.toInt)
 
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
   def checkStatus(implicit std: StdSinks): HIO[Status] = {
     val check = for {
       exitCode <- local
         .read(s"$path${local./}exitcode")
-        .mapEffect(_.toInt)
-        .catchAll(_ => IO.succeed(-1))
+        .mapAttempt(_.toInt)
+        .catchAll(_ => ZIO.succeed(-1))
       outputStatus <- checkOutputs
     } yield if (exitCode == 0) outputStatus else Status.Failure.NonZeroExitCode(exitCode)
     for {
@@ -205,10 +205,8 @@ abstract class Job(implicit ctx: Context) {
     implicit val std: StdSinks = cli.sinks(this)
     for {
       status <- checkStatus
-      (hasRun, successful) <-
-        if (status.isSuccess) ZIO.succeed((false, Status.Success))
-        else execute(cli).map((true, _))
-    } yield (hasRun, successful)
+      t <- if (status.isSuccess) ZIO.succeed((false, Status.Success)) else execute(cli).map((true, _))
+    } yield t
   }
 
   def markAsDone(cli: CLI.Service): HIO[Boolean] = {
@@ -218,7 +216,7 @@ abstract class Job(implicit ctx: Context) {
       _ <- cli.update(this, Status.Waiting)
       _ <- local.lock(path)
       _ <- cli.update(this, Status.Running)
-      _ <- ZIO.foreach_(outputs) { case (_, o) =>
+      _ <- ZIO.foreachDiscard(outputs) { case (_, o) =>
         o.fileSys.touch(s"$path${o.fileSys./}${o.value}")
       } // pretends the outputs exist
       _ <- local.write(f"$path${local./}exitcode", "0")
