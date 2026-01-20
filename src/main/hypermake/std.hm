@@ -7,20 +7,27 @@ class run(interpreter):
   def run(_internal_interpreter_script):
     $interpreter $_internal_interpreter_script
 
-## Executes the script in the background.
-object async:
-  def submit(_interal_interpreter_script) -> pid:
-    . _interal_interpreter_script &
-    echo $! > $pid
 
-  def alive(pid):
-    ps -p $pid > /dev/null
-    # write exitcode of pid if terminated
-    if [ $? -ne 0 ]
+## Executes the script in background using nohup, allowing the process to persist
+## even if the parent shell exits. Useful for long-running jobs.
+object nohup:
+  def submit(_internal_script) -> pid:
+    nohup sh -c ". $_internal_script; echo \$? > \$\$.exitcode" > stdout 2> stderr & echo $! > pid
+
+  def poll(pid):
+    if kill -0 $pid 2>/dev/null
     then
-      wait $pid
-      echo $? > exitcode
+      # process still running, return empty string
+      echo ""
+    else
+      # process finished, return exit code
+      if [ -f $pid.exitcode ]
+      then
+        cat $pid.exitcode
+      else
+        echo 1
+      fi
     fi
 
-  def kill(pid):
-    kill -9 $pid
+  def cancel(pid):
+    kill -TERM $pid 2>/dev/null || true

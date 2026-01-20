@@ -25,12 +25,18 @@ abstract class Job(implicit ctx: Context) {
   import ctx._
   implicit val runtime: RuntimeConfig = ctx.runtime
 
+  /** Name of this job without parameters. */
   def name: String
 
+  /**
+   * Whether this job is ephemeral. If ephemeral, the job will not be recorded as done,
+   * instead it will be re-run every time.
+   */
   def ephemeral: Boolean
 
   def isPackage: Boolean
 
+  /** The parameters of this job. */
   def `case`: Case
 
   def inputs: Args[Value] // may contain both arguments and input files
@@ -45,9 +51,16 @@ abstract class Job(implicit ctx: Context) {
 
   def decorators: Seq[Decorator]
 
+  /**
+   * The host that this job should be executed on.
+   * This is also the file system that the stdout/stderr are written to.
+   */
+  def host: Host
+
+  /** Services that this job depends on. */
   lazy val services: Seq[Service] = {
     val servicesReferredByInputs = inputs.values.collect { case Value.Output(_, _, _, Some(service)) => service }
-    val fileSystems = (inputFs.values ++ outputs.values.map(_.fileSys) ++ Seq(local)).toSet
+    val fileSystems = (inputFs.values ++ outputs.values.map(_.fileSys) ++ Seq(host)).toSet
     val servicesFromFileSys = fileSystems
       .collect { case fs: FileSys.Custom if fs.name != "" => fs.asService }
       .collect { case Some(service) => service }
@@ -68,16 +81,16 @@ abstract class Job(implicit ctx: Context) {
     "HYPERMAKE_JOB_ENV_VARS" -> {
       val scriptArgs = script.args.toStrMap
       val allArgs = decorators.map(_.script.args).foldLeft(scriptArgs)(_ ++ _.toStrMap)
-      allArgs.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")
+      Shell.escapeKeyValuePairs(allArgs)
     },
     "HYPERMAKE_JOB_WRAPPED_SCRIPTS" -> decorators.indices.map(i => s"script.$i").mkString(" ")
   )
 
   /** Path relative to the output root of the job file system. */
   lazy val path =
-    s"${name.replace('.', local./)}${local./}$potentiallyHashedPercentEncodedCaseString"
+    s"${name.replace('.', host./)}${host./}$potentiallyHashedPercentEncodedCaseString"
 
-  lazy val absolutePath = local.resolvePath(path)
+  lazy val absolutePath = host.resolvePath(path)
 
   /**
    * The canonical string identifier for this task, in the percent-encoded URL format.
@@ -98,7 +111,7 @@ abstract class Job(implicit ctx: Context) {
    * A unique identifier for this job provided as an environment variable to the job script.
    * This is provided for users -- HyperMake itself does not use this.
    */
-  lazy val uuid = java.util.UUID.randomUUID().toString
+  val uuid = java.util.UUID.randomUUID().toString
 
   lazy val url = s"hypermake:$id"
 
@@ -109,29 +122,29 @@ abstract class Job(implicit ctx: Context) {
   lazy val script: Script = Script(rawScript.script, rawScript.args ++ inputs ++ outputs)
 
   lazy val outputAbsolutePaths =
-    outputs.keySet.makeMap { x => s"$path${local./}${outputs(x).value}" }
+    outputs.keySet.makeMap { x => s"$path${host./}${outputs(x).value}" }
 
   /** The exit code of this job. If the job is not done, returns a failed effect. */
-  def exitCode(implicit std: StdSinks): HIO[Int] = local.read(s"$path${local./}exitcode").mapAttempt(_.toInt)
+  def exitCode(implicit std: StdSinks): HIO[Int] = host.read(s"$path${host./}exitcode").mapAttempt(_.toInt)
 
   /** Checks if this job is complete, i.e. job itself properly terminated and all its outputs existed. */
   def checkStatus(implicit std: StdSinks): HIO[Status] = {
     val check = for {
-      exitCode <- local
-        .read(s"$path${local./}exitcode")
+      exitCode <- host
+        .read(s"$path${host./}exitcode")
         .mapAttempt(_.toInt)
         .catchAll(_ => ZIO.succeed(-1))
       outputStatus <- checkOutputs
     } yield if (exitCode == 0) outputStatus else Status.Failure.NonZeroExitCode(exitCode)
     for {
-      attempted <- local.exists(path)
+      attempted <- host.exists(path)
       status <- if (attempted) check else ZIO.succeed(Status.Pending)
     } yield status
   }
 
   /** An operation that prepares output of dependent jobs to the file system of this job. */
   def prepareInputs(implicit std: StdSinks): HIO[Map[String, String]] = ZIO.collectAll {
-    val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, local) }
+    val decoratorInputs = decorators.flatMap(_.script.args).map { case (k, v) => k -> (v, host) }
     for ((name, (input, fs)) <- (inputs.args zipByKey inputFs) ++ decoratorInputs)
       yield fs
         .prepareInput(name, input, path)
@@ -164,17 +177,17 @@ abstract class Job(implicit ctx: Context) {
   )(implicit std: StdSinks): HIO[Map[String, String]] = {
     for {
       finalScript <- ZIO.foldLeft(decorators)(script) { case (scr, dec) =>
-        local
-          .write(f"$path${local./}script.${scr.nestingLevel}", scr.script)
-          .as(dec(scr, local))
+        host
+          .write(f"$path${host./}script.${scr.nestingLevel}", scr.script)
+          .as(dec(scr, host))
       } // wraps the script with decorator calls sequentially
-      _ <- local.write(f"$path${local./}script", finalScript.script)
+      _ <- host.write(f"$path${host./}script", finalScript.script)
 
       // Linked args are of the highest precedence since they are resolved from envs
       jobArgs = finalScript.args.toStrMap ++ linkedArgs
       allArgs = jobArgs ++ jobEnvVars
-      _ <- local.write(
-        f"$path${local./}args",
+      _ <- host.write(
+        f"$path${host./}args",
         allArgs.toSeq.sortBy(_._1)
           .map { case (k, v) => s"""$k=${Shell.escape(v)}""" }
           .mkString("", "\n", "\n")
@@ -185,20 +198,20 @@ abstract class Job(implicit ctx: Context) {
   def execute(cli: CLI.Service)(implicit std: StdSinks): HIO[Status.Result] = {
     val effect = for {
       _ <- removeOutputs.ignore // may fail, but we don't care, proceed
-      _ <- local.mkdir(path)
+      _ <- host.mkdir(path)
       _ <- cli.update(this, Status.Waiting)
-      _ <- local.lock(path)
+      _ <- host.lock(path)
       preparedArgs <- prepareInputs
       args <- writeScript(preparedArgs)
       _ <- cli.update(this, Status.Running)
       _ <- logTaskCall(this)(ctx.runtime)
-      exitCode <- local.execute(path, runtime.shell, Seq("script"), args)
+      exitCode <- host.execute(path, runtime.shell, Seq("script"), args)
       outputStatus <- checkOutputs
     } yield {
       if (exitCode.code != 0) Status.Failure.NonZeroExitCode(exitCode.code)
       else outputStatus
     }
-    effect.ensuring(local.unlock(path).orElseSucceed(()))
+    effect.ensuring(host.unlock(path).orElseSucceed(()))
   }
 
   def executeIfNotDone(cli: CLI.Service): HIO[(Boolean, Status.Result)] = {
@@ -212,17 +225,17 @@ abstract class Job(implicit ctx: Context) {
   def markAsDone(cli: CLI.Service): HIO[Boolean] = {
     implicit val std: StdSinks = cli.globalSinks
     val effect = for {
-      _ <- local.mkdir(path)
+      _ <- host.mkdir(path)
       _ <- cli.update(this, Status.Waiting)
-      _ <- local.lock(path)
+      _ <- host.lock(path)
       _ <- cli.update(this, Status.Running)
-      _ <- ZIO.foreachDiscard(outputs) { case (_, o) =>
+      _ <- ZIO.foreachParDiscard(outputs) { case (_, o) =>
         o.fileSys.touch(s"$path${o.fileSys./}${o.value}")
       } // pretends the outputs exist
-      _ <- local.write(f"$path${local./}exitcode", "0")
+      _ <- host.write(f"$path${host./}exitcode", "0")
       outputStatus <- checkOutputs
     } yield outputStatus.isSuccess
-    effect.ensuring(local.unlock(path).orElseSucceed(()))
+    effect.ensuring(host.unlock(path).orElseSucceed(()))
   }
 
   def printStatus(cli: CLI.Service): HIO[Unit] = {
@@ -242,19 +255,19 @@ abstract class Job(implicit ctx: Context) {
   }
 
   def isLocked(implicit std: StdSinks): HIO[Boolean] =
-    local.isLocked(path)
+    host.isLocked(path)
 
   def forceUnlock(implicit std: StdSinks): HIO[Unit] =
-    local.forceUnlock(path)
+    host.forceUnlock(path)
 
   def removeOutputs(implicit std: StdSinks): HIO[Unit] =
-    local.remove(path)
+    host.remove(path)
 
   def invalidate(implicit std: StdSinks): HIO[Unit] =
-    local.remove(f"$path${local./}exitcode")
+    host.remove(f"$path${host./}exitcode")
 
   def describe(implicit std: StdSinks): HIO[Job.Description] = {
-    implicit val runtime = ctx.runtime
+    implicit val runtime: RuntimeConfig = ctx.runtime
     for {
       status <- checkStatus
     } yield {
@@ -281,7 +294,7 @@ abstract class Job(implicit ctx: Context) {
   def potentiallyHashedPercentEncodedCaseString = {
     val s = percentEncodedCaseStringPath
     val bytes = s.getBytes(StandardCharsets.UTF_8)
-    if (bytes.length > local.maxFileNameLength)
+    if (bytes.length > host.maxFileNameLength)
       MessageDigest.getInstance("MD5").digest(bytes).map("%02x".format(_)).mkString
     else s
   }

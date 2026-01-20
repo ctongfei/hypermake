@@ -43,6 +43,13 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
       fsm.optFs.fold(parent)(e => FileSys(e.str))
   }
 
+  implicit object ParseHost extends ContextualDenotation[Host, HostModifier, Host] {
+    override def defaultContext = Host.local
+
+    def denotation(hm: HostModifier, parent: Host) =
+      hm.optHost.fold(parent)(e => Host(e.str))
+  }
+
   implicit object ParseIdentifier extends Denotation[Identifier, String] {
     def denotation(id: Identifier) = id.name
   }
@@ -281,6 +288,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
           inputFs = inputs.map { case (k, (em, _)) => k.! -> em.!! },
           outputFileNames = PointedArgsTensor(Map(outputParams)),
           outputFs = Map(outputParams._1 -> output.map { a => a.param.fsModifier.!! }.getOrElse(FileSys.local)),
+          host = Host.local,
           decorators = decorators.calls.map(_.!),
           script = script.impl,
           isPackage = true
@@ -288,7 +296,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
   }
 
   implicit def ParseTaskDef: Denotation[TaskDef, Definition[PointedTaskTensor]] = {
-    case TaskDef(decorators, ephemeral, name, host, inputs, outputs, impl) =>
+    case TaskDef(decorators, ephemeral, name, hostMod, inputs, outputs, impl) =>
       val inputFs = inputs.map { case (k, (em, _)) => k.! -> em.!! }
       val outputFs = outputs.map { case (k, (em, _)) => k.! -> em.!! }
       val inputArgs = PointedArgsTensor(inputs.map { case (k, (_, v)) =>
@@ -301,6 +309,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
       val inputArgsAxes = inputArgs.args.values.map(_.shape.vars)
       val decoratorAxes = calls.map(_.script.shape.vars)
       val axes = (decoratorAxes ++ inputArgsAxes).fold(Set())(_ union _)
+      val host = hostMod.!!
       name.! :=
         new PointedTaskTensor(
           (scope.prefix / name.!).toString,
@@ -309,6 +318,7 @@ class SemanticParser(val scope: Obj)(implicit val ctx: Context) {
           inputFs,
           outputArgs,
           outputFs,
+          host,
           calls,
           script.impl,
           ephemeral

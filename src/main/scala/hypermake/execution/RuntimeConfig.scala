@@ -21,7 +21,6 @@ import hypermake.util.printing._
 class RuntimeConfig private (
     val pipelineFile: String,
     val workDir: String,
-    val shell: String,
     val envVars: Map[String, String],
     val definedVars: Map[String, String],
     val includePaths: Seq[String],
@@ -81,7 +80,6 @@ class RuntimeConfig private (
   override def toString = {
     s"""pipelineFile = $pipelineFile
        |workDir = $workDir
-       |shell = $shell
        |definedVars = ${definedVars.map { case (k, v) => s"$k = $v" }.mkString("{", ", ", "}")}
        |includePaths = ${includePaths.mkString("[", ", ", "]")}
        |numParallelJobs = $numParallelJobs
@@ -102,7 +100,6 @@ object RuntimeConfig {
       definedVars: Map[String, String] = Map(),
       includePaths: Seq[String] = Seq(),
       includedGitRepos: Seq[String] = Seq(),
-      shell: String = defaultShell,
       numParallelJobs: Int = 1,
       keepGoing: Boolean = false,
       silent: Boolean = false,
@@ -118,7 +115,6 @@ object RuntimeConfig {
       workDir = JSystem.getProperty("user.dir"),
       envVars = JSystem.getenv().asScala.toMap,
       definedVars = definedVars,
-      shell = shell,
       includePaths = includePaths ++ allClonedPath,
       numParallelJobs = numParallelJobs,
       keepGoing = keepGoing,
@@ -140,7 +136,6 @@ object RuntimeConfig {
       pipelineFile = pipelineFile,
       includePaths = options.collect { case Opt.IncludeDir(f) => f },
       includedGitRepos = options.collect { case Opt.IncludeGit(r) => r },
-      shell = options.collectFirst { case Opt.Shell(s) => s }.getOrElse(defaultShell),
       numParallelJobs = runOptions.collectFirst { case RunOpt.NumJobs(j) => j }.getOrElse(1),
       keepGoing = runOptions contains RunOpt.KeepGoing,
       silent = runOptions contains RunOpt.Silent,

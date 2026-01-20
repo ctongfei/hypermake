@@ -37,6 +37,10 @@ object Expressions {
     ("@" ~~ identifierPath).?
   } map FileSysModifier
 
+  def hostModifier[$: P] = P {
+    ("@" ~~ identifierPath).?
+  } map HostModifier
+
   def stringLiteral[$: P]: P[StringLiteral] = P {
     Lexical.unquotedString | (Lexical.quotedString ~~ fsModifier)
   } map {

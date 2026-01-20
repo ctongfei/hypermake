@@ -84,6 +84,12 @@ object ast {
     def children = optFs.toList
   }
 
+  case class HostModifier(optHost: Option[IdentifierPath]) extends Node {
+    def str = optHost.fold("")("@" + _.str)
+
+    def children = optHost.toList
+  }
+
   // TODO: should this even be in the AST?
   case class InlineCommand(command: String) extends Node {
     def str = command
@@ -276,7 +282,7 @@ object ast {
       decorators: DecoratorCalls,
       ephemeral: Boolean,
       name: Identifier,
-      host: FileSysModifier,
+      host: HostModifier,
       inputs: Assignments,
       outputs: Assignments,
       impl: TaskImpl

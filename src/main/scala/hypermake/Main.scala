@@ -15,13 +15,14 @@ import hypermake.syntax._
 import hypermake.util.StdSinks
 import hypermake.util.printing._
 
-/** Entrypoint of Hypermake. */
+/** Entrypoint of HyperMake. */
 object Main extends ZIOAppDefault {
 
   val version = "0.1.0"
 
   lazy val headerMessage = s"${B("HyperMake")} $version -- A parameterized pipeline manager"
 
+  // format: off
   lazy val helpMessage = {
     s"""
        |$headerMessage
@@ -56,6 +57,7 @@ object Main extends ZIOAppDefault {
        |""".stripMargin
     // TODO: timestamp (-t) and checksum (-c)
   }
+  // format: on
 
   def run = for {
     args <- getArgs
@@ -64,8 +66,7 @@ object Main extends ZIOAppDefault {
       case Cmd.Version => printLine(s"HyperMake $version").orDie as ExitCode(0)
 
       case Cmd.RunTarget(subtask, options, runOptions, targets) =>
-        implicit val runtime: RuntimeConfig =
-          RuntimeConfig.createFromCliOptions(options, runOptions)
+        implicit val runtime: RuntimeConfig = RuntimeConfig.createFromCliOptions(options, runOptions)
         val cli = PlainCLI.create(style = Style.Plain)
 
         // Constructs a semantic parser and its accompanying parsing context

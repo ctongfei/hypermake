@@ -22,7 +22,7 @@ case class Decorator(
       input.args ++ script.args ++ Args(
         Map(
           // relative path to the working directory, not to the output root
-          innerFileArg -> Value.Pure(s"script.${input.nestingLevel}")
+          innerFileArg -> Value.Input(s"script.${input.nestingLevel}", fs)
         )
       ),
       input.nestingLevel + 1
@@ -52,13 +52,7 @@ case class PointedDecoratorTensor(
    * @param fs file system of the underlying running task
    */
   def apply(input: PointedTensor[Script], fs: FileSys): PointedTensor[Script] =
-    (script productWith input) { case (scr, inp) =>
-      Script(
-        scr.script,
-        inp.args ++ scr.args ++ Args(Map(innerFileArg -> Value.Input(f"script.${inp.nestingLevel}", fs))),
-        inp.nestingLevel + 1
-      )
-    }
+    (script productWith input) { case (scr, inp) => Decorator(innerFileArg, scr)(inp, fs) }
 
 }
 

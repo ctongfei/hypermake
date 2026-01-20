@@ -4,7 +4,6 @@ import fansi.Attr._
 import fansi.Color._
 import fansi._
 
-
 package object printing {
 
   def O(s: String) = Green(s).render
@@ -26,5 +25,9 @@ package object printing {
   def V(s: String): String = (LightBlue ++ Bold.On)(s).render
 
   def Vx(s: String): String = (LightBlue)(s).render
+
+  def F(s: String): String = (LightYellow ++ Bold.On)(s).render
+
+  def A(s: String): String = (LightCyan)(s).render
 
 }

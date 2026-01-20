@@ -13,8 +13,9 @@ import hypermake.util.Escaper._
 class Context(implicit val runtime: RuntimeConfig) {
 
   private[hypermake] val root: Obj = new Obj(Path.root)
-  private[hypermake] val local: FileSys = new FileSys.Local()(this)
+  private[hypermake] val local: Host = new Host.Local()(this)
   private[hypermake] val fsTable = mutable.HashMap[String, FileSys]("local" -> local)
+  private[hypermake] val hostTable = mutable.HashMap[String, Host]("local" -> local)
   private[hypermake] var allCases: PointedShape = PointedShape.singleton
 
   def getAxis(name: Axis) =

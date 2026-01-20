@@ -15,6 +15,7 @@ class Task(
     val inputFs: Map[String, FileSys],
     val outputFileNames: Args[Value.Pure],
     val outputFs: Map[String, FileSys],
+    val host: Host,
     val decorators: Seq[Decorator],
     val rawScript: Script,
     val ephemeral: Boolean = false,
@@ -34,6 +35,7 @@ class PointedTaskTensor(
     val inputFs: Map[String, FileSys],
     val outputFileNames: PointedArgsTensor[Value.Pure],
     val outputFs: Map[String, FileSys],
+    val host: Host,
     val decorators: Seq[PointedDecoratorTensor],
     val script: PointedTensor[Script],
     val ephemeral: Boolean = false,
@@ -50,7 +52,7 @@ class PointedTaskTensor(
       val os = outputFileNames(c)
       val decs = decorators.map(_(c))
       val scr = script(c)
-      Some(new Task(name, cc, is, inputFs, os, outputFs, decs, scr, ephemeral, isPackage))
+      Some(new Task(name, cc, is, inputFs, os, outputFs, host, decs, scr, ephemeral, isPackage))
     } else None
   }
 
@@ -75,6 +77,7 @@ class PointedTaskTensor(
       inputFs,
       outputFileNames,
       outputFs,
+      host,
       decorators,
       outScript,
       ephemeral,

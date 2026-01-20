@@ -44,8 +44,12 @@ object Escaper {
 
   /** Escapes a string for shell scripts (e.g. Bash). */
   object Shell extends Escaper {
-    // Credit to https://stackoverflow.com/a/33949338/2990673
+    // POSIX strong quoting
     def escape(s: String) = "'" + s.replace("'", "'\\''") + "'"
+
+    /** Escapes a sequence of key-value pairs to a string that can be passed to `env` in a shell. */
+    def escapeKeyValuePairs(kvs: Iterable[(String, String)]) =
+      kvs.map { case (k, v) => "'" + Shell.escape(s"$k=$v") + "'" }.mkString(" ")
 
     def unescape(s: String) = {
       if (s.startsWith("'") && s.endsWith("'"))

@@ -28,7 +28,7 @@ class Statements(indent: Int) {
     decoratorCalls ~
       Lexical.token("ephemeral").!.? ~
       Lexical.token("task") ~/
-      identifier ~ fsModifier ~ assignments.? ~ ("->" ~ outputAssignments).? ~ impl
+      identifier ~ hostModifier ~ assignments.? ~ ("->" ~ outputAssignments).? ~ impl
   } map { case (decorators, ephemeral, name, host, inputs, outputs, impl) =>
     TaskDef(
       decorators,

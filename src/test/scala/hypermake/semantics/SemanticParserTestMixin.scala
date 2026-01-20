@@ -10,7 +10,7 @@ trait SemanticParserTestMixin { self: AnyFunSuite =>
   def semanticsSuiteFile(name: String) =
     File(getClass.getClassLoader.getResource(s"semantics-suite/$name"))
 
-  def runTest(name: String) = try {
+  def runTest(name: String): Unit = try {
     implicit val runtime = RuntimeConfig.create()
     implicit val ctx = new Context()
     val parser = new SemanticParser(ctx.root)

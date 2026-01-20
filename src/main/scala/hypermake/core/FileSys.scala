@@ -5,19 +5,16 @@ import scala.collection._
 
 import better.files._
 import zio._
-import zio.process._
 import zio.stream.ZSink
 import zio.{Task => _, _}
 
 import hypermake.exception.DataTransferFailedException
-import hypermake.util.Escaper.Shell
 import hypermake.util._
 import hypermake.util.logging._
 
 /**
- * Encapsulates a file system that could be local, or some remote grid (e.g. SFTP, or AWS S3).
+ * Encapsulates a file system that could be local, or some remote storage (e.g. SFTP, AWS S3, Azure Blob).
  * Such a file system must possess the capabilities of a basic file system.
- * Optionally it can be equipped with methods to run arbitrary shell scripts.
  */
 trait FileSys {
 
@@ -32,21 +29,11 @@ trait FileSys {
 
   def / = separator
 
-  /** Output root on this file system. Intermediate results will be stored in this directory. */
-  def root: String
-
   def refreshInterval: Duration
 
   def maxFileNameLength: Int
 
   def supportsSymLinks: Boolean
-
-  /** Resolves a path relative to the given root directory. */
-  def resolvePath(s: String, r: String = root) = {
-    val p = s.trim
-    if (p startsWith separator.toString) p
-    else r + separator + p
-  }
 
   /** Reads the content of a file as a string. */
   def read(f: String)(implicit std: StdSinks): HIO[String]
@@ -56,7 +43,9 @@ trait FileSys {
 
   /**
    * Creates an empty directory at the given path.
-   *  If on a blob storage (e.g. AWS S3), this can always return true.
+   * This should have the semantics of `mkdir -p`: it should create all parent directories if they do not exist,
+   * and it should not fail if the directory already exists.
+   * If on a blob storage (e.g. AWS S3), this can always return true.
    */
   def mkdir(f: String)(implicit std: StdSinks): HIO[Unit]
 
@@ -82,6 +71,9 @@ trait FileSys {
   /** Downloads a file or directory from this file system to the local file system. */
   def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit]
 
+  /** Computes a checksum of a file. Returns the hex-encoded hash string. */
+  def checksum(file: String)(implicit std: StdSinks): HIO[String]
+
   def copyFrom(src: String, srcFs: FileSys, dst: String)(implicit ctx: Context, std: StdSinks): HIO[Unit] = {
     if (srcFs == this)
       link(src, dst)
@@ -91,10 +83,6 @@ trait FileSys {
       srcFs.download(src, dst)
     else FileSys.copy(src, srcFs, dst, this)
   }
-
-  def execute(wd: String, command: String, args: Seq[String], envArgs: Map[String, String])(implicit
-      std: StdSinks
-  ): HIO[ExitCode]
 
   def isLocked(f: String)(implicit std: StdSinks): HIO[Boolean] = exists(s"$f${/}.lock")
 
@@ -108,28 +96,6 @@ trait FileSys {
     isLocked <- isLocked(f)
     u <- if (isLocked) remove(s"$f${/}.lock") else ZIO.unit
   } yield u
-
-  def prepareInput(name: String, x: Value, wd: String)(implicit ctx: Context, std: StdSinks): HIO[Option[String]] =
-    x match {
-      case Value.Pure(_) => ZIO.none // do nothing
-      case Value.Input(path, fs) =>
-        if (fs == this)
-          link(path, s"$wd${/}$name") as Some(resolvePath(path)) // for debugging purposes
-        else
-          copyFrom(path, fs, s"$wd${/}$name") as Some(resolvePath(s"$wd${/}$name"))
-      case Value.Output(path, fs, job, _) =>
-        if (fs == this)
-          link(s"${job.path}${/}$path", s"$wd${/}$name") as Some(resolvePath(s"${job.path}${/}$path"))
-        else
-          copyFrom(s"${job.path}${/}$path", fs, s"$wd${/}$name") as Some(resolvePath(s"$wd${/}$name"))
-      case Value.Multiple(values, _) =>
-        for {
-          dir <- mkdir(s"$wd${/}$name")
-          r <- ZIO.foreachPar(values.allPairs) { case (c, v) =>
-            prepareInput(ctx.percentEncodedCaseStringPath(c), v, resolvePath(s"$wd${/}$name"))
-          }
-        } yield Some(resolvePath(s"$wd${/}$name"))
-    }
 
   override def toString = name
 
@@ -156,7 +122,7 @@ object FileSys {
 
   def getTaskByNameOpt(str: String)(implicit ctx: Context) = ctx.root.tasks.get(str).map(_.default)
 
-  def getScriptByNames(names: String*)(implicit ctx: Context) =
+  def getScriptByNamesOpt(names: String*)(implicit ctx: Context) =
     names.foldLeft[Option[Script]](None) { (acc, name) =>
       acc.orElse(ctx.root.functions.get(name).map(_.impl.default))
     }
@@ -181,10 +147,6 @@ object FileSys {
     final val name = "local"
     val separator = java.io.File.separatorChar
     val pathSeparator = java.io.File.pathSeparatorChar
-    lazy val root = {
-      val relRoot = ctx.root.values.get("local.root").map(_.default.value).getOrElse("out")
-      resolvePath(relRoot, ctx.runtime.workDir)
-    }
     lazy val maxFileNameLength =
       ctx.root.values.get("local.max_file_name_length").map(_.default.value.toInt).getOrElse(255)
     val refreshInterval = 100.milliseconds
@@ -225,27 +187,37 @@ object FileSys {
 
     def download(src: String, dst: String)(implicit std: StdSinks): HIO[Unit] = link(src, dst)
 
-    override def execute(
-        wd: String,
-        command: String,
-        args: Seq[String],
-        envArgs: Map[String, String]
-    )(implicit
-        std: StdSinks
-    ) = {
-      val interpreter :: interpreterArgs = command.split(' ').toList
-      val resolvedWd = resolvePath(wd)
-      val pb = zio.process.Command(interpreter, (interpreterArgs ++ args): _*)
-        .workingDirectory(File(resolvedWd).toJava.getAbsoluteFile)
-        .env(envArgs.toMap)
-        .stderr(ProcessOutput.Pipe)
-        .stdout(ProcessOutput.Pipe)
-      for {
-        process <- pb.run
-        _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
-        exitCode <- process.exitCode
-        _ <- write(s"$wd${/}exitcode", exitCode.code.toString)
-      } yield exitCode
+    def checksum(f: String)(implicit std: StdSinks): HIO[String] = ZIO.attempt {
+      val path = File(resolvePath(f))
+      val md = java.security.MessageDigest.getInstance("SHA-256")
+
+      def hashFile(file: File): Unit = {
+        val buffer = new Array[Byte](8192)
+        val fis = file.newInputStream
+        try {
+          var bytesRead = fis.read(buffer)
+          while (bytesRead != -1) {
+            md.update(buffer, 0, bytesRead)
+            bytesRead = fis.read(buffer)
+          }
+        } finally {
+          fis.close()
+        }
+      }
+
+      if (path.isDirectory) {
+        // For directories: hash all files in sorted order, including relative paths for determinism
+        val files = path.listRecursively.filter(_.isRegularFile).toSeq.sortBy(_.path.toString)
+        for (file <- files) {
+          val relativePath = path.relativize(file).toString
+          md.update(relativePath.getBytes("UTF-8"))
+          hashFile(file)
+        }
+      } else {
+        hashFile(path)
+      }
+
+      md.digest().map("%02x".format(_)).mkString
     }
 
   }
@@ -285,10 +257,12 @@ object FileSys {
       )
       for {
         _ <- logCall(s"$name.read", f)
-        process <- getScriptByName(s"${name}.read")
-          .withArgs("file" -> f)
-          .executeLocally(ctx.runtime.workDir)(ctx.runtime, sinks)
-        _ <- logExitCode(s"$name.read", f)(process)
+        exitCode <- local.executeScript(
+          getScriptByName(s"${name}.read")
+            .withArgs("file" -> f),
+          wd = ctx.runtime.workDir
+        )
+        _ <- logExitCode(s"$name.read", f)(exitCode)
       } yield baos.toString()
     }
 
@@ -305,11 +279,13 @@ object FileSys {
 
     def mkdir(f: String)(implicit std: StdSinks) = for {
       _ <- logCall(s"$name.mkdir", f)
-      process <- getScriptByName(s"$name.mkdir")
-        .withArgs("dir" -> f)
-        .executeLocally(ctx.runtime.workDir)
-      _ <- logExitCode(s"$name.mkdir", f)(process)
-      u <- process.successfulExitCode.unit
+      exitCode <- local.executeScript(
+        getScriptByName(s"$name.mkdir")
+        .withArgs("dir" -> f),
+        wd = ctx.runtime.workDir
+      )
+      _ <- logExitCode(s"$name.mkdir", f)(exitCode)
+      u <- exitCode.successfulExitCode.unit
     } yield u
 
     def exists(f: String)(implicit std: StdSinks) = for {
@@ -382,21 +358,19 @@ object FileSys {
       u <- process.successfulExitCode.unit
     } yield u
 
-    def execute(wd: String, command: String, args: Seq[String], envVars: Map[String, String])(implicit std: StdSinks) =
+    def checksum(file: String)(implicit std: StdSinks): HIO[String] = {
+      val baos = new java.io.ByteArrayOutputStream()
+      val sinks = StdSinks(ZSink.fromOutputStream(baos), std.err)
       for {
-        process <- getScriptByName(s"${name}.execute")
-          .withArgs(
-            "command" ->
-              s"""cd ${resolvePath(wd)};
-                 | ${envVars.map { case (k, v) => s"$k=${Shell.escape(v)}" }.mkString(" ")}
-                 | $command ${args.mkString(" ")} > stdout 2> stderr
-                 |""".stripMargin.replace("\n", "")
-          )
-          .executeLocally(FileSys.local.resolvePath(wd))
-        _ <- process.stdout.stream.run(std.out) <&> process.stderr.stream.run(std.err)
-        _ <- logExitCode(command, args.mkString(" "))(process)
-        exitCode <- process.exitCode
-      } yield exitCode
+        _ <- logCall(s"$name.checksum", file)
+        process <- ctx.root.functions(s"${name}.checksum")
+          .partial(Args.from("file" -> file))
+          .reify
+          .default
+          .executeLocally(ctx.local.root)(ctx.runtime, sinks)
+        _ <- logExitCode(s"$name.checksum", file)(process)
+      } yield baos.toString().trim
+    }
 
     def asService: Option[Service] = for {
       start <- getTaskByNameOpt(s"${name}.start")
